@@ -4,7 +4,7 @@ var game = new Game(14);
 var view = new View(Math.round(canvas.width / game.characterSize), Math.round(canvas.height / game.characterSize));
 var level = 0;
 var levels = [];
-game.reset();
+game.changeLevel();
 
 function Game(characterSize) {
     this.characterSize = characterSize;
@@ -17,9 +17,11 @@ function Game(characterSize) {
         this.turn++;
         this.draw();
     }
-    this.reset = function () {
+    this.changeLevel = function () {
         if (level == levels.length) {
-            levels.push(new Level(50, 50));
+            levels.push(new Level());
+            levels[level].width = 50;
+            levels[level].height = 50;
             levels[level].cells = [];
             createCells();
             levels[level].rooms = [];
@@ -28,6 +30,7 @@ function Game(characterSize) {
             movePlayerToRoom();
             levels[level].creatures = [];
             spawnCreatures(10);
+            levels[level].corpses = [];
             levels[level].chests = [];
             spawnChests(5);
         }
@@ -55,6 +58,16 @@ function Game(characterSize) {
                             }
                         }
                         if (creature) {
+                            continue;
+                        }
+                        var corpse = false;
+                        for (var i = 0; i < levels[level].corpses.length; i++) {
+                            if (x == levels[level].corpses[i].x && y == levels[level].corpses[i].y) {
+                                ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                corpse = true;
+                            }
+                        }
+                        if (corpse) {
                             continue;
                         }
                         var chest = false;
@@ -101,14 +114,8 @@ function Game(characterSize) {
     }
 }
 
-function Level(width, height) {
-    this.width = width;
-    this.height = height;
-    this.cells;
-    this.rooms;
-    this.player;
-    this.creatures;
-    this.chests;
+function Level() {
+
 }
 
 function View(width, height) {
@@ -303,13 +310,14 @@ function Player() {
     this.y = 0;
     this.inventory = [];
     this.move = function (x, y) {
-        var valid = true;
+        var move = true;
+        var tick = true;
         if (x >= 0 && x < levels[level].width && y >= 0 && y < levels[level].height) {
             if (levels[level].cells[x][y].type == "wall") {
-                valid = false;
+                move = false;
             }
             if (levels[level].cells[x][y].type == "doorClosed") {
-                valid = false;
+                move = false;
                 var roll = Math.random();
                 if (roll > 0.5) {
                     console.log("you open the door");
@@ -324,34 +332,35 @@ function Player() {
                     document.location.reload();
                 }
                 else {
-                    console.log("you return");
+                    console.log("you ascend");
                     level--;
-                    game.reset();
-                    return;
+                    game.changeLevel();
+                    tick = false;
                 }
             }
             if (levels[level].cells[x][y].type == "stairsDown") {
-                console.log("you go deeper");
+                console.log("you descend");
                 level++;
-                game.reset();
-                return;
+                game.changeLevel();
+                tick = false;
             }
             for (var i = 0; i < levels[level].creatures.length; i++) {
                 if (x == levels[level].creatures[i].x && y == levels[level].creatures[i].y) {
-                    valid = false;
+                    move = false;
                     var roll = Math.random();
                     if (roll < 0.5) {
                         console.log("you miss the " + levels[level].creatures[i].name);
                     }
                     else {
                         console.log("you kill the " + levels[level].creatures[i].name);
+                        levels[level].corpses.push(new Corpse(x, y));
                         levels[level].creatures.splice(i, 1);
                     }
                 }
             }
             for (var i = 0; i < levels[level].chests.length; i++) {
                 if (x == levels[level].chests[i].x && y == levels[level].chests[i].y) {
-                    valid = false;
+                    move = false;
                     var roll = Math.random();
                     if (roll > 0.5) {
                         console.log("you open the chest");
@@ -372,14 +381,16 @@ function Player() {
             }
         }
         else {
-            valid = false;
+            move = false;
         }
-        if (valid) {
+        if (move) {
             this.x = x;
             this.y = y;
             view.move(x, y);
         }
-        game.tick();
+        if (tick) {
+            game.tick();
+        }
         //console.log("player (" + this.x + ", " + this.y + ")" + " " + levels[level].cells[this.x][this.y].type);
     }
 }
@@ -480,6 +491,11 @@ function spawnCreatures(amount) {
     }
 }
 
+function Corpse(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
 function Chest(x, y) {
     this.x = x;
     this.y = y;
@@ -533,7 +549,7 @@ function onKeyDown(e) {
         }
     }
     if (e.keyCode == 81) {
-        console.log(JSON.stringify(levels[level]));
+        console.log(JSON.stringify(levels));
     }
     if (e.keyCode == 69) {
 
