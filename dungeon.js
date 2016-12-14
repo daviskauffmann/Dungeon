@@ -1,6 +1,14 @@
+/*
+TODO
+    calculate stuff in other dungeons
+    line of sight
+    font size
+*/
+
 var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
 var game = new Game(14);
+var player = new Player();
 var view = new View(Math.round(canvas.width / game.characterSize), Math.round(canvas.height / game.characterSize));
 var level = 0;
 var dungeons = [];
@@ -27,8 +35,7 @@ function Game(characterSize) {
             dungeon.spawnChests(5);
             dungeons.push(dungeon);
         }
-        dungeons[level].player.calculateLOS();
-        view.center(dungeons[level].player.x, dungeons[level].player.y);
+        view.center(dungeons[level].playerX, dungeons[level].playerY);
         this.draw();
         console.log("welcome to level " + (level + 1));
     }
@@ -41,66 +48,64 @@ function Game(characterSize) {
                         if (x < 0 || x >= dungeons[level].width || y < 0 || y >= dungeons[level].height) {
                             continue;
                         }
-                        if (dungeons[level].cells[x][y].visible) {
-                            ctx.fillStyle = "#fff";
-                            ctx.font = game.characterSize + "px";
-                            if (x == dungeons[level].player.x && y == dungeons[level].player.y) {
-                                ctx.fillText("@", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                continue;
+                        ctx.fillStyle = "#fff";
+                        ctx.font = game.characterSize + "px";
+                        if (x == dungeons[level].playerX && y == dungeons[level].playerY) {
+                            ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            continue;
+                        }
+                        var creature = false;
+                        for (var i = 0; i < dungeons[level].creatures.length; i++) {
+                            if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
+                                ctx.fillText(dungeons[level].creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                creature = true;
                             }
-                            var creature = false;
-                            for (var i = 0; i < dungeons[level].creatures.length; i++) {
-                                if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
-                                    ctx.fillText(dungeons[level].creatures[i].char, (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    creature = true;
-                                }
+                        }
+                        if (creature) {
+                            continue;
+                        }
+                        var corpse = false;
+                        for (var i = 0; i < dungeons[level].corpses.length; i++) {
+                            if (x == dungeons[level].corpses[i].x && y == dungeons[level].corpses[i].y) {
+                                ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                corpse = true;
                             }
-                            if (creature) {
-                                continue;
+                        }
+                        if (corpse) {
+                            continue;
+                        }
+                        var chest = false;
+                        for (var i = 0; i < dungeons[level].chests.length; i++) {
+                            if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
+                                ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                chest = true;
                             }
-                            var corpse = false;
-                            for (var i = 0; i < dungeons[level].corpses.length; i++) {
-                                if (x == dungeons[level].corpses[i].x && y == dungeons[level].corpses[i].y) {
-                                    ctx.fillText("%", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    corpse = true;
-                                }
-                            }
-                            if (corpse) {
-                                continue;
-                            }
-                            var chest = false;
-                            for (var i = 0; i < dungeons[level].chests.length; i++) {
-                                if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
-                                    ctx.fillText("~", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    chest = true;
-                                }
-                            }
-                            if (chest) {
-                                continue;
-                            }
-                            switch (dungeons[level].cells[x][y].type) {
-                                case "empty":
-                                    ctx.fillText(" ", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                                case "floor":
-                                    ctx.fillText(".", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                                case "wall":
-                                    ctx.fillText("#", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                                case "doorClosed":
-                                    ctx.fillText("+", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                                case "doorOpen":
-                                    ctx.fillText("'", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                                case "stairsUp":
-                                    ctx.fillText("<", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                                case "stairsDown":
-                                    ctx.fillText(">", (x - view.x + 1) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                    break;
-                            }
+                        }
+                        if (chest) {
+                            continue;
+                        }
+                        switch (dungeons[level].cells[x][y].type) {
+                            case "empty":
+                                ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
+                            case "floor":
+                                ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
+                            case "wall":
+                                ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
+                            case "doorClosed":
+                                ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
+                            case "doorOpen":
+                                ctx.fillText("'", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
+                            case "stairsUp":
+                                ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
+                            case "stairsDown":
+                                ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                                break;
                         }
                     }
                 }
@@ -113,12 +118,127 @@ function Game(characterSize) {
     }
 }
 
+function Player() {
+    this.inventory = [];
+    this.move = function (x, y) {
+        var move = true;
+        var ascend = false;
+        var descend = false;
+        if (x >= 0 && x < dungeons[level].width && y >= 0 && y < dungeons[level].height) {
+            if (dungeons[level].cells[x][y].type == "wall") {
+                move = false;
+            }
+            if (dungeons[level].cells[x][y].type == "doorClosed") {
+                move = false;
+                var roll = Math.random();
+                if (roll > 0.5) {
+                    console.log("you open the door");
+                    dungeons[level].cells[x][y].type = "doorOpen";
+                }
+                else {
+                    console.log("the door won't budge");
+                }
+            }
+            if (dungeons[level].cells[x][y].type == "stairsUp") {
+                if (level == 0) {
+                    document.location.reload();
+                }
+                else {
+                    console.log("you ascend");
+                    ascend = true;
+                }
+            }
+            if (dungeons[level].cells[x][y].type == "stairsDown") {
+                console.log("you descend");
+                descend = true;
+            }
+            for (var i = 0; i < dungeons[level].creatures.length; i++) {
+                if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
+                    move = false;
+                    var roll = Math.random();
+                    if (roll < 0.5) {
+                        console.log("you miss the " + dungeons[level].creatures[i].name);
+                    }
+                    else {
+                        console.log("you kill the " + dungeons[level].creatures[i].name);
+                        dungeons[level].corpses.push(new Corpse(x, y));
+                        dungeons[level].creatures.splice(i, 1);
+                    }
+                }
+            }
+            for (var i = 0; i < dungeons[level].chests.length; i++) {
+                if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
+                    move = false;
+                    var roll = Math.random();
+                    if (roll > 0.5) {
+                        console.log("you open the chest");
+                        var loot = dungeons[level].chests[i].loot();
+                        dungeons[level].chests.splice(i, 1);
+                        if (loot == null) {
+                            console.log("there is nothing inside");
+                        }
+                        else {
+                            this.inventory.push(loot);
+                            console.log("you loot a " + loot.name);
+                        }
+                    }
+                    else {
+                        console.log("the chest won't open");
+                    }
+                }
+            }
+        }
+        else {
+            move = false;
+        }
+        if (move) {
+            dungeons[level].playerX = x;
+            dungeons[level].playerY = y;
+            view.center(x, y);
+            game.tick();
+        }
+        if (ascend) {
+            level--;
+            game.changeLevel();
+        }
+        if (descend) {
+            level++;
+            game.changeLevel();
+        }
+        //console.log("player (" + this.x + ", " + this.y + ")" + " " + dungeons[level].cells[this.x][this.y].type);
+    }
+}
+
+function View(width, height) {
+    this.x = 0;
+    this.y = 0;
+    this.width = width;
+    this.height = height;
+    this.center = function (x, y) {
+        this.x = x - Math.round(width / 2);
+        this.y = y - Math.round(height / 2);
+        if (this.x < 0) {
+            this.x = 0;
+        }
+        if (this.x + this.width > dungeons[level].width) {
+            this.x = dungeons[level].width - this.width;
+        }
+        if (this.y < 0) {
+            this.y = 0;
+        }
+        if (this.y + this.height > dungeons[level].height) {
+            this.y = dungeons[level].height - this.height;
+        }
+    }
+}
+
 function Dungeon(width, height) {
     this.width = width;
     this.height = height;
     this.cells = [];
     this.rooms = [];
-    this.player;
+    this.playerX = 0;
+    this.playerY = 0;
     this.creatures = [];
     this.corpses = [];
     this.chests = [];
@@ -126,7 +246,7 @@ function Dungeon(width, height) {
         for (var x = 0; x < this.width; x++) {
             this.cells[x] = [];
             for (var y = 0; y < this.height; y++) {
-                this.cells[x][y] = new Cell(x, y);
+                this.cells[x][y] = new Cell();
             }
         }
     }
@@ -267,7 +387,8 @@ function Dungeon(width, height) {
         for (var x = 0; x < this.width; x++) {
             for (var y = 0; y < this.height; y++) {
                 if (this.cells[x][y].type == "stairsUp") {
-                    this.player = new Player(x, y);
+                    this.playerX = x;
+                    this.playerY = y;
                     break;
                 }
             }
@@ -302,34 +423,8 @@ function Dungeon(width, height) {
     }
 }
 
-function View(width, height) {
-    this.x = 0;
-    this.y = 0;
-    this.width = width;
-    this.height = height;
-    this.center = function (x, y) {
-        this.x = x - Math.round(width / 2);
-        this.y = y - Math.round(height / 2);
-        if (this.x < 0) {
-            this.x = 0;
-        }
-        if (this.x + this.width > dungeons[level].width) {
-            this.x = dungeons[level].width - this.width;
-        }
-        if (this.y < 0) {
-            this.y = 0;
-        }
-        if (this.y + this.height > dungeons[level].height) {
-            this.y = dungeons[level].height - this.height;
-        }
-    }
-}
-
-function Cell(x, y) {
-    this.x = x;
-    this.y = y;
+function Cell() {
     this.type = "empty";
-    this.visible = true;
 }
 
 function Room(x, y, width, height) {
@@ -337,104 +432,6 @@ function Room(x, y, width, height) {
     this.y = y;
     this.width = width;
     this.height = height;
-}
-
-function Player(x, y) {
-    this.x = x;
-    this.y = y;
-    this.inventory = [];
-    this.move = function (x, y) {
-        var move = true;
-        var tick = true;
-        if (x >= 0 && x < dungeons[level].width && y >= 0 && y < dungeons[level].height) {
-            if (dungeons[level].cells[x][y].type == "wall") {
-                move = false;
-            }
-            if (dungeons[level].cells[x][y].type == "doorClosed") {
-                move = false;
-                var roll = Math.random();
-                if (roll > 0.5) {
-                    console.log("you open the door");
-                    dungeons[level].cells[x][y].type = "doorOpen";
-                }
-                else {
-                    console.log("the door won't budge");
-                }
-            }
-            if (dungeons[level].cells[x][y].type == "stairsUp") {
-                if (level == 0) {
-                    document.location.reload();
-                }
-                else {
-                    console.log("you ascend");
-                    level--;
-                    game.changeLevel();
-                    tick = false;
-                }
-            }
-            if (dungeons[level].cells[x][y].type == "stairsDown") {
-                console.log("you descend");
-                level++;
-                game.changeLevel();
-                tick = false;
-            }
-            for (var i = 0; i < dungeons[level].creatures.length; i++) {
-                if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
-                    move = false;
-                    var roll = Math.random();
-                    if (roll < 0.5) {
-                        console.log("you miss the " + dungeons[level].creatures[i].name);
-                    }
-                    else {
-                        console.log("you kill the " + dungeons[level].creatures[i].name);
-                        dungeons[level].corpses.push(new Corpse(x, y));
-                        dungeons[level].creatures.splice(i, 1);
-                    }
-                }
-            }
-            for (var i = 0; i < dungeons[level].chests.length; i++) {
-                if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
-                    move = false;
-                    var roll = Math.random();
-                    if (roll > 0.5) {
-                        console.log("you open the chest");
-                        var loot = dungeons[level].chests[i].loot();
-                        dungeons[level].chests.splice(i, 1);
-                        if (loot == null) {
-                            console.log("there is nothing inside");
-                        }
-                        else {
-                            this.inventory.push(loot);
-                            console.log("you loot a " + loot.name);
-                        }
-                    }
-                    else {
-                        console.log("the chest won't open");
-                    }
-                }
-            }
-        }
-        else {
-            move = false;
-        }
-        if (move) {
-            this.x = x;
-            this.y = y;
-            this.calculateLOS();
-            view.center(x, y);
-        }
-        if (tick) {
-            game.tick();
-        }
-        //console.log("player (" + this.x + ", " + this.y + ")" + " " + dungeons[level].cells[this.x][this.y].type);
-    }
-    this.calculateLOS = function () {
-        for (var x = 0; x < dungeons[level].width; x++) {
-            for (var y = 0; y < dungeons[level].height; y++) {
-                //dungeons[level].cells[x][y].visible = false;
-            }
-        }
-    }
 }
 
 function Creature(x, y, name, char) {
@@ -457,7 +454,7 @@ function Creature(x, y, name, char) {
             if (dungeons[level].cells[x][y].type == "stairsDown") {
                 valid = false;
             }
-            if (x == dungeons[level].player.x && y == dungeons[level].player.y) {
+            if (x == dungeons[level].playerX && y == dungeons[level].playerY) {
                 valid = false;
                 var roll = Math.random();
                 if (roll < 0.5) {
@@ -530,23 +527,25 @@ document.addEventListener("keydown", onKeyDown);
 function onKeyDown(e) {
     if (game.drawMode == "game") {
         if (e.keyCode == 38) {
-            dungeons[level].player.move(dungeons[level].player.x, dungeons[level].player.y - 1);
+            player.move(dungeons[level].playerX, dungeons[level].playerY - 1);
         }
         if (e.keyCode == 39) {
-            dungeons[level].player.move(dungeons[level].player.x + 1, dungeons[level].player.y);
+            player.move(dungeons[level].playerX + 1, dungeons[level].playerY);
         }
         if (e.keyCode == 40) {
-            dungeons[level].player.move(dungeons[level].player.x, dungeons[level].player.y + 1);
+            player.move(dungeons[level].playerX, dungeons[level].playerY + 1);
         }
         if (e.keyCode == 37) {
-            dungeons[level].player.move(dungeons[level].player.x - 1, dungeons[level].player.y);
+            player.move(dungeons[level].playerX - 1, dungeons[level].playerY);
         }
     }
     if (e.keyCode == 27) {
         if (game.drawMode == "menu") {
             game.drawMode = "game";
+            game.draw();
         } else {
             game.drawMode = "menu";
+            game.draw();
         }
     }
     if (e.keyCode == 81) {
