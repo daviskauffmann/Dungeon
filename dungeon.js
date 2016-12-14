@@ -7,7 +7,7 @@ TODO
 
 var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
-var game = new Game(14);
+var game = new Game(12);
 var player = new Player();
 var view = new View(Math.round(canvas.width / game.characterSize), Math.round(canvas.height / game.characterSize));
 var level = 0;
@@ -27,13 +27,7 @@ function Game(characterSize) {
     }
     this.changeLevel = function () {
         if (level == dungeons.length) {
-            var dungeon = new Dungeon(50, 50);
-            dungeon.createCells();
-            dungeon.createRooms(20, 5, 15, true, 0.5);
-            dungeon.spawnPlayer();
-            dungeon.spawnCreatures(10);
-            dungeon.spawnChests(5);
-            dungeons.push(dungeon);
+            dungeons.push(new Dungeon(50, 50, 20, 5, 15, true, 0.5, 10, 5));
         }
         view.center(dungeons[level].playerX, dungeons[level].playerY);
         this.draw();
@@ -41,78 +35,81 @@ function Game(characterSize) {
     }
     this.draw = function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        switch (this.drawMode) {
-            case "game":
-                for (var x = view.x; x < view.x + view.width; x++) {
-                    for (var y = view.y; y < view.y + view.height; y++) {
-                        if (x < 0 || x >= dungeons[level].width || y < 0 || y >= dungeons[level].height) {
-                            continue;
-                        }
-                        ctx.fillStyle = "#fff";
-                        ctx.font = game.characterSize + "px";
-                        if (x == dungeons[level].playerX && y == dungeons[level].playerY) {
-                            ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                            continue;
-                        }
-                        var creature = false;
-                        for (var i = 0; i < dungeons[level].creatures.length; i++) {
-                            if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
-                                ctx.fillText(dungeons[level].creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                creature = true;
-                            }
-                        }
-                        if (creature) {
-                            continue;
-                        }
-                        var corpse = false;
-                        for (var i = 0; i < dungeons[level].corpses.length; i++) {
-                            if (x == dungeons[level].corpses[i].x && y == dungeons[level].corpses[i].y) {
-                                ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                corpse = true;
-                            }
-                        }
-                        if (corpse) {
-                            continue;
-                        }
-                        var chest = false;
-                        for (var i = 0; i < dungeons[level].chests.length; i++) {
-                            if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
-                                ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                chest = true;
-                            }
-                        }
-                        if (chest) {
-                            continue;
-                        }
-                        switch (dungeons[level].cells[x][y].type) {
-                            case "empty":
-                                ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                            case "floor":
-                                ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                            case "wall":
-                                ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                            case "doorClosed":
-                                ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                            case "doorOpen":
-                                ctx.fillText("'", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                            case "stairsUp":
-                                ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                            case "stairsDown":
-                                ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                                break;
-                        }
+        for (var x = view.x; x < view.x + view.width; x++) {
+            for (var y = view.y; y < view.y + view.height; y++) {
+                if (x < 0 || x >= dungeons[level].width || y < 0 || y >= dungeons[level].height) {
+                    continue;
+                }
+                ctx.fillStyle = "#fff";
+                ctx.font = game.characterSize + "px Lucida Console";
+                if (x == dungeons[level].playerX && y == dungeons[level].playerY) {
+                    ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                    continue;
+                }
+                var creature = false;
+                for (var i = 0; i < dungeons[level].creatures.length; i++) {
+                    if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
+                        ctx.fillText(dungeons[level].creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        creature = true;
                     }
                 }
-                break;
-            case "menu":
+                if (creature) {
+                    continue;
+                }
+                var corpse = false;
+                for (var i = 0; i < dungeons[level].corpses.length; i++) {
+                    if (x == dungeons[level].corpses[i].x && y == dungeons[level].corpses[i].y) {
+                        ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        corpse = true;
+                    }
+                }
+                if (corpse) {
+                    continue;
+                }
+                var chest = false;
+                for (var i = 0; i < dungeons[level].chests.length; i++) {
+                    if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
+                        ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        chest = true;
+                    }
+                }
+                if (chest) {
+                    continue;
+                }
+                switch (dungeons[level].cells[x][y].type) {
+                    case "empty":
+                        ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "floor":
+                        ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "wall":
+                        ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "doorClosed":
+                        ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "doorOpen":
+                        ctx.fillText("-", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "stairsUp":
+                        ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "stairsDown":
+                        ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                }
+            }
+        }
+        switch (this.drawMode) {
+            case "inventory":
                 ctx.fillStyle = "#fff";
-                ctx.fillText("Paused", 10, 10);
+                ctx.fillRect(0, 0, 150, canvas.height);
+                ctx.stroke();
+                ctx.fillStyle = "#000";
+                for (var i = 0; i < player.inventory.length; i++) {
+                    ctx.fillText(player.inventory[i].name, 0, (i + 1) * 12);
+                }
                 break;
         }
     }
@@ -195,7 +192,6 @@ function Player() {
             dungeons[level].playerX = x;
             dungeons[level].playerY = y;
             view.center(x, y);
-            game.tick();
         }
         if (ascend) {
             level--;
@@ -205,6 +201,7 @@ function Player() {
             level++;
             game.changeLevel();
         }
+        game.tick();
         //console.log("player (" + this.x + ", " + this.y + ")" + " " + dungeons[level].cells[this.x][this.y].type);
     }
 }
@@ -232,193 +229,179 @@ function View(width, height) {
     }
 }
 
-function Dungeon(width, height) {
+function Dungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, creatureAmount, chestAmount) {
     this.width = width;
     this.height = height;
     this.cells = [];
-    this.rooms = [];
-    this.playerX = 0;
-    this.playerY = 0;
-    this.creatures = [];
-    this.corpses = [];
-    this.chests = [];
-    this.createCells = function () {
-        for (var x = 0; x < this.width; x++) {
-            this.cells[x] = [];
-            for (var y = 0; y < this.height; y++) {
-                this.cells[x][y] = new Cell();
-            }
+    for (var x = 0; x < this.width; x++) {
+        this.cells[x] = [];
+        for (var y = 0; y < this.height; y++) {
+            this.cells[x][y] = new Cell();
         }
     }
-    this.createRooms = function (attempts, minSize, maxSize, preventOverlap, doorChance) {
-        for (var i = 0; i < attempts; i++) {
-            var roomX = getRandomInt(0, this.width);
-            var roomY = getRandomInt(0, this.height);
-            var roomWidth = getRandomInt(minSize, maxSize);
-            var roomHeight = getRandomInt(minSize, maxSize);
-            // check bounds
-            if (roomX < 1 || roomX + roomWidth > this.width - 1 || roomY < 1 || roomY + roomHeight > this.height - 1) {
-                continue;
-            }
-            // check overlap
-            if (preventOverlap) {
-                var overlap = false;
-                for (var x = roomX; x < roomX + roomWidth; x++) {
-                    for (var y = roomY; y < roomY + roomHeight; y++) {
-                        if (this.cells[x][y].type == "floor") {
-                            overlap = true;
-                        }
-                        if (this.cells[x][y - 1].type == "floor") {
-                            overlap = true;
-                        }
-                        if (this.cells[x + 1][y].type == "floor") {
-                            overlap = true;
-                        }
-                        if (this.cells[x][y + 1].type == "floor") {
-                            overlap = true;
-                        }
-                        if (this.cells[x - 1][y].type == "floor") {
-                            overlap = true;
-                        }
+    this.rooms = [];
+    for (var i = 0; i < roomAttempts; i++) {
+        var roomX = getRandomInt(0, this.width);
+        var roomY = getRandomInt(0, this.height);
+        var roomWidth = getRandomInt(minRoomSize, maxRoomSize);
+        var roomHeight = getRandomInt(minRoomSize, maxRoomSize);
+        // check bounds
+        if (roomX < 1 || roomX + roomWidth > this.width - 1 || roomY < 1 || roomY + roomHeight > this.height - 1) {
+            continue;
+        }
+        // check overlap
+        if (preventOverlap) {
+            var overlap = false;
+            for (var x = roomX; x < roomX + roomWidth; x++) {
+                for (var y = roomY; y < roomY + roomHeight; y++) {
+                    if (this.cells[x][y].type == "floor") {
+                        overlap = true;
+                    }
+                    if (this.cells[x][y - 1].type == "floor") {
+                        overlap = true;
+                    }
+                    if (this.cells[x + 1][y].type == "floor") {
+                        overlap = true;
+                    }
+                    if (this.cells[x][y + 1].type == "floor") {
+                        overlap = true;
+                    }
+                    if (this.cells[x - 1][y].type == "floor") {
+                        overlap = true;
                     }
                 }
-                if (overlap) {
-                    continue;
-                }
             }
-            // create a room
-            var room = new Room(roomX, roomY, roomWidth, roomHeight);
-            // assign cells
-            for (var x = room.x; x < room.x + room.width; x++) {
-                for (var y = room.y; y < room.y + room.height; y++) {
+            if (overlap) {
+                continue;
+            }
+        }
+        // create a room
+        var room = new Room(roomX, roomY, roomWidth, roomHeight);
+        // assign cells
+        for (var x = room.x; x < room.x + room.width; x++) {
+            for (var y = room.y; y < room.y + room.height; y++) {
+                this.cells[x][y].type = "floor";
+            }
+        }
+        // add to the list
+        this.rooms.push(room);
+    }
+    // connect rooms
+    for (var i = 0; i < this.rooms.length - 1; i++) {
+        var x1 = getRandomInt(this.rooms[i].x, this.rooms[i].x + this.rooms[i].width);
+        var y1 = getRandomInt(this.rooms[i].y, this.rooms[i].y + this.rooms[i].height);
+        var x2 = getRandomInt(this.rooms[i + 1].x, this.rooms[i + 1].x + this.rooms[i + 1].width);
+        var y2 = getRandomInt(this.rooms[i + 1].y, this.rooms[i + 1].y + this.rooms[i + 1].height);
+        if (x1 > x2) {
+            var t = x1;
+            x1 = x2;
+            x2 = t;
+        }
+        if (y1 > y2) {
+            var t = y1;
+            y1 = y2;
+            y2 = t;
+        }
+        for (var x = x1; x <= x2; x++) {
+            for (var y = y1; y <= y2; y++) {
+                if (x == x1 || x == x2 || y == y1 || y == y2) {
                     this.cells[x][y].type = "floor";
                 }
             }
-            // add to the list
-            this.rooms.push(room);
         }
-
-        // connect rooms
-        for (var i = 0; i < this.rooms.length - 1; i++) {
-            var x1 = getRandomInt(this.rooms[i].x, this.rooms[i].x + this.rooms[i].width);
-            var y1 = getRandomInt(this.rooms[i].y, this.rooms[i].y + this.rooms[i].height);
-            var x2 = getRandomInt(this.rooms[i + 1].x, this.rooms[i + 1].x + this.rooms[i + 1].width);
-            var y2 = getRandomInt(this.rooms[i + 1].y, this.rooms[i + 1].y + this.rooms[i + 1].height);
-            if (x1 > x2) {
-                var t = x1;
-                x1 = x2;
-                x2 = t;
-            }
-            if (y1 > y2) {
-                var t = y1;
-                y1 = y2;
-                y2 = t;
-            }
-            for (var x = x1; x <= x2; x++) {
-                for (var y = y1; y <= y2; y++) {
-                    if (x == x1 || x == x2 || y == y1 || y == y2) {
-                        this.cells[x][y].type = "floor";
-                    }
+    }
+    // walls
+    for (var x = 0; x < this.width; x++) {
+        for (var y = 0; y < this.height; y++) {
+            if (this.cells[x][y].type == "floor") {
+                if (this.cells[x][y - 1].type == "empty") {
+                    this.cells[x][y - 1].type = "wall";
+                }
+                if (this.cells[x + 1][y].type == "empty") {
+                    this.cells[x + 1][y].type = "wall";
+                }
+                if (this.cells[x][y + 1].type == "empty") {
+                    this.cells[x][y + 1].type = "wall";
+                }
+                if (this.cells[x - 1][y].type == "empty") {
+                    this.cells[x - 1][y].type = "wall";
                 }
             }
         }
-
-        // walls
-        for (var x = 0; x < this.width; x++) {
-            for (var y = 0; y < this.height; y++) {
+    }
+    // doors
+    for (var x = 0; x < this.width; x++) {
+        for (var y = 0; y < this.height; y++) {
+            if (Math.random() < doorChance) {
                 if (this.cells[x][y].type == "floor") {
-                    if (this.cells[x][y - 1].type == "empty") {
-                        this.cells[x][y - 1].type = "wall";
-                    }
-                    if (this.cells[x + 1][y].type == "empty") {
-                        this.cells[x + 1][y].type = "wall";
-                    }
-                    if (this.cells[x][y + 1].type == "empty") {
-                        this.cells[x][y + 1].type = "wall";
-                    }
-                    if (this.cells[x - 1][y].type == "empty") {
-                        this.cells[x - 1][y].type = "wall";
-                    }
-                }
-            }
-        }
-
-        // doors
-        for (var x = 0; x < this.width; x++) {
-            for (var y = 0; y < this.height; y++) {
-                if (Math.random() < doorChance) {
-                    if (this.cells[x][y].type == "floor") {
-                        if (this.cells[x][y - 1].type == "floor" && this.cells[x + 1][y - 1].type == "floor" && this.cells[x - 1][y - 1].type == "floor") {
-                            if (this.cells[x - 1][y].type == "wall" && this.cells[x + 1][y].type == "wall") {
-                                this.cells[x][y].type = "doorClosed";
-                            }
+                    if (this.cells[x][y - 1].type == "floor" && this.cells[x + 1][y - 1].type == "floor" && this.cells[x - 1][y - 1].type == "floor") {
+                        if (this.cells[x - 1][y].type == "wall" && this.cells[x + 1][y].type == "wall") {
+                            this.cells[x][y].type = "doorClosed";
                         }
-                        if (this.cells[x + 1][y].type == "floor" && this.cells[x + 1][y - 1].type == "floor" && this.cells[x + 1][y + 1].type == "floor") {
-                            if (this.cells[x][y + 1].type == "wall" && this.cells[x][y - 1].type == "wall") {
-                                this.cells[x][y].type = "doorClosed";
-                            }
+                    }
+                    if (this.cells[x + 1][y].type == "floor" && this.cells[x + 1][y - 1].type == "floor" && this.cells[x + 1][y + 1].type == "floor") {
+                        if (this.cells[x][y + 1].type == "wall" && this.cells[x][y - 1].type == "wall") {
+                            this.cells[x][y].type = "doorClosed";
                         }
-                        if (this.cells[x][y + 1].type == "floor" && this.cells[x + 1][y + 1].type == "floor" && this.cells[x - 1][y + 1].type == "floor") {
-                            if (this.cells[x - 1][y].type == "wall" && this.cells[x + 1][y].type == "wall") {
-                                this.cells[x][y].type = "doorClosed";
-                            }
+                    }
+                    if (this.cells[x][y + 1].type == "floor" && this.cells[x + 1][y + 1].type == "floor" && this.cells[x - 1][y + 1].type == "floor") {
+                        if (this.cells[x - 1][y].type == "wall" && this.cells[x + 1][y].type == "wall") {
+                            this.cells[x][y].type = "doorClosed";
                         }
-                        if (this.cells[x - 1][y].type == "floor" && this.cells[x - 1][y - 1].type == "floor" && this.cells[x - 1][y + 1].type == "floor") {
-                            if (this.cells[x][y + 1].type == "wall" && this.cells[x][y - 1].type == "wall") {
-                                this.cells[x][y].type = "doorClosed";
-                            }
+                    }
+                    if (this.cells[x - 1][y].type == "floor" && this.cells[x - 1][y - 1].type == "floor" && this.cells[x - 1][y + 1].type == "floor") {
+                        if (this.cells[x][y + 1].type == "wall" && this.cells[x][y - 1].type == "wall") {
+                            this.cells[x][y].type = "doorClosed";
                         }
                     }
                 }
             }
         }
-
-        //stairs
+    }
+    //stairs
+    if (this.rooms.length > 0) {
+        var x = getRandomInt(this.rooms[0].x, this.rooms[0].x + this.rooms[0].width);
+        var y = getRandomInt(this.rooms[0].y, this.rooms[0].y + this.rooms[0].height);
+        this.cells[x][y].type = "stairsUp";
+        var x = getRandomInt(this.rooms[this.rooms.length - 1].x, this.rooms[this.rooms.length - 1].x + this.rooms[this.rooms.length - 1].width);
+        var y = getRandomInt(this.rooms[this.rooms.length - 1].y, this.rooms[this.rooms.length - 1].y + this.rooms[this.rooms.length - 1].height);
+        this.cells[x][y].type = "stairsDown";
+    }
+    this.playerX = 0;
+    this.playerY = 0;
+    for (var x = 0; x < this.width; x++) {
+        for (var y = 0; y < this.height; y++) {
+            if (this.cells[x][y].type == "stairsUp") {
+                this.playerX = x;
+                this.playerY = y;
+                break;
+            }
+        }
+    }
+    this.creatures = [];
+    for (var i = 0; i < creatureAmount; i++) {
+        if (this.rooms.length > 1) {
+            var roomIndex = getRandomInt(1, this.rooms.length);
+            var x = getRandomInt(this.rooms[roomIndex].x, this.rooms[roomIndex].x + this.rooms[roomIndex].width);
+            var y = getRandomInt(this.rooms[roomIndex].y, this.rooms[roomIndex].y + this.rooms[roomIndex].height);
+            var roll = Math.random();
+            if (roll < 0.3) {
+                this.creatures.push(new Creature(x, y, "rat", "r"));
+            } else if (roll < 0.6) {
+                this.creatures.push(new Creature(x, y, "orc", "o"));
+            } else {
+                this.creatures.push(new Creature(x, y, "slime", "s"));
+            }
+        }
+    }
+    this.corpses = [];
+    this.chests = [];
+    for (var i = 0; i < chestAmount; i++) {
         if (this.rooms.length > 0) {
-            var x = getRandomInt(this.rooms[0].x, this.rooms[0].x + this.rooms[0].width);
-            var y = getRandomInt(this.rooms[0].y, this.rooms[0].y + this.rooms[0].height);
-            this.cells[x][y].type = "stairsUp";
-            var x = getRandomInt(this.rooms[this.rooms.length - 1].x, this.rooms[this.rooms.length - 1].x + this.rooms[this.rooms.length - 1].width);
-            var y = getRandomInt(this.rooms[this.rooms.length - 1].y, this.rooms[this.rooms.length - 1].y + this.rooms[this.rooms.length - 1].height);
-            this.cells[x][y].type = "stairsDown";
-        }
-    }
-    this.spawnPlayer = function () {
-        for (var x = 0; x < this.width; x++) {
-            for (var y = 0; y < this.height; y++) {
-                if (this.cells[x][y].type == "stairsUp") {
-                    this.playerX = x;
-                    this.playerY = y;
-                    break;
-                }
-            }
-        }
-    }
-    this.spawnCreatures = function (amount) {
-        for (var i = 0; i < amount; i++) {
-            if (this.rooms.length > 1) {
-                var roomIndex = getRandomInt(1, this.rooms.length);
-                var x = getRandomInt(this.rooms[roomIndex].x, this.rooms[roomIndex].x + this.rooms[roomIndex].width);
-                var y = getRandomInt(this.rooms[roomIndex].y, this.rooms[roomIndex].y + this.rooms[roomIndex].height);
-                var roll = Math.random();
-                if (roll < 0.3) {
-                    this.creatures.push(new Creature(x, y, "rat", "r"));
-                } else if (roll < 0.6) {
-                    this.creatures.push(new Creature(x, y, "orc", "o"));
-                } else {
-                    this.creatures.push(new Creature(x, y, "slime", "s"));
-                }
-            }
-        }
-    }
-    this.spawnChests = function (amount) {
-        for (var i = 0; i < amount; i++) {
-            if (this.rooms.length > 0) {
-                var roomIndex = getRandomInt(0, this.rooms.length);
-                var x = getRandomInt(this.rooms[roomIndex].x, this.rooms[roomIndex].x + this.rooms[roomIndex].width);
-                var y = getRandomInt(this.rooms[roomIndex].y, this.rooms[roomIndex].y + this.rooms[roomIndex].height);
-                this.chests.push(new Chest(x, y));
-            }
+            var roomIndex = getRandomInt(0, this.rooms.length);
+            var x = getRandomInt(this.rooms[roomIndex].x, this.rooms[roomIndex].x + this.rooms[roomIndex].width);
+            var y = getRandomInt(this.rooms[roomIndex].y, this.rooms[roomIndex].y + this.rooms[roomIndex].height);
+            this.chests.push(new Chest(x, y));
         }
     }
 }
@@ -440,22 +423,22 @@ function Creature(x, y, name, char) {
     this.name = name;
     this.char = char;
     this.move = function (x, y) {
-        var valid = true;
+        var move = true;
         if (x >= 0 && x < dungeons[level].width && y >= 0 && y < dungeons[level].height) {
             if (dungeons[level].cells[x][y].type == "wall") {
-                valid = false;
+                move = false;
             }
             if (dungeons[level].cells[x][y].type == "doorClosed") {
-                valid = false;
+                move = false;
             }
             if (dungeons[level].cells[x][y].type == "stairsUp") {
-                valid = false;
+                move = false;
             }
             if (dungeons[level].cells[x][y].type == "stairsDown") {
-                valid = false;
+                move = false;
             }
             if (x == dungeons[level].playerX && y == dungeons[level].playerY) {
-                valid = false;
+                move = false;
                 var roll = Math.random();
                 if (roll < 0.5) {
                     console.log("the " + this.name + " misses you");
@@ -469,33 +452,43 @@ function Creature(x, y, name, char) {
                     continue;
                 }
                 if (x == dungeons[level].creatures[i].x && y == dungeons[level].creatures[i].y) {
-                    valid = false;
+                    move = false;
                 }
             }
             for (var i = 0; i < dungeons[level].chests.length; i++) {
                 if (x == dungeons[level].chests[i].x && y == dungeons[level].chests[i].y) {
-                    valid = false;
+                    move = false;
                 }
             }
         }
         else {
-            valid = false;
+            move = false;
         }
-        if (valid) {
+        if (move) {
             this.x = x;
             this.y = y;
         }
     }
     this.tick = function () {
-        var roll = Math.random();
-        if (roll < 0.25) {
+        if (this.x == dungeons[level].playerX && this.y - 1 == dungeons[level].playerY) {
             this.move(this.x, this.y - 1);
-        } else if (roll < 0.5) {
+        } else if (this.x + 1 == dungeons[level].playerX && this.y == dungeons[level].playerY) {
             this.move(this.x + 1, this.y);
-        } else if (roll < 0.75) {
+        } else if (this.x == dungeons[level].playerX && this.y + 1 == dungeons[level].playerY) {
+            this.move(this.x, this.y + 1);
+        } else if (this.x == dungeons[level].playerX && this.y + 1 == dungeons[level].playerY) {
             this.move(this.x, this.y + 1);
         } else {
-            this.move(this.x - 1, this.y);
+            var roll = Math.random();
+            if (roll < 0.25) {
+                this.move(this.x, this.y - 1);
+            } else if (roll < 0.5) {
+                this.move(this.x + 1, this.y);
+            } else if (roll < 0.75) {
+                this.move(this.x, this.y + 1);
+            } else {
+                this.move(this.x - 1, this.y);
+            }
         }
     }
 }
@@ -540,13 +533,12 @@ function onKeyDown(e) {
         }
     }
     if (e.keyCode == 27) {
-        if (game.drawMode == "menu") {
-            game.drawMode = "game";
-            game.draw();
-        } else {
-            game.drawMode = "menu";
-            game.draw();
-        }
+        game.drawMode = "game";
+        game.draw();
+    }
+    if (e.keyCode == 73) {
+        game.drawMode = "inventory";
+        game.draw();
     }
     if (e.keyCode == 81) {
         console.log(JSON.stringify(dungeons));
