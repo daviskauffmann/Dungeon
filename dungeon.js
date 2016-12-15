@@ -9,6 +9,7 @@ var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
 var game = {
     player: {
+        sight: 10,
         inventory: []
     },
     dungeons: [],
@@ -32,7 +33,7 @@ function changeLevel(level) {
     if (game.level == game.dungeons.length) {
         createDungeon();
     }
-    centerView(getCurrentDungeon().playerX, getCurrentDungeon().playerY);
+    centerView(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
     draw();
     console.log("welcome to level " + (game.level + 1));
 }
@@ -44,8 +45,10 @@ function createDungeon() {
         height: 50,
         cells: [],
         rooms: [],
-        playerX: 0,
-        playerY: 0,
+        player: {
+            x: 0,
+            y: 0
+        },
         creatures: [],
         corpses: [],
         chests: []
@@ -55,7 +58,9 @@ function createDungeon() {
         dungeon.cells[x] = [];
         for (var y = 0; y < dungeon.height; y++) {
             dungeon.cells[x][y] = {
-                type: "empty"
+                type: "empty",
+                discovered: false,
+                visible: false
             }
         }
     }
@@ -207,8 +212,8 @@ function createDungeon() {
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
             if (dungeon.cells[x][y].type == "stairsUp") {
-                dungeon.playerX = x;
-                dungeon.playerY = y;
+                dungeon.player.x = x;
+                dungeon.player.y = y;
                 break;
             }
         }
@@ -279,16 +284,16 @@ function onKeyDown(e) {
     switch (game.drawMode) {
         case "game":
             if (e.keyCode == 38) {
-                movePlayer(getCurrentDungeon().playerX, getCurrentDungeon().playerY - 1);
+                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
             }
             if (e.keyCode == 39) {
-                movePlayer(getCurrentDungeon().playerX + 1, getCurrentDungeon().playerY);
+                movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
             }
             if (e.keyCode == 40) {
-                movePlayer(getCurrentDungeon().playerX, getCurrentDungeon().playerY + 1);
+                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
             }
             if (e.keyCode == 37) {
-                movePlayer(getCurrentDungeon().playerX - 1, getCurrentDungeon().playerY);
+                movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
             }
             break;
         case "inventory":
@@ -407,8 +412,8 @@ function movePlayer(x, y) {
         move = false;
     }
     if (move) {
-        getCurrentDungeon().playerX = x;
-        getCurrentDungeon().playerY = y;
+        getCurrentDungeon().player.x = x;
+        getCurrentDungeon().player.y = y;
         centerView(x, y);
     }
     if (ascend) {
@@ -433,13 +438,13 @@ function tick() {
 }
 
 function tickCreature(creature) {
-    if (creature.x == getCurrentDungeon().playerX && creature.y - 1 == getCurrentDungeon().playerY) {
+    if (creature.x == getCurrentDungeon().player.x && creature.y - 1 == getCurrentDungeon().player.y) {
         moveCreature(creature, creature.x, creature.y - 1);
-    } else if (creature.x + 1 == getCurrentDungeon().playerX && creature.y == getCurrentDungeon().playerY) {
+    } else if (creature.x + 1 == getCurrentDungeon().player.x && creature.y == getCurrentDungeon().player.y) {
         moveCreature(creature, creature.x + 1, creature.y);
-    } else if (creature.x == getCurrentDungeon().playerX && creature.y + 1 == getCurrentDungeon().playerY) {
+    } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
         moveCreature(creature, creature.x, creature.y + 1);
-    } else if (creature.x == getCurrentDungeon().playerX && creature.y + 1 == getCurrentDungeon().playerY) {
+    } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
         moveCreature(creature, creature.x - 1, creature.y);
     } else {
         var roll = Math.random();
@@ -470,7 +475,7 @@ function moveCreature(creature, x, y) {
         if (getCurrentDungeon().cells[x][y].type == "stairsDown") {
             move = false;
         }
-        if (x == getCurrentDungeon().playerX && y == getCurrentDungeon().playerY) {
+        if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
             move = false;
             var roll = Math.random();
             if (roll < 0.5) {
@@ -520,48 +525,93 @@ function centerView(x, y) {
     }
 }
 
+function fov() {
+    for (var x = 0; x < getCurrentDungeon().width; x++) {
+        for (var y = 0; y < getCurrentDungeon().height; y++) {
+            getCurrentDungeon().cells[x][y].visible = false;
+        }
+    }
+    for (var i = 0; i < 360; i++) {
+        var x = Math.cos(i * 0.01745);
+        var y = Math.sin(i * 0.01745);
+        doFov(x, y);
+    }
+}
+
+function doFov(x, y) {
+    var ox = getCurrentDungeon().player.x + 0.5;
+    var oy = getCurrentDungeon().player.y + 0.5;
+    for (var i = 0; i < game.player.sight; i++) {
+        if (Math.trunc(ox) < 0 || Math.trunc(ox) >= getCurrentDungeon().width || Math.trunc(oy) < 0 || Math.trunc(oy) >= getCurrentDungeon().height) {
+            return;
+        }
+        getCurrentDungeon().cells[Math.trunc(ox)][Math.trunc(oy)].discovered = true;
+        getCurrentDungeon().cells[Math.trunc(ox)][Math.trunc(oy)].visible = true;
+        switch (getCurrentDungeon().cells[Math.trunc(ox)][Math.trunc(oy)].type) {
+            case "empty":
+                return;
+            case "wall":
+                return;
+            case "doorClosed":
+                return;
+        }
+        ox += x;
+        oy += y;
+    }
+}
+
 function draw() {
+    fov();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
             if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
                 continue;
             }
+            ctx.font = game.characterSize + "px Lucida Console";
             ctx.fillStyle = "#fff";
-            ctx.font = this.characterSize + "px Lucida Console";
-            if (x == getCurrentDungeon().playerX && y == getCurrentDungeon().playerY) {
+            if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
                 ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
                 continue;
             }
-            var creature = false;
-            for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
-                if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
-                    ctx.fillText(getCurrentDungeon().creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    creature = true;
+            if (getCurrentDungeon().cells[x][y].visible) {
+                var creature = false;
+                for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
+                    if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
+                        ctx.fillText(getCurrentDungeon().creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        creature = true;
+                    }
+                }
+                if (creature) {
+                    continue;
+                }
+                var corpse = false;
+                for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
+                    if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
+                        ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        corpse = true;
+                    }
+                }
+                if (corpse) {
+                    continue;
+                }
+                var chest = false;
+                for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
+                    if (x == getCurrentDungeon().chests[i].x && y == getCurrentDungeon().chests[i].y) {
+                        ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        chest = true;
+                    }
+                }
+                if (chest) {
+                    continue;
                 }
             }
-            if (creature) {
-                continue;
-            }
-            var corpse = false;
-            for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
-                if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
-                    ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    corpse = true;
-                }
-            }
-            if (corpse) {
-                continue;
-            }
-            var chest = false;
-            for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
-                if (x == getCurrentDungeon().chests[i].x && y == getCurrentDungeon().chests[i].y) {
-                    ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    chest = true;
-                }
-            }
-            if (chest) {
-                continue;
+            if (getCurrentDungeon().cells[x][y].visible) {
+                ctx.fillStyle = "#fff";
+            } else if (getCurrentDungeon().cells[x][y].discovered) {
+                ctx.fillStyle = "#646464";
+            } else {
+                ctx.fillStyle = "#000";
             }
             switch (getCurrentDungeon().cells[x][y].type) {
                 case "empty":
