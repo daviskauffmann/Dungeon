@@ -5,7 +5,6 @@ TODO
     font size
 */
 
-document.addEventListener("keydown", onKeyDown);
 var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
 var game = {
@@ -24,7 +23,9 @@ var view = {
     width: Math.round(canvas.width / game.characterSize),
     height: Math.round(canvas.height / game.characterSize)
 }
+var inventorySelection = 0;
 changeLevel(0);
+document.addEventListener("keydown", onKeyDown);
 
 function changeLevel(level) {
     game.level = level
@@ -154,7 +155,8 @@ function createDungeon() {
     // doors
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
-            if (Math.random() < 0.5) {
+            var roll = Math.random();
+            if (roll < 0.5) {
                 if (dungeon.cells[x][y].type == "floor") {
                     if (dungeon.cells[x][y - 1].type == "floor" && dungeon.cells[x + 1][y - 1].type == "floor" && dungeon.cells[x - 1][y - 1].type == "floor") {
                         if (dungeon.cells[x - 1][y].type == "wall" && dungeon.cells[x + 1][y].type == "wall") {
@@ -180,11 +182,23 @@ function createDungeon() {
             }
         }
     }
-    // stairs
+    // traps
+    if (dungeon.rooms.length > 0) {
+        for (var i = 0; i < 3; i++) {
+            var roomIndex = getRandomInt(0, dungeon.rooms.length);
+            var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+            var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+            dungeon.cells[x][y].type = "trap";
+        }
+    }
+    // stairs up
     if (dungeon.rooms.length > 0) {
         var x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
         var y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
         dungeon.cells[x][y].type = "stairsUp";
+    }
+    // stairs down
+    if (dungeon.rooms.length > 0) {
         var x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
         var y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
         dungeon.cells[x][y].type = "stairsDown";
@@ -205,29 +219,22 @@ function createDungeon() {
             var roomIndex = getRandomInt(1, dungeon.rooms.length);
             var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
             var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
-            var creature;
+            var creature = {
+                x: x,
+                y: y,
+                name: "",
+                char: ""
+            }
             var roll = Math.random();
             if (roll < 0.3) {
-                creature = {
-                    x: x,
-                    y: y,
-                    name: "rat",
-                    char: "r"
-                }
+                creature.name = "rat";
+                creature.char = "r";
             } else if (roll < 0.6) {
-                creature = {
-                    x: x,
-                    y: y,
-                    name: "slime",
-                    char: "s"
-                }
+                creature.name = "slime";
+                creature.char = "s";
             } else {
-                creature = {
-                    x: x,
-                    y: y,
-                    name: "orc",
-                    char: "o"
-                }
+                creature.name = "orc";
+                creature.char = "o";
             }
             dungeon.creatures.push(creature);
         }
@@ -248,20 +255,16 @@ function createDungeon() {
                 chest.loot = null;
             }
             else {
-                var loot;
+                var loot = {
+                    name: ""
+                }
                 var roll = Math.random();
                 if (roll < 0.3) {
-                    loot = {
-                        name: "sword"
-                    }
+                    loot.name = "sword";
                 } else if (roll < 0.6) {
-                    loot = {
-                        name: "spear"
-                    }
+                    loot.name = "spear";
                 } else {
-                    loot = {
-                        name: "shield"
-                    }
+                    loot.name = "shield";
                 }
                 chest.loot = loot;
             }
@@ -273,19 +276,36 @@ function createDungeon() {
 }
 
 function onKeyDown(e) {
-    if (game.drawMode == "game") {
-        if (e.keyCode == 38) {
-            movePlayer(getCurrentDungeon().playerX, getCurrentDungeon().playerY - 1);
-        }
-        if (e.keyCode == 39) {
-            movePlayer(getCurrentDungeon().playerX + 1, getCurrentDungeon().playerY);
-        }
-        if (e.keyCode == 40) {
-            movePlayer(getCurrentDungeon().playerX, getCurrentDungeon().playerY + 1);
-        }
-        if (e.keyCode == 37) {
-            movePlayer(getCurrentDungeon().playerX - 1, getCurrentDungeon().playerY);
-        }
+    switch (game.drawMode) {
+        case "game":
+            if (e.keyCode == 38) {
+                movePlayer(getCurrentDungeon().playerX, getCurrentDungeon().playerY - 1);
+            }
+            if (e.keyCode == 39) {
+                movePlayer(getCurrentDungeon().playerX + 1, getCurrentDungeon().playerY);
+            }
+            if (e.keyCode == 40) {
+                movePlayer(getCurrentDungeon().playerX, getCurrentDungeon().playerY + 1);
+            }
+            if (e.keyCode == 37) {
+                movePlayer(getCurrentDungeon().playerX - 1, getCurrentDungeon().playerY);
+            }
+            break;
+        case "inventory":
+            if (e.keyCode == 38) {
+                inventorySelection--;
+            }
+            if (e.keyCode == 39) {
+            }
+            if (e.keyCode == 40) {
+                inventorySelection++;
+            }
+            if (e.keyCode == 37) {
+            }
+            if (e.keyCode == 13) {
+                useItem(game.player.inventory[inventorySelection]);
+            }
+            break;
     }
     if (e.keyCode == 27) {
         game.drawMode = "game";
@@ -304,6 +324,7 @@ function onKeyDown(e) {
         console.log("game loaded");
         changeLevel(game.level);
     }
+    draw();
 }
 
 function movePlayer(x, y) {
@@ -337,6 +358,10 @@ function movePlayer(x, y) {
         if (getCurrentDungeon().cells[x][y].type == "stairsDown") {
             console.log("you descend");
             descend = true;
+        }
+        if (getCurrentDungeon().cells[x][y].type == "trap") {
+            console.log("you triggered a trap!");
+            getCurrentDungeon().cells[x][y].type = "floor";
         }
         for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
             if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
@@ -393,6 +418,10 @@ function movePlayer(x, y) {
         changeLevel(game.level + 1);
     }
     tick();
+}
+
+function useItem(item) {
+    game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
 }
 
 function tick() {
@@ -556,6 +585,9 @@ function draw() {
                 case "stairsDown":
                     ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
                     break;
+                case "trap":
+                    ctx.fillText("^", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                    break;
             }
         }
     }
@@ -564,8 +596,13 @@ function draw() {
             ctx.fillStyle = "#fff";
             ctx.fillRect(0, 0, 150, canvas.height);
             ctx.stroke();
-            ctx.fillStyle = "#000";
             for (var i = 0; i < game.player.inventory.length; i++) {
+                if (i == inventorySelection) {
+                    ctx.fillStyle = "#ff0000";
+                }
+                else {
+                    ctx.fillStyle = "#000";
+                }
                 ctx.fillText(game.player.inventory[i].name, 0, (i + 1) * 12);
             }
             break;
