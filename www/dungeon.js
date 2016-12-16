@@ -322,7 +322,9 @@ function onKeyDown(e) {
                 draw();
             }
             if (e.key == "ArrowRight") {
-                inventory.itemMenu = true;
+                if (inventory.itemMenuSelection >= 0 && inventory.itemMenuSelection < game.player.inventory.length) {
+                    inventory.itemMenu = true;
+                }
                 draw();
             }
             if (e.key == "ArrowDown") {
@@ -345,6 +347,7 @@ function onKeyDown(e) {
             if (e.key == "Enter") {
                 if (inventory.itemMenu) {
                     useItem(game.player.inventory[inventory.itemMenuSelection]);
+                    inventory.itemMenu = false;
                 }
                 draw();
             }
