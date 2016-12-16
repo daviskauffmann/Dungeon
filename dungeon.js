@@ -1,8 +1,6 @@
 /*
 TODO
-    calculate stuff in other dungeons
-    line of sight
-    font size
+    
 */
 
 var canvas = document.getElementById("game");
@@ -230,7 +228,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                 x: x,
                 y: y,
                 name: "",
-                char: ""
+                char: "",
+                dungeon: game.level,
             }
             var roll = Math.random();
             if (roll < 0.3) {
@@ -340,36 +339,38 @@ function movePlayer(x, y) {
     var ascend = false;
     var descend = false;
     if (x >= 0 && x < getCurrentDungeon().width && y >= 0 && y < getCurrentDungeon().height) {
-        if (getCurrentDungeon().cells[x][y].type == "wall") {
-            move = false;
-        }
-        if (getCurrentDungeon().cells[x][y].type == "doorClosed") {
-            move = false;
-            var roll = Math.random();
-            if (roll > 0.5) {
-                console.log("you open the door");
-                getCurrentDungeon().cells[x][y].type = "doorOpen";
-            }
-            else {
-                console.log("the door won't budge");
-            }
-        }
-        if (getCurrentDungeon().cells[x][y].type == "stairsUp") {
-            if (game.level == 0) {
-                document.location.reload();
-            }
-            else {
-                console.log("you ascend");
-                ascend = true;
-            }
-        }
-        if (getCurrentDungeon().cells[x][y].type == "stairsDown") {
-            console.log("you descend");
-            descend = true;
-        }
-        if (getCurrentDungeon().cells[x][y].type == "trap") {
-            console.log("you triggered a trap!");
-            getCurrentDungeon().cells[x][y].type = "floor";
+        switch (getCurrentDungeon().cells[x][y].type) {
+            case "wall":
+                move = false;
+                break;
+            case "doorClosed":
+                move = false;
+                var roll = Math.random();
+                if (roll > 0.5) {
+                    console.log("you open the door");
+                    getCurrentDungeon().cells[x][y].type = "doorOpen";
+                }
+                else {
+                    console.log("the door won't budge");
+                }
+                break;
+            case "trap":
+                console.log("you triggered a trap!");
+                getCurrentDungeon().cells[x][y].type = "floor";
+                break;
+            case "stairsUp":
+                if (game.level == 0) {
+                    document.location.reload();
+                }
+                else {
+                    console.log("you ascend");
+                    ascend = true;
+                }
+                break;
+            case "stairsDown":
+                console.log("you descend");
+                descend = true;
+                break;
         }
         for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
             if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
@@ -446,15 +447,23 @@ function tick() {
 }
 
 function tickCreature(creature) {
-    if (creature.x == getCurrentDungeon().player.x && creature.y - 1 == getCurrentDungeon().player.y) {
-        moveCreature(creature, creature.x, creature.y - 1);
-    } else if (creature.x + 1 == getCurrentDungeon().player.x && creature.y == getCurrentDungeon().player.y) {
-        moveCreature(creature, creature.x + 1, creature.y);
-    } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
-        moveCreature(creature, creature.x, creature.y + 1);
-    } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
-        moveCreature(creature, creature.x - 1, creature.y);
-    } else {
+    var attackPlayer = false;
+    if (getCreatureDungeon(creature) == getCurrentDungeon()) {
+        if (creature.x == getCreatureDungeon(creature).player.x && creature.y - 1 == getCreatureDungeon(creature).player.y) {
+            attackPlayer = true;
+            moveCreature(creature, creature.x, creature.y - 1);
+        } else if (creature.x + 1 == getCreatureDungeon(creature).player.x && creature.y == getCreatureDungeon(creature).player.y) {
+            attackPlayer = true;
+            moveCreature(creature, creature.x + 1, creature.y);
+        } else if (creature.x == getCreatureDungeon(creature).player.x && creature.y + 1 == getCreatureDungeon(creature).player.y) {
+            attackPlayer = true;
+            moveCreature(creature, creature.x, creature.y + 1);
+        } else if (creature.x == getCreatureDungeon(creature).player.x && creature.y + 1 == getCreatureDungeon(creature).player.y) {
+            attackPlayer = true;
+            moveCreature(creature, creature.x - 1, creature.y);
+        }
+    }
+    if (!attackPlayer) {
         var roll = Math.random();
         if (roll < 0.25) {
             moveCreature(creature, creature.x, creature.y - 1);
@@ -470,39 +479,43 @@ function tickCreature(creature) {
 
 function moveCreature(creature, x, y) {
     var move = true;
-    if (x >= 0 && x < getCurrentDungeon().width && y >= 0 && y < getCurrentDungeon().height) {
-        if (getCurrentDungeon().cells[x][y].type == "wall") {
-            move = false;
+    if (x >= 0 && x < getCreatureDungeon(creature).width && y >= 0 && y < getCreatureDungeon(creature).height) {
+        switch (getCreatureDungeon(creature).cells[x][y].type) {
+            case "wall":
+                move = false;
+                break;
+            case "doorClosed":
+                move = false;
+                break;
+            case "stairsUp":
+                move = false;
+                break;
+            case "stairsDown":
+                move = false;
+                break;
         }
-        if (getCurrentDungeon().cells[x][y].type == "doorClosed") {
-            move = false;
-        }
-        if (getCurrentDungeon().cells[x][y].type == "stairsUp") {
-            move = false;
-        }
-        if (getCurrentDungeon().cells[x][y].type == "stairsDown") {
-            move = false;
-        }
-        if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
-            move = false;
-            var roll = Math.random();
-            if (roll < 0.5) {
-                console.log("the " + creature.name + " misses you");
+        if (getCreatureDungeon(creature) == getCurrentDungeon()) {
+            if (x == getCreatureDungeon(creature).player.x && y == getCreatureDungeon(creature).player.y) {
+                move = false;
+                var roll = Math.random();
+                if (roll < 0.5) {
+                    console.log("the " + creature.name + " misses you");
+                }
+                else {
+                    console.log("the " + creature.name + " attacks you");
+                }
             }
-            else {
-                console.log("the " + creature.name + " attacks you");
-            }
         }
-        for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
-            if (getCurrentDungeon().creatures[i] == creature) {
+        for (var i = 0; i < getCreatureDungeon(creature).creatures.length; i++) {
+            if (getCreatureDungeon(creature).creatures[i] == creature) {
                 continue;
             }
-            if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
+            if (x == getCreatureDungeon(creature).creatures[i].x && y == getCreatureDungeon(creature).creatures[i].y) {
                 move = false;
             }
         }
-        for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
-            if (x == getCurrentDungeon().chests[i].x && y == getCurrentDungeon().chests[i].y) {
+        for (var i = 0; i < getCreatureDungeon(creature).chests.length; i++) {
+            if (x == getCreatureDungeon(creature).chests[i].x && y == getCreatureDungeon(creature).chests[i].y) {
                 move = false;
             }
         }
@@ -677,4 +690,8 @@ function getRandomInt(min, max) {
 
 function getCurrentDungeon() {
     return game.dungeons[game.level];
+}
+
+function getCreatureDungeon(creature) {
+    return game.dungeons[creature.dungeon];
 }
