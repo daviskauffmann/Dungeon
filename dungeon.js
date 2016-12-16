@@ -31,18 +31,18 @@ document.addEventListener("keydown", onKeyDown);
 function changeLevel(level) {
     game.level = level
     if (game.level == game.dungeons.length) {
-        createDungeon();
+        createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 10, 5);
     }
     centerView(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
     draw();
     console.log("welcome to level " + (game.level + 1));
 }
 
-function createDungeon() {
+function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, creatureAmount, chestAmount) {
     // dungeon
     var dungeon = {
-        width: 50,
-        height: 50,
+        width: width,
+        height: height,
         cells: [],
         rooms: [],
         player: {
@@ -65,38 +65,40 @@ function createDungeon() {
         }
     }
     // rooms
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < roomAttempts; i++) {
         var roomX = getRandomInt(0, dungeon.width);
         var roomY = getRandomInt(0, dungeon.height);
-        var roomWidth = getRandomInt(5, 15);
-        var roomHeight = getRandomInt(5, 15);
+        var roomWidth = getRandomInt(minRoomSize, maxRoomSize);
+        var roomHeight = getRandomInt(minRoomSize, maxRoomSize);
         // check bounds
         if (roomX < 1 || roomX + roomWidth > dungeon.width - 1 || roomY < 1 || roomY + roomHeight > dungeon.height - 1) {
             continue;
         }
         // check overlap
-        var overlap = false;
-        for (var x = roomX; x < roomX + roomWidth; x++) {
-            for (var y = roomY; y < roomY + roomHeight; y++) {
-                if (dungeon.cells[x][y].type == "floor") {
-                    overlap = true;
-                }
-                if (dungeon.cells[x][y - 1].type == "floor") {
-                    overlap = true;
-                }
-                if (dungeon.cells[x + 1][y].type == "floor") {
-                    overlap = true;
-                }
-                if (dungeon.cells[x][y + 1].type == "floor") {
-                    overlap = true;
-                }
-                if (dungeon.cells[x - 1][y].type == "floor") {
-                    overlap = true;
+        if (preventOverlap) {
+            var overlap = false;
+            for (var x = roomX; x < roomX + roomWidth; x++) {
+                for (var y = roomY; y < roomY + roomHeight; y++) {
+                    if (dungeon.cells[x][y].type == "floor") {
+                        overlap = true;
+                    }
+                    if (dungeon.cells[x][y - 1].type == "floor") {
+                        overlap = true;
+                    }
+                    if (dungeon.cells[x + 1][y].type == "floor") {
+                        overlap = true;
+                    }
+                    if (dungeon.cells[x][y + 1].type == "floor") {
+                        overlap = true;
+                    }
+                    if (dungeon.cells[x - 1][y].type == "floor") {
+                        overlap = true;
+                    }
                 }
             }
-        }
-        if (overlap) {
-            continue;
+            if (overlap) {
+                continue;
+            }
         }
         // create a room
         var room = {
@@ -161,7 +163,7 @@ function createDungeon() {
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
             var roll = Math.random();
-            if (roll < 0.5) {
+            if (roll < doorChance) {
                 if (dungeon.cells[x][y].type == "floor") {
                     if (dungeon.cells[x][y - 1].type == "floor" && dungeon.cells[x + 1][y - 1].type == "floor" && dungeon.cells[x - 1][y - 1].type == "floor") {
                         if (dungeon.cells[x - 1][y].type == "wall" && dungeon.cells[x + 1][y].type == "wall") {
@@ -189,7 +191,7 @@ function createDungeon() {
     }
     // traps
     if (dungeon.rooms.length > 0) {
-        for (var i = 0; i < 3; i++) {
+        for (var i = 0; i < trapAmount; i++) {
             var roomIndex = getRandomInt(0, dungeon.rooms.length);
             var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
             var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
@@ -220,7 +222,7 @@ function createDungeon() {
     }
     // creatures
     if (dungeon.rooms.length > 1) {
-        for (var i = 0; i < 20; i++) {
+        for (var i = 0; i < creatureAmount; i++) {
             var roomIndex = getRandomInt(1, dungeon.rooms.length);
             var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
             var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
@@ -246,7 +248,7 @@ function createDungeon() {
     }
     // chests
     if (dungeon.rooms.length > 0) {
-        for (var i = 0; i < 5; i++) {
+        for (var i = 0; i < chestAmount; i++) {
             var roomIndex = getRandomInt(0, dungeon.rooms.length);
             var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
             var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
@@ -283,48 +285,49 @@ function createDungeon() {
 function onKeyDown(e) {
     switch (game.drawMode) {
         case "game":
-            if (e.keyCode == 38) {
+            if (e.key == "ArrowUp") {
                 movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
             }
-            if (e.keyCode == 39) {
+            if (e.key == "ArrowRight") {
                 movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
             }
-            if (e.keyCode == 40) {
+            if (e.key == "ArrowDown") {
                 movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
             }
-            if (e.keyCode == 37) {
+            if (e.key == "ArrowLeft") {
                 movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
             }
             break;
         case "inventory":
-            if (e.keyCode == 38) {
+            if (e.key == "ArrowUp") {
                 inventorySelection--;
             }
-            if (e.keyCode == 39) {
-            }
-            if (e.keyCode == 40) {
+            if (e.key == "ArrowDown") {
                 inventorySelection++;
             }
-            if (e.keyCode == 37) {
-            }
-            if (e.keyCode == 13) {
+            if (e.key == "z") {
                 useItem(game.player.inventory[inventorySelection]);
             }
             break;
     }
-    if (e.keyCode == 27) {
+    if (e.key == "Escape") {
         game.drawMode = "game";
         draw();
     }
-    if (e.keyCode == 73) {
-        game.drawMode = "inventory";
+    if (e.key == "i") {
+        if (game.drawMode == "inventory") {
+            game.drawMode = "game";
+        }
+        else {
+            game.drawMode = "inventory";
+        }
         draw();
     }
-    if (e.keyCode == 81) {
+    if (e.key == "1") {
         localStorage.setItem("game", JSON.stringify(game));
         console.log("game saved");
     }
-    if (e.keyCode == 69) {
+    if (e.key == "2") {
         game = JSON.parse(localStorage.getItem("game"));
         console.log("game loaded");
         changeLevel(game.level);
@@ -426,6 +429,11 @@ function movePlayer(x, y) {
 }
 
 function useItem(item) {
+    removeItem(item);
+}
+
+function removeItem(item) {
+    console.log("you destroy a " + item.name);
     game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
 }
 
@@ -525,29 +533,31 @@ function centerView(x, y) {
     }
 }
 
-function fov() {
+function calcFov() {
     for (var x = 0; x < getCurrentDungeon().width; x++) {
         for (var y = 0; y < getCurrentDungeon().height; y++) {
             getCurrentDungeon().cells[x][y].visible = false;
         }
     }
     for (var i = 0; i < 360; i++) {
-        var x = Math.cos(i * 0.01745);
-        var y = Math.sin(i * 0.01745);
-        doFov(x, y);
+        var dx = Math.cos(i * (Math.PI / 180));
+        var dy = Math.sin(i * (Math.PI / 180));
+        doFov(dx, dy);
     }
 }
 
-function doFov(x, y) {
+function doFov(dx, dy) {
     var ox = getCurrentDungeon().player.x + 0.5;
     var oy = getCurrentDungeon().player.y + 0.5;
     for (var i = 0; i < game.player.sight; i++) {
-        if (Math.trunc(ox) < 0 || Math.trunc(ox) >= getCurrentDungeon().width || Math.trunc(oy) < 0 || Math.trunc(oy) >= getCurrentDungeon().height) {
+        var x = Math.trunc(ox);
+        var y = Math.trunc(oy);
+        if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
             return;
         }
-        getCurrentDungeon().cells[Math.trunc(ox)][Math.trunc(oy)].discovered = true;
-        getCurrentDungeon().cells[Math.trunc(ox)][Math.trunc(oy)].visible = true;
-        switch (getCurrentDungeon().cells[Math.trunc(ox)][Math.trunc(oy)].type) {
+        getCurrentDungeon().cells[x][y].discovered = true;
+        getCurrentDungeon().cells[x][y].visible = true;
+        switch (getCurrentDungeon().cells[x][y].type) {
             case "empty":
                 return;
             case "wall":
@@ -555,13 +565,13 @@ function doFov(x, y) {
             case "doorClosed":
                 return;
         }
-        ox += x;
-        oy += y;
+        ox += dx;
+        oy += dy;
     }
 }
 
 function draw() {
-    fov();
+    calcFov();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
