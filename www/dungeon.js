@@ -13,7 +13,7 @@ var game = {
     dungeons: [],
     turn: 0,
     level: 0,
-    characterSize: 48,
+    characterSize: 24,
     drawMode: "game"
 }
 var view = {

@@ -2,10 +2,10 @@
 <widget id="com.phonegap.helloworld" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <name>Dungeon</name>
     <description>
-        A blank PhoneGap app.
+        A procedural dungeon generator in Javascript.
     </description>
-    <author email="support@phonegap.com" href="http://phonegap.com">
-        PhoneGap Team
+    <author email="daviskauffmann@gmail.com" href="daviskauffmann.wordpress.com">
+        Davis Kauffmann
     </author>
     <content src="index.html" />
     <access origin="*" />
