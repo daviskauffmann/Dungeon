@@ -3,7 +3,7 @@ TODO
     
 */
 
-var canvas = document.getElementById("game");
+var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var game = {
     player: {
@@ -14,7 +14,8 @@ var game = {
     turn: 0,
     level: 0,
     characterSize: 24,
-    drawMode: "game"
+    drawMode: "game",
+    message: ""
 }
 var view = {
     x: 0,
@@ -40,7 +41,7 @@ function changeLevel(level) {
         createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 10, 5);
     }
     draw();
-    console.log("welcome to level " + (game.level + 1));
+    game.message = "welcome to level " + (game.level + 1);
 }
 
 function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, creatureAmount, chestAmount) {
@@ -368,11 +369,11 @@ function onKeyDown(e) {
     }
     if (e.key == "1") {
         localStorage.setItem("game", JSON.stringify(game));
-        console.log("game saved");
+        game.message = "game saved";
     }
     if (e.key == "2") {
         game = JSON.parse(localStorage.getItem("game"));
-        console.log("game loaded");
+        game.message = "game loaded";
         changeLevel(game.level);
     }
 }
@@ -421,15 +422,15 @@ function movePlayer(x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll > 0.5) {
-                    console.log("you open the door");
+                    game.message = "you open the door";
                     getCurrentDungeon().cells[x][y].type = "doorOpen";
                 }
                 else {
-                    console.log("the door won't budge");
+                    game.message = "the door won't budge";
                 }
                 break;
             case "trap":
-                console.log("you triggered a trap!");
+                game.message = "you triggered a trap!";
                 getCurrentDungeon().cells[x][y].type = "floor";
                 break;
             case "stairsUp":
@@ -437,12 +438,12 @@ function movePlayer(x, y) {
                     document.location.reload();
                 }
                 else {
-                    console.log("you ascend");
+                    game.message = "you ascend";
                     ascend = true;
                 }
                 break;
             case "stairsDown":
-                console.log("you descend");
+                game.message = "you descend";
                 descend = true;
                 break;
         }
@@ -451,10 +452,10 @@ function movePlayer(x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll < 0.5) {
-                    console.log("you miss the " + getCurrentDungeon().creatures[i].name);
+                    game.message = "you miss the " + getCurrentDungeon().creatures[i].name;
                 }
                 else {
-                    console.log("you kill the " + getCurrentDungeon().creatures[i].name);
+                    game.message = "you kill the " + getCurrentDungeon().creatures[i].name;
                     var corpse = {
                         x: x,
                         y: y
@@ -469,19 +470,19 @@ function movePlayer(x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll > 0.5) {
-                    console.log("you open the chest");
+                    game.message = "you open the chest";
                     var loot = getCurrentDungeon().chests[i].loot;
                     if (loot == null) {
-                        console.log("there is nothing inside");
+                        game.message = "there is nothing inside";
                     }
                     else {
                         game.player.inventory.push(loot);
-                        console.log("you loot a " + loot.name);
+                        game.message = "you loot a " + loot.name;
                     }
                     getCurrentDungeon().chests.splice(i, 1);
                 }
                 else {
-                    console.log("the chest won't open");
+                    game.message = "the chest won't open";
                 }
             }
         }
@@ -507,7 +508,7 @@ function useItem(item) {
 }
 
 function removeItem(item) {
-    console.log("you destroy a " + item.name);
+    game.message = "you destroy a " + item.name;
     game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
 }
 
@@ -572,10 +573,10 @@ function moveCreature(creature, x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll < 0.5) {
-                    console.log("the " + creature.name + " misses you");
+                    game.message = "the " + creature.name + " misses you";
                 }
                 else {
-                    console.log("the " + creature.name + " attacks you");
+                    game.message = "the " + creature.name + " attacks you";
                 }
             }
         }
@@ -661,21 +662,26 @@ function doFov(dx, dy) {
 function draw() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     centerView();
     calcFov();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = game.characterSize + "px mono";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(game.message, 0, game.characterSize);
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
+            // check bounds
             if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
                 continue;
             }
-            ctx.font = game.characterSize + "px mono";
-            ctx.fillStyle = "#fff";
+            // player
             if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
                 ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
                 continue;
             }
+            // objects
             if (getCurrentDungeon().cells[x][y].visible) {
+                // creatures
                 var creature = false;
                 for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
                     if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
@@ -686,6 +692,7 @@ function draw() {
                 if (creature) {
                     continue;
                 }
+                // corpses
                 var corpse = false;
                 for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
                     if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
@@ -696,6 +703,7 @@ function draw() {
                 if (corpse) {
                     continue;
                 }
+                // chests
                 var chest = false;
                 for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
                     if (x == getCurrentDungeon().chests[i].x && y == getCurrentDungeon().chests[i].y) {
@@ -707,38 +715,39 @@ function draw() {
                     continue;
                 }
             }
-            if (getCurrentDungeon().cells[x][y].visible) {
-                ctx.fillStyle = "#fff";
-            } else if (getCurrentDungeon().cells[x][y].discovered) {
-                ctx.fillStyle = "#646464";
-            } else {
-                ctx.fillStyle = "#000";
-            }
-            switch (getCurrentDungeon().cells[x][y].type) {
-                case "empty":
-                    ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "floor":
-                    ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "wall":
-                    ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "doorClosed":
-                    ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "doorOpen":
-                    ctx.fillText("-", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "stairsUp":
-                    ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "stairsDown":
-                    ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
-                case "trap":
-                    ctx.fillText("^", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                    break;
+            // environment
+            if (getCurrentDungeon().cells[x][y].visible || getCurrentDungeon().cells[x][y].discovered) {
+                if (getCurrentDungeon().cells[x][y].visible) {
+                    ctx.fillStyle = "#fff";
+                } else if (getCurrentDungeon().cells[x][y].discovered) {
+                    ctx.fillStyle = "#646464";
+                }
+                switch (getCurrentDungeon().cells[x][y].type) {
+                    case "empty":
+                        ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "floor":
+                        ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "wall":
+                        ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "doorClosed":
+                        ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "doorOpen":
+                        ctx.fillText("-", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "stairsUp":
+                        ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "stairsDown":
+                        ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                    case "trap":
+                        ctx.fillText("^", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                        break;
+                }
             }
         }
     }
