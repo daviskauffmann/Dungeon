@@ -22,7 +22,12 @@ var view = {
     width: 0,
     height: 0
 }
-var inventorySelection = 0;
+var inventory = {
+    itemSelection: 0,
+    itemMenu: false,
+    itemMenuOptions: ["Use", "Drop", "Destroy"],
+    itemMenuSelection: 0
+}
 changeLevel(0);
 document.addEventListener("keydown", onKeyDown);
 document.addEventListener("mousedown", mouseDown);
@@ -259,7 +264,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                 loot: null
             }
             var roll = Math.random();
-            if (roll < 0.5) {
+            if (roll < 0) {
                 chest.loot = null;
             }
             else {
@@ -298,18 +303,49 @@ function onKeyDown(e) {
             if (e.key == "ArrowLeft") {
                 movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
             }
+            if (e.key == ".") {
+                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
+            }
             break;
         case "inventory":
             if (e.key == "ArrowUp") {
-                inventorySelection--;
+                if (inventory.itemMenu) {
+                    if (inventory.itemMenuSelection > 0) {
+                        inventory.itemMenuSelection--;
+                    }
+                }
+                else {
+                    if (inventory.itemSelection > 0) {
+                        inventory.itemSelection--;
+                    }
+                }
+                draw();
+            }
+            if (e.key == "ArrowRight") {
+                inventory.itemMenu = true;
                 draw();
             }
             if (e.key == "ArrowDown") {
-                inventorySelection++;
+                if (inventory.itemMenu) {
+                    if (inventory.itemMenuSelection < inventory.itemMenuOptions.length - 1) {
+                        inventory.itemMenuSelection++;
+                    }
+                }
+                else {
+                    if (inventory.itemSelection < game.player.inventory.length - 1) {
+                        inventory.itemSelection++;
+                    }
+                }
                 draw();
             }
-            if (e.key == "z") {
-                useItem(game.player.inventory[inventorySelection]);
+            if (e.key == "ArrowLeft") {
+                inventory.itemMenu = false;
+                draw();
+            }
+            if (e.key == "Enter") {
+                if (inventory.itemMenu) {
+                    useItem(game.player.inventory[inventory.itemMenuSelection]);
+                }
                 draw();
             }
             break;
@@ -706,16 +742,27 @@ function draw() {
     switch (game.drawMode) {
         case "inventory":
             ctx.fillStyle = "#fff";
-            ctx.fillRect(0, 0, 150, canvas.height);
+            ctx.fillRect(0, 0, 200, canvas.height);
             ctx.stroke();
             for (var i = 0; i < game.player.inventory.length; i++) {
-                if (i == inventorySelection) {
+                if (i == inventory.itemSelection) {
                     ctx.fillStyle = "#ff0000";
                 }
                 else {
                     ctx.fillStyle = "#000";
                 }
-                ctx.fillText(game.player.inventory[i].name, 0, (i + 1) * 12);
+                ctx.fillText(game.player.inventory[i].name, 0, (i + 1) * game.characterSize);
+            }
+            if (inventory.itemMenu) {
+                for (var i = 0; i < inventory.itemMenuOptions.length; i++) {
+                    if (i == inventory.itemMenuSelection) {
+                        ctx.fillStyle = "#ff0000";
+                    }
+                    else {
+                        ctx.fillStyle = "#000";
+                    }
+                    ctx.fillText(inventory.itemMenuOptions[i], 100, (i + 1) * game.characterSize);
+                }
             }
             break;
     }
