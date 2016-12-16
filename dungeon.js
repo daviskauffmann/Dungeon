@@ -13,25 +13,27 @@ var game = {
     dungeons: [],
     turn: 0,
     level: 0,
-    characterSize: 12,
+    characterSize: 48,
     drawMode: "game"
 }
 var view = {
     x: 0,
     y: 0,
-    width: Math.round(canvas.width / game.characterSize),
-    height: Math.round(canvas.height / game.characterSize)
+    width: 0,
+    height: 0
 }
 var inventorySelection = 0;
 changeLevel(0);
 document.addEventListener("keydown", onKeyDown);
+document.addEventListener("mousedown", mouseDown);
+document.addEventListener("touchstart", touchStart);
+window.addEventListener("resize", draw);
 
 function changeLevel(level) {
     game.level = level
     if (game.level == game.dungeons.length) {
         createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 10, 5);
     }
-    centerView(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
     draw();
     console.log("welcome to level " + (game.level + 1));
 }
@@ -300,12 +302,15 @@ function onKeyDown(e) {
         case "inventory":
             if (e.key == "ArrowUp") {
                 inventorySelection--;
+                draw();
             }
             if (e.key == "ArrowDown") {
                 inventorySelection++;
+                draw();
             }
             if (e.key == "z") {
                 useItem(game.player.inventory[inventorySelection]);
+                draw();
             }
             break;
     }
@@ -331,7 +336,37 @@ function onKeyDown(e) {
         console.log("game loaded");
         changeLevel(game.level);
     }
-    draw();
+}
+
+function mouseDown(e) {
+    var x = e.clientX - canvas.getBoundingClientRect().left;
+    var y = e.clientY - canvas.getBoundingClientRect().top;
+
+    if (y < canvas.height * 0.25) {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
+    } else if (x > canvas.width * 0.75) {
+        movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
+    } else if (y > canvas.height * 0.75) {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
+    } else if (x < canvas.height * 0.25) {
+        movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
+    }
+}
+
+function touchStart(e) {
+    e.preventDefault();
+    var x = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+    var y = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+
+    if (y < canvas.height * 0.25) {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
+    } else if (x > canvas.width * 0.75) {
+        movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
+    } else if (y > canvas.height * 0.75) {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
+    } else if (x < canvas.height * 0.25) {
+        movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
+    }
 }
 
 function movePlayer(x, y) {
@@ -418,7 +453,6 @@ function movePlayer(x, y) {
     if (move) {
         getCurrentDungeon().player.x = x;
         getCurrentDungeon().player.y = y;
-        centerView(x, y);
     }
     if (ascend) {
         changeLevel(game.level - 1);
@@ -529,9 +563,11 @@ function moveCreature(creature, x, y) {
     }
 }
 
-function centerView(x, y) {
-    view.x = x - Math.round(view.width / 2);
-    view.y = y - Math.round(view.height / 2);
+function centerView() {
+    view.width = Math.round(canvas.width / game.characterSize);
+    view.height = Math.round(canvas.height / game.characterSize);
+    view.x = getCurrentDungeon().player.x - Math.round(view.width / 2);
+    view.y = getCurrentDungeon().player.y - Math.round(view.height / 2);
     if (view.x < 0) {
         view.x = 0;
     }
@@ -584,14 +620,17 @@ function doFov(dx, dy) {
 }
 
 function draw() {
-    calcFov();
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    centerView();
+    calcFov();
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
             if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
                 continue;
             }
-            ctx.font = game.characterSize + "px Lucida Console";
+            ctx.font = game.characterSize + "px mono";
             ctx.fillStyle = "#fff";
             if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
                 ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
