@@ -23,12 +23,6 @@ var view = {
     width: 0,
     height: 0
 }
-var inventory = {
-    itemSelection: 0,
-    itemMenu: false,
-    itemMenuOptions: ["Use", "Drop", "Destroy"],
-    itemMenuSelection: 0
-}
 changeLevel(0);
 document.addEventListener("keydown", onKeyDown);
 document.addEventListener("mousedown", mouseDown);
@@ -290,82 +284,20 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 }
 
 function onKeyDown(e) {
-    switch (game.drawMode) {
-        case "game":
-            if (e.key == "ArrowUp") {
-                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
-            }
-            if (e.key == "ArrowRight") {
-                movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
-            }
-            if (e.key == "ArrowDown") {
-                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
-            }
-            if (e.key == "ArrowLeft") {
-                movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
-            }
-            if (e.key == ".") {
-                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
-            }
-            break;
-        case "inventory":
-            if (e.key == "ArrowUp") {
-                if (inventory.itemMenu) {
-                    if (inventory.itemMenuSelection > 0) {
-                        inventory.itemMenuSelection--;
-                    }
-                }
-                else {
-                    if (inventory.itemSelection > 0) {
-                        inventory.itemSelection--;
-                    }
-                }
-                draw();
-            }
-            if (e.key == "ArrowRight") {
-                if (inventory.itemMenuSelection >= 0 && inventory.itemMenuSelection < game.player.inventory.length) {
-                    inventory.itemMenu = true;
-                }
-                draw();
-            }
-            if (e.key == "ArrowDown") {
-                if (inventory.itemMenu) {
-                    if (inventory.itemMenuSelection < inventory.itemMenuOptions.length - 1) {
-                        inventory.itemMenuSelection++;
-                    }
-                }
-                else {
-                    if (inventory.itemSelection < game.player.inventory.length - 1) {
-                        inventory.itemSelection++;
-                    }
-                }
-                draw();
-            }
-            if (e.key == "ArrowLeft") {
-                inventory.itemMenu = false;
-                draw();
-            }
-            if (e.key == "Enter") {
-                if (inventory.itemMenu) {
-                    useItem(game.player.inventory[inventory.itemMenuSelection]);
-                    inventory.itemMenu = false;
-                }
-                draw();
-            }
-            break;
+    if (e.key == "ArrowUp") {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
     }
-    if (e.key == "Escape") {
-        game.drawMode = "game";
-        draw();
+    if (e.key == "ArrowRight") {
+        movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
     }
-    if (e.key == "i") {
-        if (game.drawMode == "inventory") {
-            game.drawMode = "game";
-        }
-        else {
-            game.drawMode = "inventory";
-        }
-        draw();
+    if (e.key == "ArrowDown") {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
+    }
+    if (e.key == "ArrowLeft") {
+        movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
+    }
+    if (e.key == ".") {
+        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
     }
     if (e.key == "1") {
         localStorage.setItem("game", JSON.stringify(game));
@@ -750,33 +682,6 @@ function draw() {
                 }
             }
         }
-    }
-    switch (game.drawMode) {
-        case "inventory":
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(0, 0, 200, canvas.height);
-            ctx.stroke();
-            for (var i = 0; i < game.player.inventory.length; i++) {
-                if (i == inventory.itemSelection) {
-                    ctx.fillStyle = "#ff0000";
-                }
-                else {
-                    ctx.fillStyle = "#000";
-                }
-                ctx.fillText(game.player.inventory[i].name, 0, (i + 1) * game.characterSize);
-            }
-            if (inventory.itemMenu) {
-                for (var i = 0; i < inventory.itemMenuOptions.length; i++) {
-                    if (i == inventory.itemMenuSelection) {
-                        ctx.fillStyle = "#ff0000";
-                    }
-                    else {
-                        ctx.fillStyle = "#000";
-                    }
-                    ctx.fillText(inventory.itemMenuOptions[i], 100, (i + 1) * game.characterSize);
-                }
-            }
-            break;
     }
 }
 
