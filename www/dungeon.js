@@ -15,7 +15,7 @@ var game = {
     turn: 0,
     characterSize: 24,
     drawMode: "game",
-    message: ""
+    messages: []
 }
 var view = {
     x: 0,
@@ -34,8 +34,8 @@ function changeLevel(level) {
     if (game.level == game.dungeons.length) {
         createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 10, 5);
     }
+    game.messages.push("welcome to level " + (game.level + 1));
     draw();
-    game.message = "welcome to level " + (game.level + 1);
 }
 
 function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, creatureAmount, chestAmount) {
@@ -149,21 +149,33 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         }
     }
     // create walls
-    // each floor cell looks at its NESW neighbor and turns them into walls if they are empty
+    // each floor cell looks at its neighbors and turns them into walls if they are empty
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
             if (dungeon.cells[x][y].type == "floor") {
                 if (dungeon.cells[x][y - 1].type == "empty") {
                     dungeon.cells[x][y - 1].type = "wall";
                 }
+                if (dungeon.cells[x + 1][y - 1].type == "empty") {
+                    dungeon.cells[x + 1][y - 1].type = "wall";
+                }
                 if (dungeon.cells[x + 1][y].type == "empty") {
                     dungeon.cells[x + 1][y].type = "wall";
+                }
+                if (dungeon.cells[x + 1][y + 1].type == "empty") {
+                    dungeon.cells[x + 1][y + 1].type = "wall";
                 }
                 if (dungeon.cells[x][y + 1].type == "empty") {
                     dungeon.cells[x][y + 1].type = "wall";
                 }
+                if (dungeon.cells[x - 1][y - 1].type == "empty") {
+                    dungeon.cells[x - 1][y - 1].type = "wall";
+                }
                 if (dungeon.cells[x - 1][y].type == "empty") {
                     dungeon.cells[x - 1][y].type = "wall";
+                }
+                if (dungeon.cells[x - 1][y + 1].type == "empty") {
+                    dungeon.cells[x - 1][y + 1].type = "wall";
                 }
             }
         }
@@ -313,11 +325,11 @@ function onKeyDown(e) {
     }
     if (e.key == "1") {
         localStorage.setItem("game", JSON.stringify(game));
-        game.message = "game saved";
+        game.messages.push("game saved");
     }
     if (e.key == "2") {
         game = JSON.parse(localStorage.getItem("game"));
-        game.message = "game loaded";
+        game.messages.push("game loaded");
         changeLevel(game.level);
     }
 }
@@ -366,15 +378,15 @@ function movePlayer(x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll > 0.5) {
-                    game.message = "you open the door";
+                    game.messages.push("you open the door");
                     getCurrentDungeon().cells[x][y].type = "doorOpen";
                 }
                 else {
-                    game.message = "the door won't budge";
+                    game.messages.push("the door won't budge");
                 }
                 break;
             case "trap":
-                game.message = "you triggered a trap!";
+                game.messages.push("you triggered a trap!");
                 getCurrentDungeon().cells[x][y].type = "floor";
                 break;
             case "stairsUp":
@@ -382,12 +394,12 @@ function movePlayer(x, y) {
                     document.location.reload();
                 }
                 else {
-                    game.message = "you ascend";
+                    game.messages.push("you ascend");
                     ascend = true;
                 }
                 break;
             case "stairsDown":
-                game.message = "you descend";
+                game.messages.push("you descend");
                 descend = true;
                 break;
         }
@@ -396,10 +408,10 @@ function movePlayer(x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll < 0.5) {
-                    game.message = "you miss the " + getCurrentDungeon().creatures[i].name;
+                    game.messages.push("you miss the " + getCurrentDungeon().creatures[i].name);
                 }
                 else {
-                    game.message = "you kill the " + getCurrentDungeon().creatures[i].name;
+                    game.messages.push("you kill the " + getCurrentDungeon().creatures[i].name);
                     var corpse = {
                         x: x,
                         y: y
@@ -414,19 +426,19 @@ function movePlayer(x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll > 0.5) {
-                    game.message = "you open the chest";
+                    game.messages.push("you open the chest");
                     var loot = getCurrentDungeon().chests[i].loot;
                     if (loot == null) {
-                        game.message = "there is nothing inside";
+                        game.messages.push("there is nothing inside");
                     }
                     else {
                         game.player.inventory.push(loot);
-                        game.message = "you loot a " + loot.name;
+                        game.messages.push("you loot a " + loot.name);
                     }
                     getCurrentDungeon().chests.splice(i, 1);
                 }
                 else {
-                    game.message = "the chest won't open";
+                    game.messages.push("the chest won't open");
                 }
             }
         }
@@ -452,7 +464,7 @@ function useItem(item) {
 }
 
 function removeItem(item) {
-    game.message = "you destroy a " + item.name;
+    game.messages.push("you destroy a " + item.name);
     game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
 }
 
@@ -522,10 +534,10 @@ function moveCreature(creature, x, y) {
                 move = false;
                 var roll = Math.random();
                 if (roll < 0.5) {
-                    game.message = "the " + creature.name + " misses you";
+                    game.messages.push("the " + creature.name + " misses you");
                 }
                 else {
-                    game.message = "the " + creature.name + " attacks you";
+                    game.messages.push("the " + creature.name + " attacks you");
                 }
             }
         }
@@ -590,7 +602,7 @@ function calcFov() {
 function doFov(dx, dy) {
     var ox = getCurrentDungeon().player.x + 0.5;
     var oy = getCurrentDungeon().player.y + 0.5;
-    for (var i = 0; i < game.player.sight; i++) {
+    for (var j = 0; j < game.player.sight; j++) {
         var x = Math.trunc(ox);
         var y = Math.trunc(oy);
         if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
@@ -611,6 +623,18 @@ function doFov(dx, dy) {
     }
 }
 
+function getNextMessage() {
+    if (game.messages.length > 0) {
+        var message = game.messages[0];
+        game.messages.splice(0, 1);
+        console.log(message);
+        return message;
+    }
+    else {
+        return "";
+    }
+}
+
 function draw() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -618,9 +642,6 @@ function draw() {
     calcFov();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = game.characterSize + "px mono";
-    ctx.fillStyle = "#fff";
-    ctx.fillText(game.message, 0, game.characterSize);
-    ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
             // check bounds
@@ -704,6 +725,11 @@ function draw() {
             }
         }
     }
+    ctx.fillStyle = "#fff";
+    ctx.fillText(getNextMessage(), 0, game.characterSize);
+    ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
+    ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
+
 }
 
 function getRandomInt(min, max) {
