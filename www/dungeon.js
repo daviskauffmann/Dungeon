@@ -11,8 +11,8 @@ var game = {
         inventory: []
     },
     dungeons: [],
-    turn: 0,
     level: 0,
+    turn: 0,
     characterSize: 24,
     drawMode: "game",
     message: ""
@@ -32,19 +32,19 @@ window.addEventListener("resize", draw);
 function changeLevel(level) {
     game.level = level
     if (game.level == game.dungeons.length) {
-        createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 10, 5);
+        createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 10, 5);
     }
     draw();
     game.message = "welcome to level " + (game.level + 1);
 }
 
 function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, creatureAmount, chestAmount) {
-    // dungeon
     var dungeon = {
         width: width,
         height: height,
         cells: [],
         rooms: [],
+        // each dungeon keeps track of the player's position in that dungeon, rather than the player itself
         player: {
             x: 0,
             y: 0
@@ -53,7 +53,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         corpses: [],
         chests: []
     }
-    // cells
+    // create cells
     for (var x = 0; x < dungeon.width; x++) {
         dungeon.cells[x] = [];
         for (var y = 0; y < dungeon.height; y++) {
@@ -64,17 +64,21 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             }
         }
     }
-    // rooms
+    // generate rooms
     for (var i = 0; i < roomAttempts; i++) {
         var roomX = getRandomInt(0, dungeon.width);
         var roomY = getRandomInt(0, dungeon.height);
         var roomWidth = getRandomInt(minRoomSize, maxRoomSize);
         var roomHeight = getRandomInt(minRoomSize, maxRoomSize);
         // check bounds
+        // the edges of the room should not be at the very edge of the map, because walls are generated adjacent to floor cells
         if (roomX < 1 || roomX + roomWidth > dungeon.width - 1 || roomY < 1 || roomY + roomHeight > dungeon.height - 1) {
             continue;
         }
         // check overlap
+        // this is done by looping through all the cells in the prospective room and checking if they are already a floor
+        // checking NESW cells is done so rooms don't end up 
+        // this is an optional step. if not done, the dungeon will be more cavernous
         if (preventOverlap) {
             var overlap = false;
             for (var x = roomX; x < roomX + roomWidth; x++) {
@@ -107,7 +111,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             width: roomWidth,
             height: roomHeight
         }
-        // assign cells
+        // turn this room's cells into floors
         for (var x = room.x; x < room.x + room.width; x++) {
             for (var y = room.y; y < room.y + room.height; y++) {
                 dungeon.cells[x][y].type = "floor";
@@ -117,6 +121,10 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         dungeon.rooms.push(room);
     }
     // connect rooms
+    // this algorithm simply loops through the rooms and connects it to the one at the next index
+    // connecting the rooms is done by selecting a random cell in the first room and a random one in the second
+    // then, it draws a rectangle between those two points
+    // this ensures that all rooms have at least two modes of entry and exit, and that there are no "island" rooms
     for (var i = 0; i < dungeon.rooms.length - 1; i++) {
         var x1 = getRandomInt(dungeon.rooms[i].x, dungeon.rooms[i].x + dungeon.rooms[i].width);
         var y1 = getRandomInt(dungeon.rooms[i].y, dungeon.rooms[i].y + dungeon.rooms[i].height);
@@ -140,7 +148,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             }
         }
     }
-    // walls
+    // create walls
+    // each floor cell looks at its NESW neighbor and turns them into walls if they are empty
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
             if (dungeon.cells[x][y].type == "floor") {
@@ -159,7 +168,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             }
         }
     }
-    // doors
+    // create doors if it has two adjacent walls and three floors ahead of it
+    // this is checked for all four directions
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
             var roll = Math.random();
@@ -189,7 +199,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             }
         }
     }
-    // traps
+    // create traps in random rooms at random locations
     if (dungeon.rooms.length > 0) {
         for (var i = 0; i < trapAmount; i++) {
             var roomIndex = getRandomInt(0, dungeon.rooms.length);
@@ -198,19 +208,20 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             dungeon.cells[x][y].type = "trap";
         }
     }
-    // stairs up
+    // create stairs up at the first room in the array
     if (dungeon.rooms.length > 0) {
         var x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
         var y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
         dungeon.cells[x][y].type = "stairsUp";
     }
-    // stairs down
+    // create stairs down at the last room in the array
+    // this doesn't necessarily mean that stairs will generate far from each other, since the room positions are random
     if (dungeon.rooms.length > 0) {
         var x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
         var y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
         dungeon.cells[x][y].type = "stairsDown";
     }
-    // move player
+    // move player to the stairs up
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
             if (dungeon.cells[x][y].type == "stairsUp") {
@@ -220,7 +231,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             }
         }
     }
-    // creatures
+    // spawn creatures in random rooms at random locations
     if (dungeon.rooms.length > 1) {
         for (var i = 0; i < creatureAmount; i++) {
             var roomIndex = getRandomInt(1, dungeon.rooms.length);
@@ -231,7 +242,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                 y: y,
                 name: "",
                 char: "",
-                dungeon: game.level,
+                level: game.level,
             }
             var roll = Math.random();
             if (roll < 0.3) {
@@ -247,7 +258,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             dungeon.creatures.push(creature);
         }
     }
-    // chests
+    // spawn chests in random rooms at random locations and give them loot
     if (dungeon.rooms.length > 0) {
         for (var i = 0; i < chestAmount; i++) {
             var roomIndex = getRandomInt(0, dungeon.rooms.length);
@@ -259,7 +270,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                 loot: null
             }
             var roll = Math.random();
-            if (roll < 0) {
+            if (roll < 0.25) {
                 chest.loot = null;
             }
             else {
@@ -283,6 +294,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
     game.dungeons.push(dungeon);
 }
 
+// player input
 function onKeyDown(e) {
     if (e.key == "ArrowUp") {
         movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
@@ -444,27 +456,32 @@ function removeItem(item) {
     game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
 }
 
+// this gets called when the player takes an action
 function tick() {
-    for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
-        tickCreature(getCurrentDungeon().creatures[i]);
+    // update all the creatures in all dungeons
+    for (var i = 0; i < game.dungeons.length; i++) {
+        for (var j = 0; j < game.dungeons[i].creatures.length; j++) {
+            tickCreature(game.dungeons[i].creatures[j]);
+        }
     }
     game.turn++;
     draw();
 }
 
 function tickCreature(creature) {
+    // the creature should only try to attack the player if the player is in the dungeon they are in
     var attackPlayer = false;
     if (getCreatureDungeon(creature) == getCurrentDungeon()) {
-        if (creature.x == getCreatureDungeon(creature).player.x && creature.y - 1 == getCreatureDungeon(creature).player.y) {
+        if (creature.x == getCurrentDungeon().player.x && creature.y - 1 == getCurrentDungeon().player.y) {
             attackPlayer = true;
             moveCreature(creature, creature.x, creature.y - 1);
-        } else if (creature.x + 1 == getCreatureDungeon(creature).player.x && creature.y == getCreatureDungeon(creature).player.y) {
+        } else if (creature.x + 1 == getCurrentDungeon().player.x && creature.y == getCurrentDungeon().player.y) {
             attackPlayer = true;
             moveCreature(creature, creature.x + 1, creature.y);
-        } else if (creature.x == getCreatureDungeon(creature).player.x && creature.y + 1 == getCreatureDungeon(creature).player.y) {
+        } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
             attackPlayer = true;
             moveCreature(creature, creature.x, creature.y + 1);
-        } else if (creature.x == getCreatureDungeon(creature).player.x && creature.y + 1 == getCreatureDungeon(creature).player.y) {
+        } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
             attackPlayer = true;
             moveCreature(creature, creature.x - 1, creature.y);
         }
@@ -535,6 +552,7 @@ function moveCreature(creature, x, y) {
     }
 }
 
+// center the view on the player, while staying within the bounds of the dungeon
 function centerView() {
     view.width = Math.round(canvas.width / game.characterSize);
     view.height = Math.round(canvas.height / game.characterSize);
@@ -555,11 +573,13 @@ function centerView() {
 }
 
 function calcFov() {
+    // set all cells to invisible
     for (var x = 0; x < getCurrentDungeon().width; x++) {
         for (var y = 0; y < getCurrentDungeon().height; y++) {
             getCurrentDungeon().cells[x][y].visible = false;
         }
     }
+    // calculate unit vectors for rays in 360 directions
     for (var i = 0; i < 360; i++) {
         var dx = Math.cos(i * (Math.PI / 180));
         var dy = Math.sin(i * (Math.PI / 180));
@@ -600,18 +620,19 @@ function draw() {
     ctx.font = game.characterSize + "px mono";
     ctx.fillStyle = "#fff";
     ctx.fillText(game.message, 0, game.characterSize);
+    ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
             // check bounds
             if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
                 continue;
             }
-            // player
+            // draw player
             if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
                 ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
                 continue;
             }
-            // objects
+            // draw objects only if the current cell is visible
             if (getCurrentDungeon().cells[x][y].visible) {
                 // creatures
                 var creature = false;
@@ -647,7 +668,7 @@ function draw() {
                     continue;
                 }
             }
-            // environment
+            // draw the environment
             if (getCurrentDungeon().cells[x][y].visible || getCurrentDungeon().cells[x][y].discovered) {
                 if (getCurrentDungeon().cells[x][y].visible) {
                     ctx.fillStyle = "#fff";
@@ -688,6 +709,7 @@ function draw() {
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
+    //return 4;
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
@@ -696,5 +718,5 @@ function getCurrentDungeon() {
 }
 
 function getCreatureDungeon(creature) {
-    return game.dungeons[creature.dungeon];
+    return game.dungeons[creature.level];
 }
