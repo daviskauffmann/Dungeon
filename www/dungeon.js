@@ -1,6 +1,17 @@
 /*
 TODO
-    
+    inventory
+        display list of items
+            top left
+        assign letters to each item
+            thus, limit of 26 (uppercase? 52?)
+        chatbox that takes in commands?
+        rather than a chatbox, it could be that each command in the game is a letter on the keyboard
+        e.g. if the user wants to drop an item at letter f, the flow is
+            d (bringing up the inventory) > f (dropping the item), or
+            i > d > f, or if doing the chatbox method
+            #drop f, where pressing i will show the user what items are what
+        upon consideration, i will go with the second option
 */
 
 var canvas = document.getElementById("canvas");
@@ -14,7 +25,6 @@ var game = {
     level: 0,
     turn: 0,
     characterSize: 24,
-    drawMode: "game",
     messages: []
 }
 var view = {
@@ -22,6 +32,9 @@ var view = {
     y: 0,
     width: 0,
     height: 0
+}
+var ui = {
+    mode: ""
 }
 changeLevel(0);
 document.addEventListener("keydown", onKeyDown);
@@ -287,7 +300,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             }
             else {
                 var loot = {
-                    name: ""
+                    name: "",
+                    letter: ""
                 }
                 var roll = Math.random();
                 if (roll < 0.3) {
@@ -308,20 +322,59 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 
 // player input
 function onKeyDown(e) {
-    if (e.key == "ArrowUp") {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
-    }
-    if (e.key == "ArrowRight") {
-        movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
-    }
-    if (e.key == "ArrowDown") {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
-    }
-    if (e.key == "ArrowLeft") {
-        movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
-    }
-    if (e.key == ".") {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
+    switch (ui.mode) {
+        case "":
+            if (e.key == "ArrowUp") {
+                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
+            }
+            if (e.key == "ArrowRight") {
+                movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
+            }
+            if (e.key == "ArrowDown") {
+                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
+            }
+            if (e.key == "ArrowLeft") {
+                movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
+            }
+            if (e.key == ".") {
+                movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
+            }
+            if (e.key == "i") {
+                ui.mode = "inventory";
+                draw();
+            }
+            break;
+        case "inventory":
+            if (e.key == "i") {
+                ui.mode = "";
+                draw();
+            }
+            if (e.key == "d") {
+                game.messages.push("drop item, press space to cancel");
+                ui.mode = "inventory_drop";
+                draw();
+            }
+            break;
+        case "inventory_drop":
+            var invalid = true;
+            for (var i = 0; i < game.player.inventory.length; i++) {
+                if (game.player.inventory[i].letter == e.key) {
+                    invalid = false;
+                    dropItem(game.player.inventory[i]);
+                    ui.mode = "";
+                    draw();
+                }
+            }
+            if (e.key == " ") {
+                invalid = false;
+                ui.mode = "";
+                draw();
+            }
+            if (invalid) {
+                game.messages.push("invalid item");
+                draw();
+            }
+            break;
     }
     if (e.key == "1") {
         localStorage.setItem("game", JSON.stringify(game));
@@ -409,8 +462,7 @@ function movePlayer(x, y) {
                 var roll = Math.random();
                 if (roll < 0.5) {
                     game.messages.push("you miss the " + getCurrentDungeon().creatures[i].name);
-                }
-                else {
+                } else {
                     game.messages.push("you kill the " + getCurrentDungeon().creatures[i].name);
                     var corpse = {
                         x: x,
@@ -430,20 +482,19 @@ function movePlayer(x, y) {
                     var loot = getCurrentDungeon().chests[i].loot;
                     if (loot == null) {
                         game.messages.push("there is nothing inside");
+                        getCurrentDungeon().chests.splice(i, 1);
+                    } else {
+                        if (addItem(loot)) {
+                            game.messages.push("you loot a " + loot.name);
+                            getCurrentDungeon().chests.splice(i, 1);
+                        }
                     }
-                    else {
-                        game.player.inventory.push(loot);
-                        game.messages.push("you loot a " + loot.name);
-                    }
-                    getCurrentDungeon().chests.splice(i, 1);
-                }
-                else {
+                } else {
                     game.messages.push("the chest won't open");
                 }
             }
         }
-    }
-    else {
+    } else {
         move = false;
     }
     if (move) {
@@ -459,12 +510,18 @@ function movePlayer(x, y) {
     tick();
 }
 
-function useItem(item) {
-    removeItem(item);
+function addItem(item) {
+    if (game.player.inventory.length >= 26) {
+        game.messages.push("inventory is full");
+        return false;
+    }
+    item.letter = String.fromCharCode(97 + game.player.inventory.length);
+    game.player.inventory.push(item);
+    return true;
 }
 
-function removeItem(item) {
-    game.messages.push("you destroy a " + item.name);
+function dropItem(item) {
+    game.messages.push("you drop a " + item.name);
     game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
 }
 
@@ -625,8 +682,7 @@ function doFov(dx, dy) {
 
 function getNextMessage() {
     if (game.messages.length > 0) {
-        var message = game.messages[0];
-        game.messages.splice(0, 1);
+        var message = game.messages.shift();
         console.log(message);
         return message;
     }
@@ -650,11 +706,13 @@ function draw() {
             }
             // draw player
             if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
+                ctx.fillStyle = "#fff";
                 ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
                 continue;
             }
             // draw objects only if the current cell is visible
             if (getCurrentDungeon().cells[x][y].visible) {
+                ctx.fillStyle = "#fff";
                 // creatures
                 var creature = false;
                 for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
@@ -730,6 +788,14 @@ function draw() {
     ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
     ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 
+    if (ui.mode == "inventory" || ui.mode == "inventory_drop") {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, game.player.inventory.length * 26);
+        ctx.fillStyle = "#fff";
+        for (var i = 0; i < game.player.inventory.length; i++) {
+            ctx.fillText(game.player.inventory[i].letter + ") " + game.player.inventory[i].name, canvas.width - (game.characterSize * 10), (i + 1) * game.characterSize);
+        }
+    }
 }
 
 function getRandomInt(min, max) {
