@@ -45,7 +45,7 @@ window.addEventListener("resize", draw);
 function changeLevel(level) {
     game.level = level
     if (game.level == game.dungeons.length) {
-        createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 10, 5);
+        createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 10, 20);
     }
     game.messages.push("welcome to level " + (game.level + 1));
     draw();
@@ -321,6 +321,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 }
 
 // player input
+var swapFirst;
 function onKeyDown(e) {
     switch (ui.mode) {
         case "":
@@ -340,8 +341,10 @@ function onKeyDown(e) {
                 movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
             }
             if (e.key == "i") {
-                ui.mode = "inventory";
-                draw();
+                if (game.player.inventory.length > 0) {
+                    ui.mode = "inventory";
+                    draw();
+                }
             }
             break;
         case "inventory":
@@ -350,28 +353,75 @@ function onKeyDown(e) {
                 draw();
             }
             if (e.key == "d") {
-                game.messages.push("drop item, press space to cancel");
+                game.messages.push("select item to drop");
+                game.messages.push("press space to cancel");
                 ui.mode = "inventory_drop";
+                draw();
+            }
+            if (e.key == "e") {
+                game.messages.push("select item to equip");
+                game.messages.push("press space to cancel");
+                ui.mode = "inventory_equip";
+                draw();
+            }
+            if (e.key == "s") {
+                game.messages.push("select first item to swap");
+                game.messages.push("press space to cancel");
+                ui.mode = "inventory_swapFirst";
                 draw();
             }
             break;
         case "inventory_drop":
-            var invalid = true;
             for (var i = 0; i < game.player.inventory.length; i++) {
                 if (game.player.inventory[i].letter == e.key) {
-                    invalid = false;
                     dropItem(game.player.inventory[i]);
                     ui.mode = "";
                     draw();
                 }
             }
             if (e.key == " ") {
-                invalid = false;
                 ui.mode = "";
                 draw();
             }
-            if (invalid) {
-                game.messages.push("invalid item");
+            break;
+        case "inventory_equip":
+            for (var i = 0; i < game.player.inventory.length; i++) {
+                if (game.player.inventory[i].letter == e.key) {
+                    game.messages.push("you equip a " + game.player.inventory[i].name);
+                    ui.mode = "";
+                    draw();
+                }
+            }
+            if (e.key == " ") {
+                ui.mode = "";
+                draw();
+            }
+            break;
+        case "inventory_swapFirst":
+            for (var i = 0; i < game.player.inventory.length; i++) {
+                if (game.player.inventory[i].letter == e.key) {
+                    swapFirst = i;
+                    game.messages.push("select second item to swap");
+                    game.messages.push("press space to cancel");
+                    ui.mode = "inventory_swapSecond";
+                    draw();
+                }
+            }
+            if (e.key == " ") {
+                ui.mode = "";
+                draw();
+            }
+            break;
+        case "inventory_swapSecond":
+            for (var i = 0; i < game.player.inventory.length; i++) {
+                if (game.player.inventory[i].letter == e.key) {
+                    swapItems(swapFirst, i);
+                    ui.mode = "";
+                    draw();
+                }
+            }
+            if (e.key == " ") {
+                ui.mode = "";
                 draw();
             }
             break;
@@ -485,7 +535,7 @@ function movePlayer(x, y) {
                         getCurrentDungeon().chests.splice(i, 1);
                     } else {
                         if (addItem(loot)) {
-                            game.messages.push("you loot a " + loot.name);
+                            //game.messages.push("you loot a " + loot.name);
                             getCurrentDungeon().chests.splice(i, 1);
                         }
                     }
@@ -510,19 +560,35 @@ function movePlayer(x, y) {
     tick();
 }
 
+function calcItemLetters() {
+    for (var i = 0; i < game.player.inventory.length; i++) {
+        game.player.inventory[i].letter = String.fromCharCode(97 + i);
+    }
+}
+
 function addItem(item) {
     if (game.player.inventory.length >= 26) {
         game.messages.push("inventory is full");
         return false;
     }
-    item.letter = String.fromCharCode(97 + game.player.inventory.length);
+    game.messages.push("you pick up a " + item.name);
     game.player.inventory.push(item);
+    calcItemLetters();
     return true;
 }
 
 function dropItem(item) {
     game.messages.push("you drop a " + item.name);
     game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
+    calcItemLetters();
+}
+
+function swapItems(i, j) {
+    game.messages.push("you swap the " + game.player.inventory[i].name + " with the " + game.player.inventory[j].name);
+    var t = game.player.inventory[i];
+    game.player.inventory[i] = game.player.inventory[j];
+    game.player.inventory[j] = t;
+    calcItemLetters();
 }
 
 // this gets called when the player takes an action
@@ -788,7 +854,7 @@ function draw() {
     ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
     ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 
-    if (ui.mode == "inventory" || ui.mode == "inventory_drop") {
+    if (ui.mode.includes("inventory")) {
         ctx.fillStyle = "#000";
         ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, game.player.inventory.length * 26);
         ctx.fillStyle = "#fff";
