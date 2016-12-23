@@ -12,6 +12,66 @@ TODO
             i > d > f, or if doing the chatbox method
             #drop f, where pressing i will show the user what items are what
         upon consideration, i will go with the second option
+    items
+        decorator pattern?
+            each item will be decorated with commands that can be performed on it
+            e.g. a potion will have (d, s, q, t, p)
+            it would probably be better to predefine certain item types
+                weapon
+                armor
+                potion
+                scroll
+            each type would have commands associated with them
+            an individual item would fall under some type category
+            this makes random item generation easy
+            if the user tries to drink (q) an item at slot a, the command would be i > q > a
+                if the item is a potion, drink it
+                if not, the action fails
+        stacking?
+            when items are added to the inventory, identical items are stacked
+            each item will need an amount variable
+                when removing an item, simply decrement the amount
+                if amount is 0, splice the item from the inventory
+            splitting stacks?
+                it is probably unecessary for the user to be able to split stacks
+            stack limit?
+                could be limited or unlimited
+                ultimately, a game design decision, not a technical one
+    RPG elements
+        stats
+            health
+                reaches 0, character death
+            energy
+                affects all skills
+                damages health if too low for too long
+                can be restored with food
+                decreased through movement and combat
+            mana
+                used for casting learned spells
+
+            stamina
+                max health
+            endurance
+                max energy
+            attunement
+                max mana
+            resistance
+                resistance to all damage
+            strength
+                physical damage
+            intelligence
+                magic damage
+                scroll and potion effectiveness
+            avoidance
+                avoid all damage chance
+            precision
+                critical damage chance
+            charisma
+                roleplay
+                affects prices at merchants
+            luck
+                affects all skills
+                affects item find
 */
 
 var canvas = document.getElementById("canvas");
@@ -533,11 +593,9 @@ function movePlayer(x, y) {
                     if (loot == null) {
                         game.messages.push("there is nothing inside");
                         getCurrentDungeon().chests.splice(i, 1);
-                    } else {
-                        if (addItem(loot)) {
-                            //game.messages.push("you loot a " + loot.name);
-                            getCurrentDungeon().chests.splice(i, 1);
-                        }
+                    } else if (addItem(loot)) {
+                        //game.messages.push("you loot a " + loot.name);
+                        getCurrentDungeon().chests.splice(i, 1);
                     }
                 } else {
                     game.messages.push("the chest won't open");
@@ -718,14 +776,14 @@ function calcFov() {
     for (var i = 0; i < 360; i++) {
         var dx = Math.cos(i * (Math.PI / 180));
         var dy = Math.sin(i * (Math.PI / 180));
-        doFov(dx, dy);
+        raycast(dx, dy);
     }
 }
 
-function doFov(dx, dy) {
+function raycast(dx, dy) {
     var ox = getCurrentDungeon().player.x + 0.5;
     var oy = getCurrentDungeon().player.y + 0.5;
-    for (var j = 0; j < game.player.sight; j++) {
+    for (var i = 0; i < game.player.sight; i++) {
         var x = Math.trunc(ox);
         var y = Math.trunc(oy);
         if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
