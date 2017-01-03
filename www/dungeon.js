@@ -78,8 +78,24 @@ var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var game = {
     player: {
-        sight: 10,
-        inventory: []
+        stats: {
+            health: 100,
+            energy: 100,
+            mana: 100,
+
+            stamina: 0,
+            endurance: 0,
+            attunement: 0,
+            resistance: 0,
+            strength: 0,
+            intellect: 0,
+            avoidance: 0,
+            precision: 0,
+            charisma: 0,
+            luck: 0
+        },
+        inventory: [],
+        sight: 10
     },
     dungeons: [],
     level: 0,
@@ -97,9 +113,6 @@ var ui = {
     mode: ""
 }
 changeLevel(0);
-document.addEventListener("keydown", onKeyDown);
-document.addEventListener("mousedown", mouseDown);
-document.addEventListener("touchstart", touchStart);
 window.addEventListener("resize", draw);
 
 function changeLevel(level) {
@@ -131,6 +144,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         dungeon.cells[x] = [];
         for (var y = 0; y < dungeon.height; y++) {
             dungeon.cells[x][y] = {
+                x: x,
+                y: y,
                 type: "empty",
                 discovered: false,
                 visible: false
@@ -382,7 +397,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 
 // player input
 var swapFirst;
-function onKeyDown(e) {
+var swapSecond;
+document.addEventListener("keydown", function (e) {
     switch (ui.mode) {
         case "":
             if (e.key == "ArrowUp") {
@@ -406,6 +422,11 @@ function onKeyDown(e) {
                     draw();
                 }
             }
+            if (e.key == "c") {
+                ui.mode = "character";
+                draw();
+            }
+            pathfind(getCurrentDungeon().player.x, getCurrentDungeon().player.y, getCurrentDungeon().player.x + 3, getCurrentDungeon().player.y + 3);
             break;
         case "inventory":
             if (e.key == "i") {
@@ -424,6 +445,12 @@ function onKeyDown(e) {
                 ui.mode = "inventory_equip";
                 draw();
             }
+            if (e.key == "u") {
+                game.messages.push("select item to unequip");
+                game.messages.push("press space to cancel");
+                ui.mode = "inventory_unequip";
+                draw();
+            }
             if (e.key == "s") {
                 game.messages.push("select first item to swap");
                 game.messages.push("press space to cancel");
@@ -434,7 +461,8 @@ function onKeyDown(e) {
         case "inventory_drop":
             for (var i = 0; i < game.player.inventory.length; i++) {
                 if (game.player.inventory[i].letter == e.key) {
-                    dropItem(game.player.inventory[i]);
+                    game.messages.push("you drop a " + game.player.inventory[i].name);
+                    game.player.inventory.splice(i, 1);
                     ui.mode = "";
                     draw();
                 }
@@ -448,6 +476,21 @@ function onKeyDown(e) {
             for (var i = 0; i < game.player.inventory.length; i++) {
                 if (game.player.inventory[i].letter == e.key) {
                     game.messages.push("you equip a " + game.player.inventory[i].name);
+                    game.player.inventory[i].equipped = true;
+                    ui.mode = "";
+                    draw();
+                }
+            }
+            if (e.key == " ") {
+                ui.mode = "";
+                draw();
+            }
+            break;
+        case "inventory_unequip":
+            for (var i = 0; i < game.player.inventory.length; i++) {
+                if (game.player.inventory[i].letter == e.key) {
+                    game.messages.push("you unequip a " + game.player.inventory[i].name);
+                    game.player.inventory[i].equipped = false;
                     ui.mode = "";
                     draw();
                 }
@@ -475,12 +518,22 @@ function onKeyDown(e) {
         case "inventory_swapSecond":
             for (var i = 0; i < game.player.inventory.length; i++) {
                 if (game.player.inventory[i].letter == e.key) {
-                    swapItems(swapFirst, i);
+                    swapSecond = i;
+                    game.messages.push("you swap the " + game.player.inventory[swapFirst].name + " with the " + game.player.inventory[swapSecond].name);
+                    var t = game.player.inventory[swapFirst];
+                    game.player.inventory[swapFirst] = game.player.inventory[swapSecond];
+                    game.player.inventory[swapSecond] = t;
                     ui.mode = "";
                     draw();
                 }
             }
             if (e.key == " ") {
+                ui.mode = "";
+                draw();
+            }
+            break;
+        case "character":
+            if (e.key == "c") {
                 ui.mode = "";
                 draw();
             }
@@ -495,9 +548,9 @@ function onKeyDown(e) {
         game.messages.push("game loaded");
         changeLevel(game.level);
     }
-}
+});
 
-function mouseDown(e) {
+document.addEventListener("mousedown", function (e) {
     var x = e.clientX - canvas.getBoundingClientRect().left;
     var y = e.clientY - canvas.getBoundingClientRect().top;
 
@@ -510,9 +563,9 @@ function mouseDown(e) {
     } else if (x < canvas.height * 0.25) {
         movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
     }
-}
+});
 
-function touchStart(e) {
+document.addEventListener("touchstart", function (e) {
     e.preventDefault();
     var x = e.touches[0].clientX - canvas.getBoundingClientRect().left;
     var y = e.touches[0].clientY - canvas.getBoundingClientRect().top;
@@ -526,7 +579,7 @@ function touchStart(e) {
     } else if (x < canvas.height * 0.25) {
         movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
     }
-}
+});
 
 function movePlayer(x, y) {
     var move = true;
@@ -575,12 +628,18 @@ function movePlayer(x, y) {
                 } else {
                     game.messages.push("you kill the " + getCurrentDungeon().creatures[i].name);
                     var corpse = {
+                        name: getCurrentDungeon().creatures[i].name,
                         x: x,
                         y: y
                     }
                     getCurrentDungeon().corpses.push(corpse);
                     getCurrentDungeon().creatures.splice(i, 1);
                 }
+            }
+        }
+        for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
+            if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
+                game.messages.push("you see a dead " + getCurrentDungeon().corpses[i].name);
             }
         }
         for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
@@ -593,9 +652,14 @@ function movePlayer(x, y) {
                     if (loot == null) {
                         game.messages.push("there is nothing inside");
                         getCurrentDungeon().chests.splice(i, 1);
-                    } else if (addItem(loot)) {
-                        //game.messages.push("you loot a " + loot.name);
-                        getCurrentDungeon().chests.splice(i, 1);
+                    } else {
+                        if (game.player.inventory.length >= 26) {
+                            game.messages.push("inventory is full");
+                        } else {
+                            game.messages.push("you loot up a " + loot.name);
+                            game.player.inventory.push(loot);
+                            getCurrentDungeon().chests.splice(i, 1);
+                        }
                     }
                 } else {
                     game.messages.push("the chest won't open");
@@ -616,37 +680,6 @@ function movePlayer(x, y) {
         changeLevel(game.level + 1);
     }
     tick();
-}
-
-function calcItemLetters() {
-    for (var i = 0; i < game.player.inventory.length; i++) {
-        game.player.inventory[i].letter = String.fromCharCode(97 + i);
-    }
-}
-
-function addItem(item) {
-    if (game.player.inventory.length >= 26) {
-        game.messages.push("inventory is full");
-        return false;
-    }
-    game.messages.push("you pick up a " + item.name);
-    game.player.inventory.push(item);
-    calcItemLetters();
-    return true;
-}
-
-function dropItem(item) {
-    game.messages.push("you drop a " + item.name);
-    game.player.inventory.splice(game.player.inventory.indexOf(item), 1);
-    calcItemLetters();
-}
-
-function swapItems(i, j) {
-    game.messages.push("you swap the " + game.player.inventory[i].name + " with the " + game.player.inventory[j].name);
-    var t = game.player.inventory[i];
-    game.player.inventory[i] = game.player.inventory[j];
-    game.player.inventory[j] = t;
-    calcItemLetters();
 }
 
 // this gets called when the player takes an action
@@ -745,12 +778,12 @@ function moveCreature(creature, x, y) {
     }
 }
 
-// center the view on the player, while staying within the bounds of the dungeon
-function centerView() {
+// center the view on the coordinate, while staying within the bounds of the dungeon
+function centerView(x, y) {
     view.width = Math.round(canvas.width / game.characterSize);
     view.height = Math.round(canvas.height / game.characterSize);
-    view.x = getCurrentDungeon().player.x - Math.round(view.width / 2);
-    view.y = getCurrentDungeon().player.y - Math.round(view.height / 2);
+    view.x = x - Math.round(view.width / 2);
+    view.y = y - Math.round(view.height / 2);
     if (view.x < 0) {
         view.x = 0;
     }
@@ -765,42 +798,18 @@ function centerView() {
     }
 }
 
-function calcFov() {
-    // set all cells to invisible
+// sends out rays to check visibility of cells
+function calcVisibility(sx, sy, r, action) {
     for (var x = 0; x < getCurrentDungeon().width; x++) {
         for (var y = 0; y < getCurrentDungeon().height; y++) {
             getCurrentDungeon().cells[x][y].visible = false;
         }
     }
-    // calculate unit vectors for rays in 360 directions
-    for (var i = 0; i < 360; i++) {
-        var dx = Math.cos(i * (Math.PI / 180));
-        var dy = Math.sin(i * (Math.PI / 180));
-        raycast(dx, dy);
-    }
-}
-
-function raycast(dx, dy) {
-    var ox = getCurrentDungeon().player.x + 0.5;
-    var oy = getCurrentDungeon().player.y + 0.5;
-    for (var i = 0; i < game.player.sight; i++) {
-        var x = Math.trunc(ox);
-        var y = Math.trunc(oy);
-        if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
-            return;
-        }
-        getCurrentDungeon().cells[x][y].discovered = true;
-        getCurrentDungeon().cells[x][y].visible = true;
-        switch (getCurrentDungeon().cells[x][y].type) {
-            case "empty":
-                return;
-            case "wall":
-                return;
-            case "doorClosed":
-                return;
-        }
-        ox += dx;
-        oy += dy;
+    for (var dir = 0; dir < 360; dir++) {
+        raycast(sx, sy, r, dir, function (x, y) {
+            getCurrentDungeon().cells[x][y].discovered = true;
+            getCurrentDungeon().cells[x][y].visible = true;
+        });
     }
 }
 
@@ -809,8 +818,7 @@ function getNextMessage() {
         var message = game.messages.shift();
         console.log(message);
         return message;
-    }
-    else {
+    } else {
         return "";
     }
 }
@@ -818,8 +826,8 @@ function getNextMessage() {
 function draw() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    centerView();
-    calcFov();
+    centerView(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
+    calcVisibility(getCurrentDungeon().player.x, getCurrentDungeon().player.y, game.player.sight);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = game.characterSize + "px mono";
     for (var x = view.x; x < view.x + view.width; x++) {
@@ -911,14 +919,23 @@ function draw() {
     ctx.fillText(getNextMessage(), 0, game.characterSize);
     ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
     ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
-
     if (ui.mode.includes("inventory")) {
+        for (var i = 0; i < game.player.inventory.length; i++) {
+            game.player.inventory[i].letter = String.fromCharCode(97 + i);
+        }
         ctx.fillStyle = "#000";
         ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, game.player.inventory.length * 26);
         ctx.fillStyle = "#fff";
         for (var i = 0; i < game.player.inventory.length; i++) {
-            ctx.fillText(game.player.inventory[i].letter + ") " + game.player.inventory[i].name, canvas.width - (game.characterSize * 10), (i + 1) * game.characterSize);
+            ctx.fillText(game.player.inventory[i].letter + ") " + game.player.inventory[i].name + (game.player.inventory[i].equipped ? " (equipped)" : ""), canvas.width - (game.characterSize * 10), (i + 1) * game.characterSize);
         }
+    }
+    if (ui.mode == "character") {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, game.characterSize * 10);
+        ctx.fillStyle = "#fff";
+        ctx.fillText("Health: " + game.player.stats.health, canvas.width - (game.characterSize * 10), game.characterSize);
+        ctx.fillText("Mana: " + game.player.stats.mana, canvas.width - (game.characterSize * 10), game.characterSize * 2);
     }
 }
 
@@ -935,4 +952,157 @@ function getCurrentDungeon() {
 
 function getCreatureDungeon(creature) {
     return game.dungeons[creature.level];
+}
+
+// sends out a ray in a certain direction, calling the action on every cell it comes across
+// with this implementation, some cells will be visited multiple times
+function raycast(sx, sy, r, dir, action) {
+    var dx = Math.cos(dir * (Math.PI / 180));
+    var dy = Math.sin(dir * (Math.PI / 180));
+    var cx = sx + 0.5;
+    var cy = sy + 0.5;
+    for (var i = 0; i < r; i++) {
+        var x = Math.trunc(cx);
+        var y = Math.trunc(cy);
+        if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
+            return;
+        }
+        action(x, y);
+        switch (getCurrentDungeon().cells[x][y].type) {
+            case "empty":
+                return;
+            case "wall":
+                return;
+            case "doorClosed":
+                return;
+        }
+        cx += dx;
+        cy += dy;
+    }
+}
+
+function pathfind(x1, y1, x2, y2) {
+    if (x1 < 0 || x1 >= getCurrentDungeon().width || y1 < 0 || y1 >= getCurrentDungeon().height || x2 < 0 || x2 >= getCurrentDungeon().width || y2 < 0 || y2 >= getCurrentDungeon().height) {
+        return;
+    }
+    if (getCurrentDungeon().cells[x1][y1].type == "wall" || getCurrentDungeon().cells[x2][y2].type == "wall") {
+        return;
+    }
+    var closedSet = [];
+    var openSet = [
+        getCurrentDungeon().cells[x1][y1]
+    ];
+    var cameFrom = [];
+    var gScore = [];
+    for (var x = 0; x < getCurrentDungeon().width; x++) {
+        for (var y = 0; y < getCurrentDungeon().height; y++) {
+            mapSet(gScore, getCurrentDungeon().cells[x][y], Infinity);
+        }
+    }
+    mapSet(gScore, getCurrentDungeon().cells[x1][y1], 0);
+    var fScore = [];
+    for (var x = 0; x < getCurrentDungeon().width; x++) {
+        for (var y = 0; y < getCurrentDungeon().height; y++) {
+            mapSet(fScore, getCurrentDungeon().cells[x][y], Infinity);
+        }
+    }
+    mapSet(fScore, getCurrentDungeon().cells[x1][y1], distanceBetween(x1, y1, x2, y2));
+    while (openSet.length > 0) {
+        var current;
+        var lowestFScore = Infinity;
+        for (var i = 0; i < openSet.length; i++) {
+            var value = mapGet(fScore, openSet[i]);
+            if (value < lowestFScore) {
+                current = openSet[i];
+                lowestFScore = value;
+            }
+        }
+        if (current == getCurrentDungeon().cells[x2][y2]) {
+            console.log("path found");
+            var path = [];
+            for (var i = 0; i < cameFrom.length; i++) {
+                path.push(cameFrom[i].key);
+            }
+            for (var i = 0; i < path.length; i++) {
+                path[i].type = "trap";
+            }
+            return;
+        }
+        openSet.splice(openSet.indexOf(current), 1);
+        closedSet.push(current);
+        var neighbors = [];
+        if (current.y - 1 >= 0) {
+            var neighbor = getCurrentDungeon().cells[current.x][current.y - 1];
+            if (neighbor.type != "wall") {
+                neighbors.push(neighbor);
+            }
+        }
+        if (current.x + 1 < getCurrentDungeon().width) {
+            var neighbor = getCurrentDungeon().cells[current.x + 1][current.y];
+            if (neighbor.type != "wall") {
+                neighbors.push(neighbor);
+            }
+        }
+        if (current.y + 1 < getCurrentDungeon().height) {
+            var neighbor = getCurrentDungeon().cells[current.x][current.y + 1];
+            if (neighbor.type != "wall") {
+                neighbors.push(neighbor);
+            }
+        }
+        if (current.x - 1 >= 0) {
+            var neighbor = getCurrentDungeon().cells[current.x - 1][current.y];
+            if (neighbor.type != "wall") {
+                neighbors.push(neighbor);
+            }
+        }
+        for (var i = 0; i < neighbors.length; i++) {
+            if (arrayContains(closedSet, neighbors[i])) {
+                continue;
+            }
+            var tentativeGScore = mapGet(gScore, current) + distanceBetween(current.x, current.y, neighbors[i].x, neighbors[i].y);
+            if (!arrayContains(openSet, neighbors[i])) {
+                openSet.push(neighbors[i]);
+            } else if (tentativeGScore >= mapGet(gScore, neighbors[i])) {
+                continue;
+            }
+            mapSet(cameFrom, neighbors[i], current);
+            mapSet(gScore, neighbors[i], tentativeGScore);
+            mapSet(fScore, neighbors[i], mapGet(gScore, neighbors[i]) + distanceBetween(neighbors[i].x, neighbors[i].y, x2, y2));
+        }
+    }
+}
+
+function distanceBetween(x1, y1, x2, y2) {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+function arrayContains(array, element) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i] == element) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function mapGet(map, key) {
+    for (var i = 0; i < map.length; i++) {
+        if (map[i].key == key) {
+            return map[i].value;
+        }
+    }
+    return null;
+}
+
+function mapSet(map, key, value) {
+    for (var i = 0; i < map.length; i++) {
+        if (map[i].key == key) {
+            map[i].value = value;
+            return;
+        }
+    }
+    map.push({
+        key: key,
+        value: value
+    });
 }
