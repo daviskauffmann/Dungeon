@@ -342,6 +342,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                 y: y,
                 name: "",
                 char: "",
+                sight: 10,
                 level: game.level,
             }
             var roll = Math.random();
@@ -395,6 +396,24 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
     game.dungeons.push(dungeon);
 }
 
+function getCurrentDungeon() {
+    return game.dungeons[game.level];
+}
+
+function getCreatureDungeon(creature) {
+    return game.dungeons[creature.level];
+}
+
+function getNextMessage() {
+    if (game.messages.length > 0) {
+        var message = game.messages.shift();
+        console.log(message);
+        return message;
+    } else {
+        return "";
+    }
+}
+
 // player input
 var swapFirst;
 var swapSecond;
@@ -426,7 +445,6 @@ document.addEventListener("keydown", function (e) {
                 ui.mode = "character";
                 draw();
             }
-            pathfind(getCurrentDungeon().player.x, getCurrentDungeon().player.y, getCurrentDungeon().player.x + 3, getCurrentDungeon().player.y + 3);
             break;
         case "inventory":
             if (e.key == "i") {
@@ -651,16 +669,15 @@ function movePlayer(x, y) {
                     var loot = getCurrentDungeon().chests[i].loot;
                     if (loot == null) {
                         game.messages.push("there is nothing inside");
-                        getCurrentDungeon().chests.splice(i, 1);
                     } else {
                         if (game.player.inventory.length >= 26) {
                             game.messages.push("inventory is full");
                         } else {
-                            game.messages.push("you loot up a " + loot.name);
+                            game.messages.push("you loot a " + loot.name);
                             game.player.inventory.push(loot);
-                            getCurrentDungeon().chests.splice(i, 1);
                         }
                     }
+                    getCurrentDungeon().chests.splice(i, 1);
                 } else {
                     game.messages.push("the chest won't open");
                 }
@@ -695,24 +712,23 @@ function tick() {
 }
 
 function tickCreature(creature) {
-    // the creature should only try to attack the player if the player is in the dungeon they are in
-    var attackPlayer = false;
+    var seePlayer = false;
     if (getCreatureDungeon(creature) == getCurrentDungeon()) {
-        if (creature.x == getCurrentDungeon().player.x && creature.y - 1 == getCurrentDungeon().player.y) {
-            attackPlayer = true;
-            moveCreature(creature, creature.x, creature.y - 1);
-        } else if (creature.x + 1 == getCurrentDungeon().player.x && creature.y == getCurrentDungeon().player.y) {
-            attackPlayer = true;
-            moveCreature(creature, creature.x + 1, creature.y);
-        } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
-            attackPlayer = true;
-            moveCreature(creature, creature.x, creature.y + 1);
-        } else if (creature.x == getCurrentDungeon().player.x && creature.y + 1 == getCurrentDungeon().player.y) {
-            attackPlayer = true;
-            moveCreature(creature, creature.x - 1, creature.y);
+        for (var i = 0; i < 360; i++) {
+            raycast(creature.x, creature.y, creature.sight, i, function (x, y) {
+                if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
+                    seePlayer = true;
+                }
+            });
         }
     }
-    if (!attackPlayer) {
+    if (seePlayer) {
+        var path = pathfind(creature.x, creature.y, getCurrentDungeon().player.x, getCurrentDungeon().player.y);
+        if (path != null) {
+            next = path.pop();
+            moveCreature(creature, next.x, next.y);
+        }
+    } else {
         var roll = Math.random();
         if (roll < 0.25) {
             moveCreature(creature, creature.x, creature.y - 1);
@@ -735,6 +751,10 @@ function moveCreature(creature, x, y) {
                 break;
             case "doorClosed":
                 move = false;
+                var roll = Math.random();
+                if (roll > 0.5) {
+                    getCurrentDungeon().cells[x][y].type = "doorOpen";
+                }
                 break;
             case "stairsUp":
                 move = false;
@@ -778,12 +798,15 @@ function moveCreature(creature, x, y) {
     }
 }
 
-// center the view on the coordinate, while staying within the bounds of the dungeon
-function centerView(x, y) {
+function draw() {
+    // resize the canvas
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // center the view on the player, while staying within the bounds of the dungeon
     view.width = Math.round(canvas.width / game.characterSize);
     view.height = Math.round(canvas.height / game.characterSize);
-    view.x = x - Math.round(view.width / 2);
-    view.y = y - Math.round(view.height / 2);
+    view.x = getCurrentDungeon().player.x - Math.round(view.width / 2);
+    view.y = getCurrentDungeon().player.y - Math.round(view.height / 2);
     if (view.x < 0) {
         view.x = 0;
     }
@@ -796,38 +819,14 @@ function centerView(x, y) {
     if (view.y + view.height > getCurrentDungeon().height) {
         view.y = getCurrentDungeon().height - view.height;
     }
-}
-
-// sends out rays to check visibility of cells
-function calcVisibility(sx, sy, r, action) {
-    for (var x = 0; x < getCurrentDungeon().width; x++) {
-        for (var y = 0; y < getCurrentDungeon().height; y++) {
-            getCurrentDungeon().cells[x][y].visible = false;
-        }
-    }
-    for (var dir = 0; dir < 360; dir++) {
-        raycast(sx, sy, r, dir, function (x, y) {
+    // sends out rays to check visibility
+    for (var i = 0; i < 360; i++) {
+        raycast(getCurrentDungeon().player.x, getCurrentDungeon().player.y, game.player.sight, i, function (x, y) {
             getCurrentDungeon().cells[x][y].discovered = true;
             getCurrentDungeon().cells[x][y].visible = true;
         });
     }
-}
-
-function getNextMessage() {
-    if (game.messages.length > 0) {
-        var message = game.messages.shift();
-        console.log(message);
-        return message;
-    } else {
-        return "";
-    }
-}
-
-function draw() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    centerView(getCurrentDungeon().player.x, getCurrentDungeon().player.y);
-    calcVisibility(getCurrentDungeon().player.x, getCurrentDungeon().player.y, game.player.sight);
+    // draw the cells within the view
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = game.characterSize + "px mono";
     for (var x = view.x; x < view.x + view.width; x++) {
@@ -913,12 +912,16 @@ function draw() {
                         break;
                 }
             }
+            // reset visibility
+            getCurrentDungeon().cells[x][y].visible = false;
         }
     }
+    // messages and level info
     ctx.fillStyle = "#fff";
     ctx.fillText(getNextMessage(), 0, game.characterSize);
     ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
     ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
+    // menus
     if (ui.mode.includes("inventory")) {
         for (var i = 0; i < game.player.inventory.length; i++) {
             game.player.inventory[i].letter = String.fromCharCode(97 + i);
@@ -937,172 +940,4 @@ function draw() {
         ctx.fillText("Health: " + game.player.stats.health, canvas.width - (game.characterSize * 10), game.characterSize);
         ctx.fillText("Mana: " + game.player.stats.mana, canvas.width - (game.characterSize * 10), game.characterSize * 2);
     }
-}
-
-function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    //return 4;
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function getCurrentDungeon() {
-    return game.dungeons[game.level];
-}
-
-function getCreatureDungeon(creature) {
-    return game.dungeons[creature.level];
-}
-
-// sends out a ray in a certain direction, calling the action on every cell it comes across
-// with this implementation, some cells will be visited multiple times
-function raycast(sx, sy, r, dir, action) {
-    var dx = Math.cos(dir * (Math.PI / 180));
-    var dy = Math.sin(dir * (Math.PI / 180));
-    var cx = sx + 0.5;
-    var cy = sy + 0.5;
-    for (var i = 0; i < r; i++) {
-        var x = Math.trunc(cx);
-        var y = Math.trunc(cy);
-        if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
-            return;
-        }
-        action(x, y);
-        switch (getCurrentDungeon().cells[x][y].type) {
-            case "empty":
-                return;
-            case "wall":
-                return;
-            case "doorClosed":
-                return;
-        }
-        cx += dx;
-        cy += dy;
-    }
-}
-
-function pathfind(x1, y1, x2, y2) {
-    if (x1 < 0 || x1 >= getCurrentDungeon().width || y1 < 0 || y1 >= getCurrentDungeon().height || x2 < 0 || x2 >= getCurrentDungeon().width || y2 < 0 || y2 >= getCurrentDungeon().height) {
-        return;
-    }
-    if (getCurrentDungeon().cells[x1][y1].type == "wall" || getCurrentDungeon().cells[x2][y2].type == "wall") {
-        return;
-    }
-    var closedSet = [];
-    var openSet = [
-        getCurrentDungeon().cells[x1][y1]
-    ];
-    var cameFrom = [];
-    var gScore = [];
-    for (var x = 0; x < getCurrentDungeon().width; x++) {
-        for (var y = 0; y < getCurrentDungeon().height; y++) {
-            mapSet(gScore, getCurrentDungeon().cells[x][y], Infinity);
-        }
-    }
-    mapSet(gScore, getCurrentDungeon().cells[x1][y1], 0);
-    var fScore = [];
-    for (var x = 0; x < getCurrentDungeon().width; x++) {
-        for (var y = 0; y < getCurrentDungeon().height; y++) {
-            mapSet(fScore, getCurrentDungeon().cells[x][y], Infinity);
-        }
-    }
-    mapSet(fScore, getCurrentDungeon().cells[x1][y1], distanceBetween(x1, y1, x2, y2));
-    while (openSet.length > 0) {
-        var current;
-        var lowestFScore = Infinity;
-        for (var i = 0; i < openSet.length; i++) {
-            var value = mapGet(fScore, openSet[i]);
-            if (value < lowestFScore) {
-                current = openSet[i];
-                lowestFScore = value;
-            }
-        }
-        if (current == getCurrentDungeon().cells[x2][y2]) {
-            console.log("path found");
-            var path = [];
-            for (var i = 0; i < cameFrom.length; i++) {
-                path.push(cameFrom[i].key);
-            }
-            for (var i = 0; i < path.length; i++) {
-                path[i].type = "trap";
-            }
-            return;
-        }
-        openSet.splice(openSet.indexOf(current), 1);
-        closedSet.push(current);
-        var neighbors = [];
-        if (current.y - 1 >= 0) {
-            var neighbor = getCurrentDungeon().cells[current.x][current.y - 1];
-            if (neighbor.type != "wall") {
-                neighbors.push(neighbor);
-            }
-        }
-        if (current.x + 1 < getCurrentDungeon().width) {
-            var neighbor = getCurrentDungeon().cells[current.x + 1][current.y];
-            if (neighbor.type != "wall") {
-                neighbors.push(neighbor);
-            }
-        }
-        if (current.y + 1 < getCurrentDungeon().height) {
-            var neighbor = getCurrentDungeon().cells[current.x][current.y + 1];
-            if (neighbor.type != "wall") {
-                neighbors.push(neighbor);
-            }
-        }
-        if (current.x - 1 >= 0) {
-            var neighbor = getCurrentDungeon().cells[current.x - 1][current.y];
-            if (neighbor.type != "wall") {
-                neighbors.push(neighbor);
-            }
-        }
-        for (var i = 0; i < neighbors.length; i++) {
-            if (arrayContains(closedSet, neighbors[i])) {
-                continue;
-            }
-            var tentativeGScore = mapGet(gScore, current) + distanceBetween(current.x, current.y, neighbors[i].x, neighbors[i].y);
-            if (!arrayContains(openSet, neighbors[i])) {
-                openSet.push(neighbors[i]);
-            } else if (tentativeGScore >= mapGet(gScore, neighbors[i])) {
-                continue;
-            }
-            mapSet(cameFrom, neighbors[i], current);
-            mapSet(gScore, neighbors[i], tentativeGScore);
-            mapSet(fScore, neighbors[i], mapGet(gScore, neighbors[i]) + distanceBetween(neighbors[i].x, neighbors[i].y, x2, y2));
-        }
-    }
-}
-
-function distanceBetween(x1, y1, x2, y2) {
-    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-}
-
-function arrayContains(array, element) {
-    for (var i = 0; i < array.length; i++) {
-        if (array[i] == element) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function mapGet(map, key) {
-    for (var i = 0; i < map.length; i++) {
-        if (map[i].key == key) {
-            return map[i].value;
-        }
-    }
-    return null;
-}
-
-function mapSet(map, key, value) {
-    for (var i = 0; i < map.length; i++) {
-        if (map[i].key == key) {
-            map[i].value = value;
-            return;
-        }
-    }
-    map.push({
-        key: key,
-        value: value
-    });
 }
