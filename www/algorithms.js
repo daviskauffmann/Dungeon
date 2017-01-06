@@ -27,10 +27,8 @@ function raycast(sx, sy, r, dir, action) {
     }
 }
 
-function pathfind(x1, y1, x2, y2) {
-    if (x1 < 0 || x1 >= getCurrentDungeon().width || y1 < 0 || y1 >= getCurrentDungeon().height || x2 < 0 || x2 >= getCurrentDungeon().width || y2 < 0 || y2 >= getCurrentDungeon().height) {
-        return;
-    }
+// uses A* to find a path between two coordinates
+function pathfind(x1, y1, x2, y2, isPlayer) {
     var closedSet = [];
     var openSet = [
         getCurrentDungeon().cells[x1][y1]
@@ -92,21 +90,29 @@ function pathfind(x1, y1, x2, y2) {
         }
         for (var i = 0; i < neighbors.length; i++) {
             var blocked = false;
-            switch (neighbors[i].type) {
-                case "wall":
-                case "stairsUp":
-                case "stairsDown":
-                    blocked = true;
-                    break;
-            }
-            for (var j = 0; j < getCurrentDungeon().creatures.length; j++) {
-                if (neighbors[i].x == getCurrentDungeon().creatures[j].x && neighbors[i].y == getCurrentDungeon().creatures[j].y) {
-                    blocked = true;
+            if (isPlayer) {
+                switch (neighbors[i].type) {
+                    case "wall":
+                        blocked = true;
+                        break;
                 }
-            }
-            for (var j = 0; j < getCurrentDungeon().chests.length; j++) {
-                if (neighbors[i].x == getCurrentDungeon().chests[j].x && neighbors[i].y == getCurrentDungeon().chests[j].y) {
-                    blocked = true;
+            } else {
+                switch (neighbors[i].type) {
+                    case "wall":
+                    case "stairsUp":
+                    case "stairsDown":
+                        blocked = true;
+                        break;
+                }
+                for (var j = 0; j < getCurrentDungeon().creatures.length; j++) {
+                    if (neighbors[i].x == getCurrentDungeon().creatures[j].x && neighbors[i].y == getCurrentDungeon().creatures[j].y) {
+                        blocked = true;
+                    }
+                }
+                for (var j = 0; j < getCurrentDungeon().chests.length; j++) {
+                    if (neighbors[i].x == getCurrentDungeon().chests[j].x && neighbors[i].y == getCurrentDungeon().chests[j].y) {
+                        blocked = true;
+                    }
                 }
             }
             if (blocked) {

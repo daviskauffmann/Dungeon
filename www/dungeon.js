@@ -110,18 +110,20 @@ var view = {
     height: 0
 }
 var ui = {
-    mode: ""
+    mode: "",
+    inventorySwapFirst: null,
+    inventorySwapSecond: null
 }
 changeLevel(0);
+draw();
 window.addEventListener("resize", draw);
 
 function changeLevel(level) {
     game.level = level
     if (game.level == game.dungeons.length) {
-        createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 10, 20);
+        createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 10, 20);
     }
     game.messages.push("welcome to level " + (game.level + 1));
-    draw();
 }
 
 function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, creatureAmount, chestAmount) {
@@ -415,8 +417,6 @@ function getNextMessage() {
 }
 
 // player input
-var swapFirst;
-var swapSecond;
 document.addEventListener("keydown", function (e) {
     switch (ui.mode) {
         case "":
@@ -521,7 +521,7 @@ document.addEventListener("keydown", function (e) {
         case "inventory_swapFirst":
             for (var i = 0; i < game.player.inventory.length; i++) {
                 if (game.player.inventory[i].letter == e.key) {
-                    swapFirst = i;
+                    ui.inventorySwapFirst = i;
                     game.messages.push("select second item to swap");
                     game.messages.push("press space to cancel");
                     ui.mode = "inventory_swapSecond";
@@ -536,11 +536,11 @@ document.addEventListener("keydown", function (e) {
         case "inventory_swapSecond":
             for (var i = 0; i < game.player.inventory.length; i++) {
                 if (game.player.inventory[i].letter == e.key) {
-                    swapSecond = i;
-                    game.messages.push("you swap the " + game.player.inventory[swapFirst].name + " with the " + game.player.inventory[swapSecond].name);
-                    var t = game.player.inventory[swapFirst];
-                    game.player.inventory[swapFirst] = game.player.inventory[swapSecond];
-                    game.player.inventory[swapSecond] = t;
+                    ui.inventorySwapSecond = i;
+                    game.messages.push("you swap the " + game.player.inventory[ui.inventorySwapFirst].name + " with the " + game.player.inventory[ui.inventorySwapSecond].name);
+                    var t = game.player.inventory[ui.inventorySwapFirst];
+                    game.player.inventory[ui.inventorySwapFirst] = game.player.inventory[ui.inventorySwapSecond];
+                    game.player.inventory[ui.inventorySwapSecond] = t;
                     ui.mode = "";
                     draw();
                 }
@@ -569,33 +569,25 @@ document.addEventListener("keydown", function (e) {
 });
 
 document.addEventListener("mousedown", function (e) {
-    var x = e.clientX - canvas.getBoundingClientRect().left;
-    var y = e.clientY - canvas.getBoundingClientRect().top;
+    var x = view.x + Math.floor(e.x / game.characterSize);
+    var y = view.y + Math.floor(e.y / game.characterSize);
 
-    if (y < canvas.height * 0.25) {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
-    } else if (x > canvas.width * 0.75) {
-        movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
-    } else if (y > canvas.height * 0.75) {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
-    } else if (x < canvas.height * 0.25) {
-        movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
+    var path = pathfind(getCurrentDungeon().player.x, getCurrentDungeon().player.y, x, y, true);
+    if (path != null && path.length > 0) {
+        next = path.pop();
+        movePlayer(next.x, next.y);
     }
 });
 
 document.addEventListener("touchstart", function (e) {
     e.preventDefault();
-    var x = e.touches[0].clientX - canvas.getBoundingClientRect().left;
-    var y = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+    var x = view.x + Math.floor(e.touches[0].screenX / game.characterSize);
+    var y = view.y + Math.floor(e.touches[0].screenY / game.characterSize);
 
-    if (y < canvas.height * 0.25) {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y - 1);
-    } else if (x > canvas.width * 0.75) {
-        movePlayer(getCurrentDungeon().player.x + 1, getCurrentDungeon().player.y);
-    } else if (y > canvas.height * 0.75) {
-        movePlayer(getCurrentDungeon().player.x, getCurrentDungeon().player.y + 1);
-    } else if (x < canvas.height * 0.25) {
-        movePlayer(getCurrentDungeon().player.x - 1, getCurrentDungeon().player.y);
+    var path = pathfind(getCurrentDungeon().player.x, getCurrentDungeon().player.y, x, y, true);
+    if (path != null && path.length > 0) {
+        next = path.pop();
+        movePlayer(next.x, next.y);
     }
 });
 
@@ -723,7 +715,7 @@ function tickCreature(creature) {
         }
     }
     if (seePlayer) {
-        var path = pathfind(creature.x, creature.y, getCurrentDungeon().player.x, getCurrentDungeon().player.y);
+        var path = pathfind(creature.x, creature.y, getCurrentDungeon().player.x, getCurrentDungeon().player.y, false);
         if (path != null) {
             next = path.pop();
             moveCreature(creature, next.x, next.y);
@@ -788,8 +780,7 @@ function moveCreature(creature, x, y) {
                 move = false;
             }
         }
-    }
-    else {
+    } else {
         move = false;
     }
     if (move) {
@@ -818,6 +809,12 @@ function draw() {
     }
     if (view.y + view.height > getCurrentDungeon().height) {
         view.y = getCurrentDungeon().height - view.height;
+    }
+    // reset visibility
+    for (var x = view.x; x < view.x + view.width; x++) {
+        for (var y = view.y; y < view.y + view.height; y++) {
+            getCurrentDungeon().cells[x][y].visible = false;
+        }
     }
     // sends out rays to check visibility
     for (var i = 0; i < 360; i++) {
@@ -912,8 +909,6 @@ function draw() {
                         break;
                 }
             }
-            // reset visibility
-            getCurrentDungeon().cells[x][y].visible = false;
         }
     }
     // messages and level info
