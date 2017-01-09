@@ -817,7 +817,9 @@ function draw() {
     // reset visibility
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
-            getCurrentDungeon().cells[x][y].visible = false;
+            if (x >= 0 || x < getCurrentDungeon().width || y >= 0 || y < getCurrentDungeon().height) {
+                getCurrentDungeon().cells[x][y].visible = false;
+            }
         }
     }
     // sends out rays to check visibility
@@ -832,85 +834,83 @@ function draw() {
     ctx.font = game.characterSize + "px mono";
     for (var x = view.x; x < view.x + view.width; x++) {
         for (var y = view.y; y < view.y + view.height; y++) {
-            // check bounds
-            if (x < 0 || x >= getCurrentDungeon().width || y < 0 || y >= getCurrentDungeon().height) {
-                continue;
-            }
-            // draw player
-            if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
-                ctx.fillStyle = "#fff";
-                ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                continue;
-            }
-            // draw objects only if the current cell is visible
-            if (getCurrentDungeon().cells[x][y].visible) {
-                ctx.fillStyle = "#fff";
-                // creatures
-                var creature = false;
-                for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
-                    if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
-                        ctx.fillText(getCurrentDungeon().creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        creature = true;
-                    }
-                }
-                if (creature) {
+            if (x >= 0 || x < getCurrentDungeon().width || y >= 0 || y < getCurrentDungeon().height) {
+                // draw player
+                if (x == getCurrentDungeon().player.x && y == getCurrentDungeon().player.y) {
+                    ctx.fillStyle = "#fff";
+                    ctx.fillText("@", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
                     continue;
                 }
-                // corpses
-                var corpse = false;
-                for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
-                    if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
-                        ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        corpse = true;
-                    }
-                }
-                if (corpse) {
-                    continue;
-                }
-                // chests
-                var chest = false;
-                for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
-                    if (x == getCurrentDungeon().chests[i].x && y == getCurrentDungeon().chests[i].y) {
-                        ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        chest = true;
-                    }
-                }
-                if (chest) {
-                    continue;
-                }
-            }
-            // draw the environment
-            if (getCurrentDungeon().cells[x][y].visible || getCurrentDungeon().cells[x][y].discovered) {
+                // draw objects only if the current cell is visible
                 if (getCurrentDungeon().cells[x][y].visible) {
                     ctx.fillStyle = "#fff";
-                } else if (getCurrentDungeon().cells[x][y].discovered) {
-                    ctx.fillStyle = "#646464";
+                    // creatures
+                    var creature = false;
+                    for (var i = 0; i < getCurrentDungeon().creatures.length; i++) {
+                        if (x == getCurrentDungeon().creatures[i].x && y == getCurrentDungeon().creatures[i].y) {
+                            ctx.fillText(getCurrentDungeon().creatures[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            creature = true;
+                        }
+                    }
+                    if (creature) {
+                        continue;
+                    }
+                    // corpses
+                    var corpse = false;
+                    for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
+                        if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
+                            ctx.fillText("%", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            corpse = true;
+                        }
+                    }
+                    if (corpse) {
+                        continue;
+                    }
+                    // chests
+                    var chest = false;
+                    for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
+                        if (x == getCurrentDungeon().chests[i].x && y == getCurrentDungeon().chests[i].y) {
+                            ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            chest = true;
+                        }
+                    }
+                    if (chest) {
+                        continue;
+                    }
                 }
-                switch (getCurrentDungeon().cells[x][y].type) {
-                    case "empty":
-                        ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "floor":
-                        ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "wall":
-                        ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "doorClosed":
-                        ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "doorOpen":
-                        ctx.fillText("-", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "stairsUp":
-                        ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "stairsDown":
-                        ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
-                    case "trap":
-                        ctx.fillText("^", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
-                        break;
+                // draw the environment
+                if (getCurrentDungeon().cells[x][y].visible || getCurrentDungeon().cells[x][y].discovered) {
+                    if (getCurrentDungeon().cells[x][y].visible) {
+                        ctx.fillStyle = "#fff";
+                    } else if (getCurrentDungeon().cells[x][y].discovered) {
+                        ctx.fillStyle = "#646464";
+                    }
+                    switch (getCurrentDungeon().cells[x][y].type) {
+                        case "empty":
+                            ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "floor":
+                            ctx.fillText(".", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "wall":
+                            ctx.fillText("#", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "doorClosed":
+                            ctx.fillText("+", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "doorOpen":
+                            ctx.fillText("-", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "stairsUp":
+                            ctx.fillText("<", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "stairsDown":
+                            ctx.fillText(">", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                        case "trap":
+                            ctx.fillText("^", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+                            break;
+                    }
                 }
             }
         }
