@@ -107,11 +107,13 @@ function pathfind(x1, y1, x2, y2, isPlayer) {
                 for (var j = 0; j < getCurrentDungeon().creatures.length; j++) {
                     if (neighbors[i].x == getCurrentDungeon().creatures[j].x && neighbors[i].y == getCurrentDungeon().creatures[j].y) {
                         blocked = true;
+                        break;
                     }
                 }
                 for (var j = 0; j < getCurrentDungeon().chests.length; j++) {
                     if (neighbors[i].x == getCurrentDungeon().chests[j].x && neighbors[i].y == getCurrentDungeon().chests[j].y) {
                         blocked = true;
+                        break;
                     }
                 }
             }

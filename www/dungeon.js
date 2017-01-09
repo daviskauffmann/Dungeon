@@ -571,7 +571,6 @@ document.addEventListener("keydown", function (e) {
 document.addEventListener("mousedown", function (e) {
     var x = view.x + Math.floor(e.x / game.characterSize);
     var y = view.y + Math.floor(e.y / game.characterSize);
-
     var path = pathfind(getCurrentDungeon().player.x, getCurrentDungeon().player.y, x, y, true);
     if (path != null && path.length > 0) {
         next = path.pop();
@@ -583,12 +582,12 @@ document.addEventListener("touchstart", function (e) {
     e.preventDefault();
     var x = view.x + Math.floor(e.touches[0].screenX / game.characterSize);
     var y = view.y + Math.floor(e.touches[0].screenY / game.characterSize);
-
     var path = pathfind(getCurrentDungeon().player.x, getCurrentDungeon().player.y, x, y, true);
     if (path != null && path.length > 0) {
         next = path.pop();
         movePlayer(next.x, next.y);
     }
+    console.log(prompt());
 });
 
 function movePlayer(x, y) {
@@ -645,11 +644,13 @@ function movePlayer(x, y) {
                     getCurrentDungeon().corpses.push(corpse);
                     getCurrentDungeon().creatures.splice(i, 1);
                 }
+                break;
             }
         }
         for (var i = 0; i < getCurrentDungeon().corpses.length; i++) {
             if (x == getCurrentDungeon().corpses[i].x && y == getCurrentDungeon().corpses[i].y) {
                 game.messages.push("you see a dead " + getCurrentDungeon().corpses[i].name);
+                break;
             }
         }
         for (var i = 0; i < getCurrentDungeon().chests.length; i++) {
@@ -673,6 +674,7 @@ function movePlayer(x, y) {
                 } else {
                     game.messages.push("the chest won't open");
                 }
+                break;
             }
         }
     } else {
@@ -773,11 +775,13 @@ function moveCreature(creature, x, y) {
             }
             if (x == getCreatureDungeon(creature).creatures[i].x && y == getCreatureDungeon(creature).creatures[i].y) {
                 move = false;
+                break;
             }
         }
         for (var i = 0; i < getCreatureDungeon(creature).chests.length; i++) {
             if (x == getCreatureDungeon(creature).chests[i].x && y == getCreatureDungeon(creature).chests[i].y) {
                 move = false;
+                break;
             }
         }
     } else {
