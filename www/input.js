@@ -1,45 +1,49 @@
 ﻿document.addEventListener("keydown", function (e) {
+	var player = getPlayer();
+	if (player == null) {
+		return;
+	}
 	switch (ui.mode) {
 		case "":
 			if (e.key == "ArrowUp") {
-				movePlayer(game.dungeons[game.level].player.x, game.dungeons[game.level].player.y - 1);
+				movePlayer(player.x, player.y - 1);
 				tick();
 			}
 			if (e.key == "ArrowRight") {
-				movePlayer(game.dungeons[game.level].player.x + 1, game.dungeons[game.level].player.y);
+				movePlayer(player.x + 1, player.y);
 				tick();
 			}
 			if (e.key == "ArrowDown") {
-				movePlayer(game.dungeons[game.level].player.x, game.dungeons[game.level].player.y + 1);
+				movePlayer(player.x, player.y + 1);
 				tick();
 			}
 			if (e.key == "ArrowLeft") {
-				movePlayer(game.dungeons[game.level].player.x - 1, game.dungeons[game.level].player.y);
+				movePlayer(player.x - 1, player.y);
 				tick();
 			}
 			if (e.key == ".") {
 				tick();
 			}
 			if (e.key == "g") {
-				for (var i = 0; i < game.dungeons[game.level].items.length; i++) {
-					if (game.dungeons[game.level].player.x == game.dungeons[game.level].items[i].x && game.dungeons[game.level].player.y == game.dungeons[game.level].items[i].y) {
-						game.messages.push("you pick up a " + game.dungeons[game.level].items[i].name);
-						game.player.inventory.push(game.dungeons[game.level].items[i]);
-						game.dungeons[game.level].items.splice(i, 1);
+				for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
+					if (player.x == game.dungeons[player.level].items[i].x && player.y == game.dungeons[player.level].items[i].y) {
+						game.messages.push("you pick up a " + game.dungeons[player.level].items[i].name);
+						player.inventory.push(game.dungeons[player.level].items[i]);
+						game.dungeons[player.level].items.splice(i, 1);
 						draw();
 						break;
 					}
 				}
 			}
 			if (e.key == "c") {
-				if (game.dungeons[game.level].cells[game.dungeons[game.level].player.x][game.dungeons[game.level].player.y].type == "doorOpen") {
+				if (game.dungeons[player.level].cells[player.x][player.y].type == "doorOpen") {
 					game.messages.push("you close the door");
-					game.dungeons[game.level].cells[game.dungeons[game.level].player.x][game.dungeons[game.level].player.y].type = "doorClosed"
+					game.dungeons[player.level].cells[player.x][player.y].type = "doorClosed"
 					draw();
 				}
 			}
 			if (e.key == "i") {
-				if (game.player.inventory.length > 0) {
+				if (player.inventory.length > 0) {
 					ui.mode = "inventory";
 					draw();
 				}
@@ -84,13 +88,13 @@
 			}
 			break;
 		case "inventory_drop":
-			for (var i = 0; i < game.player.inventory.length; i++) {
-				if (game.player.inventory[i].index == e.key) {
-					game.messages.push("you drop a " + game.player.inventory[i].name);
-					game.player.inventory[i].x = game.dungeons[game.level].player.x;
-					game.player.inventory[i].y = game.dungeons[game.level].player.y;
-					game.dungeons[game.level].items.push(game.player.inventory[i]);
-					game.player.inventory.splice(i, 1);
+			for (var i = 0; i < player.inventory.length; i++) {
+				if (player.inventory[i].index == e.key) {
+					game.messages.push("you drop a " + player.inventory[i].name);
+					player.inventory[i].x = player.x;
+					player.inventory[i].y = player.y;
+					game.dungeons[player.level].items.push(player.inventory[i]);
+					player.inventory.splice(i, 1);
 					ui.mode = "";
 					draw();
 				}
@@ -101,10 +105,10 @@
 			}
 			break;
 		case "inventory_equip":
-			for (var i = 0; i < game.player.inventory.length; i++) {
-				if (game.player.inventory[i].index == e.key) {
-					game.messages.push("you equip a " + game.player.inventory[i].name);
-					game.player.inventory[i].equipped = true;
+			for (var i = 0; i < player.inventory.length; i++) {
+				if (player.inventory[i].index == e.key) {
+					game.messages.push("you equip a " + player.inventory[i].name);
+					player.inventory[i].equipped = true;
 					ui.mode = "";
 					draw();
 				}
@@ -115,10 +119,10 @@
 			}
 			break;
 		case "inventory_unequip":
-			for (var i = 0; i < game.player.inventory.length; i++) {
-				if (game.player.inventory[i].index == e.key) {
-					game.messages.push("you unequip a " + game.player.inventory[i].name);
-					game.player.inventory[i].equipped = false;
+			for (var i = 0; i < player.inventory.length; i++) {
+				if (player.inventory[i].index == e.key) {
+					game.messages.push("you unequip a " + player.inventory[i].name);
+					player.inventory[i].equipped = false;
 					ui.mode = "";
 					draw();
 				}
@@ -129,8 +133,8 @@
 			}
 			break;
 		case "inventory_swapFirst":
-			for (var i = 0; i < game.player.inventory.length; i++) {
-				if (game.player.inventory[i].index == e.key) {
+			for (var i = 0; i < player.inventory.length; i++) {
+				if (player.inventory[i].index == e.key) {
 					ui.inventorySwapFirst = i;
 					game.messages.push("select second item to swap");
 					game.messages.push("press space to cancel");
@@ -144,13 +148,13 @@
 			}
 			break;
 		case "inventory_swapSecond":
-			for (var i = 0; i < game.player.inventory.length; i++) {
-				if (game.player.inventory[i].index == e.key) {
+			for (var i = 0; i < player.inventory.length; i++) {
+				if (player.inventory[i].index == e.key) {
 					ui.inventorySwapSecond = i;
-					game.messages.push("you swap the " + game.player.inventory[ui.inventorySwapFirst].name + " with the " + game.player.inventory[ui.inventorySwapSecond].name);
-					var t = game.player.inventory[ui.inventorySwapFirst];
-					game.player.inventory[ui.inventorySwapFirst] = game.player.inventory[ui.inventorySwapSecond];
-					game.player.inventory[ui.inventorySwapSecond] = t;
+					game.messages.push("you swap the " + player.inventory[ui.inventorySwapFirst].name + " with the " + player.inventory[ui.inventorySwapSecond].name);
+					var t = player.inventory[ui.inventorySwapFirst];
+					player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
+					player.inventory[ui.inventorySwapSecond] = t;
 					ui.mode = "";
 					draw();
 				}
@@ -167,24 +171,32 @@
 			}
 			break;
 	}
-	if (e.key == "1") {
-		//localStorage.setItem("game", JSON.stringify(game));
+	/*if (e.key == "1") {
+		localStorage.setItem("game", JSON.stringify(game));
 		console.log(JSON.stringify(game));
 		game.messages.push("game saved");
 	}
 	if (e.key == "2") {
-		//game = JSON.parse(localStorage.getItem("game"));
+		game = JSON.parse(localStorage.getItem("game"));
+		console.log(game);
 		game.messages.push("game loaded");
-		changeLevel(game.level);
+		draw();
+	}*/
+	if (e.key == " ") {
+		game.stopTime = !game.stopTime;
 	}
 });
 
 function movePlayer(x, y) {
+	var player = getPlayer();
+	if (player == null) {
+		return;
+	}
 	var move = true;
 	var ascend = false;
 	var descend = false;
-	if (x >= 0 && x < game.dungeons[game.level].width && y >= 0 && y < game.dungeons[game.level].height) {
-		switch (game.dungeons[game.level].cells[x][y].type) {
+	if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
+		switch (game.dungeons[player.level].cells[x][y].type) {
 			case "wall":
 				move = false;
 				break;
@@ -193,7 +205,7 @@ function movePlayer(x, y) {
 				var roll = Math.random();
 				if (roll > 0.5) {
 					game.messages.push("you open the door");
-					game.dungeons[game.level].cells[x][y].type = "doorOpen";
+					game.dungeons[player.level].cells[x][y].type = "doorOpen";
 				}
 				else {
 					game.messages.push("the door won't budge");
@@ -201,10 +213,10 @@ function movePlayer(x, y) {
 				break;
 			case "trap":
 				game.messages.push("you triggered a trap!");
-				game.dungeons[game.level].cells[x][y].type = "floor";
+				game.dungeons[player.level].cells[x][y].type = "floor";
 				break;
 			case "stairsUp":
-				if (game.level == 0) {
+				if (player.level == 0) {
 					document.location.reload();
 				}
 				else {
@@ -217,12 +229,12 @@ function movePlayer(x, y) {
 				descend = true;
 				break;
 		}
-		for (var i = 0; i < game.dungeons[game.level].entities.length; i++) {
-			if (x == game.dungeons[game.level].entities[i].x && y == game.dungeons[game.level].entities[i].y) {
+		for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
+			if (x == game.dungeons[player.level].entities[i].x && y == game.dungeons[player.level].entities[i].y) {
 				move = false;
 				var friendly = true;
-				for (var j = 0; j < game.dungeons[game.level].entities[i].factions.length; j++) {
-					if (arrayContains(game.player.hostileFactions, game.dungeons[game.level].entities[i].factions[j])) {
+				for (var j = 0; j < game.dungeons[player.level].entities[i].factions.length; j++) {
+					if (arrayContains(player.hostileFactions, game.dungeons[player.level].entities[i].factions[j])) {
 						friendly = false;
 					}
 				}
@@ -231,51 +243,49 @@ function movePlayer(x, y) {
 				}
 				var roll = Math.random();
 				if (roll < 0.5) {
-					game.messages.push("you miss the " + game.dungeons[game.level].entities[i].name);
+					game.messages.push("you miss the " + game.dungeons[player.level].entities[i].name);
 				} else {
-					game.messages.push("you kill the " + game.dungeons[game.level].entities[i].name);
+					game.messages.push("you kill the " + game.dungeons[player.level].entities[i].name);
 					var corpse = {
 						x: x,
 						y: y,
-						name: game.dungeons[game.level].entities[i].name + " corpse",
+						name: game.dungeons[player.level].entities[i].name + " corpse",
 						char: "%",
 						index: ""
 					}
-					game.dungeons[game.level].items.push(corpse);
-					game.dungeons[game.level].entities.splice(i, 1);
+					game.dungeons[player.level].items.push(corpse);
+					game.dungeons[player.level].entities.splice(i, 1);
 				}
 				break;
 			}
 		}
-		for (var i = 0; i < game.dungeons[game.level].chests.length; i++) {
-			if (x == game.dungeons[game.level].chests[i].x && y == game.dungeons[game.level].chests[i].y) {
+		for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
+			if (x == game.dungeons[player.level].chests[i].x && y == game.dungeons[player.level].chests[i].y) {
 				move = false;
 				var roll = Math.random();
 				if (roll > 0.5) {
 					game.messages.push("you open the chest");
-					var loot = game.dungeons[game.level].chests[i].loot;
+					var loot = game.dungeons[player.level].chests[i].loot;
 					if (loot == null) {
 						game.messages.push("there is nothing inside");
 					} else {
-						if (game.player.inventory.length >= 26) {
+						if (player.inventory.length >= 26) {
 							game.messages.push("inventory is full");
 						} else {
 							game.messages.push("you loot a " + loot.name);
-							game.player.inventory.push(loot);
+							player.inventory.push(loot);
 						}
 					}
-					game.dungeons[game.level].chests.splice(i, 1);
+					game.dungeons[player.level].chests.splice(i, 1);
 				} else {
 					game.messages.push("the chest won't open");
 				}
 				break;
 			}
 		}
-		for (var i = 0; i < game.dungeons[game.level].items.length; i++) {
-			if (x == game.dungeons[game.level].items[i].x && y == game.dungeons[game.level].items[i].y) {
-				game.messages.push("you see a " + game.dungeons[game.level].items[i].name);
-				//game.player.inventory.push(game.dungeons[game.level].items[i]);
-				//game.dungeons[game.level].items.splice(i, 1);
+		for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
+			if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
+				game.messages.push("you see a " + game.dungeons[player.level].items[i].name);
 				break;
 			}
 		}
@@ -283,21 +293,21 @@ function movePlayer(x, y) {
 		move = false;
 	}
 	if (move) {
-		game.dungeons[game.level].player.x = x;
-		game.dungeons[game.level].player.y = y;
+		player.x = x;
+		player.y = y;
 	}
 	if (ascend) {
-		changeLevel(game.level - 1);
+		changeLevel(player, player.level - 1, "stairsDown");
 	}
 	if (descend) {
-		changeLevel(game.level + 1);
+		changeLevel(player, player.level + 1, "stairsUp");
 	}
 }
 
-document.addEventListener("mousedown", function (e) {
+/*document.addEventListener("mousedown", function (e) {
 	var x = view.x + Math.floor(e.x / game.characterSize);
 	var y = view.y + Math.floor(e.y / game.characterSize);
-	var path = pathfind(game.dungeons[game.level], game.dungeons[game.level].player.x, game.dungeons[game.level].player.y, x, y);
+	var path = pathfind(game.dungeons[player.level], player.x, player.y, x, y);
 	if (path != null && path.length > 0) {
 		next = path.pop();
 		movePlayer(next.x, next.y);
@@ -309,10 +319,10 @@ document.addEventListener("touchstart", function (e) {
 	e.preventDefault();
 	var x = view.x + Math.floor(e.touches[0].screenX / game.characterSize);
 	var y = view.y + Math.floor(e.touches[0].screenY / game.characterSize);
-	var path = pathfind(game.dungeons[game.level], game.dungeons[game.level].player.x, game.dungeons[game.level].player.y, x, y);
+	var path = pathfind(game.dungeons[player.level], player.x, player.y, x, y);
 	if (path != null && path.length > 0) {
 		next = path.pop();
 		movePlayer(next.x, next.y);
 		tick();
 	}
-});
+});*/

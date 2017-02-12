@@ -62,7 +62,7 @@ function pathfind(dungeon, x1, y1, x2, y2) {
                 lowestFScore = value;
             }
         }
-        if (current == dungeon.cells[x2][y2] || passes > Infinity) {
+        if (current == dungeon.cells[x2][y2] || passes > 50) {
             var path = [
                 current
             ];
@@ -71,7 +71,6 @@ function pathfind(dungeon, x1, y1, x2, y2) {
                 path.push(current);
             }
             path.pop();
-            console.log(passes);
             return path;
         }
         openSet.splice(openSet.indexOf(current), 1);
@@ -121,6 +120,5 @@ function pathfind(dungeon, x1, y1, x2, y2) {
         }
         passes++;
     }
-    console.log(passes);
     return null;
 }

@@ -170,16 +170,100 @@ TODO
 			hostileFactions: [],
 			hostileEntities: []
 		}
+	combine movePlayer() and moveEntity() into the same function
 */
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var game = {
 	id: 1,
-	player: {
+	dungeons: [],
+	turn: 0,
+	stopTime: false,
+	characterSize: 24,
+	messages: []
+}
+var view = {
+	x: 0,
+	y: 0,
+	width: 0,
+	height: 0
+}
+var ui = {
+	mode: "",
+	inventorySwapFirst: null,
+	inventorySwapSecond: null
+}
+createTown();
+draw();
+window.addEventListener("resize", draw);
+
+function getPlayer() {
+	for (var i = 0; i < game.dungeons.length; i++) {
+		for (var j = 0; j < game.dungeons[i].entities.length; j++) {
+			if (game.dungeons[i].entities[j].id == 0) {
+				return game.dungeons[i].entities[j];
+			}
+		}
+	}
+	return null;
+}
+
+function changeLevel(entity, level, cellType) {
+	if (level == game.dungeons.length) {
+		createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 10, 1);
+	}
+	game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
+	entity.level = level;
+	game.dungeons[entity.level].entities.push(entity);
+	for (var x = 0; x < game.dungeons[entity.level].width; x++) {
+		for (var y = 0; y < game.dungeons[entity.level].height; y++) {
+			if (game.dungeons[entity.level].cells[x][y].type == cellType) {
+				entity.x = x;
+				entity.y = y;
+				break;
+			}
+		}
+	}
+	game.messages.push(entity.name + " has moved to level " + (entity.level));
+}
+
+function createTown() {
+	var dungeon = {
+		width: 25,
+		height: 25,
+		cells: [],
+		rooms: [],
+		entities: [],
+		chests: [],
+		items: []
+	}
+
+	// create the grass
+	for (var x = 0; x < dungeon.width; x++) {
+		dungeon.cells[x] = [];
+		for (var y = 0; y < dungeon.height; y++) {
+			dungeon.cells[x][y] = {
+				x: x,
+				y: y,
+				type: "grass",
+				discovered: false,
+				visible: false
+			}
+		}
+	}
+	// create the stairs down
+	var x = Math.round(dungeon.width / 2);
+	var y = Math.round(dungeon.height / 2);
+	dungeon.cells[x][y].type = "stairsDown";
+	// create the player
+	var player = {
 		id: 0,
+		x: 0,
+		y: 0,
 		name: "player",
 		char: "@",
+		level: 0,
 		stats: {
 			level: 1,
 
@@ -208,71 +292,19 @@ var game = {
 			"monster"
 		],
 		hostileEntities: []
-	},
-	dungeons: [],
-	level: 0,
-	turn: 0,
-	characterSize: 24,
-	messages: []
-}
-var view = {
-	x: 0,
-	y: 0,
-	width: 0,
-	height: 0
-}
-var ui = {
-	mode: "",
-	inventorySwapFirst: null,
-	inventorySwapSecond: null
-}
-changeLevel(0);
-draw();
-window.addEventListener("resize", draw);
-
-function changeLevel(level) {
-	game.level = level
-	if (game.level == game.dungeons.length) {
-		if (game.level == -1) {
-			createTown();
-			game.messages.push("welcome to the town");
-		} else {
-			createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 20, 1);
-			game.messages.push("welcome to level " + (game.level + 1));
-		}
 	}
-}
-
-function createTown() {
-	var dungeon = {
-		width: 50,
-		height: 50,
-		cells: [],
-		rooms: [],
-		player: {
-			x: 0,
-			y: 0
-		},
-		entities: [],
-		corpses: [],
-		chests: [],
-		items: []
-	}
+	dungeon.entities.push(player);
+	// move the player to the spawnpoint
 	for (var x = 0; x < dungeon.width; x++) {
-		dungeon.cells[x] = [];
 		for (var y = 0; y < dungeon.height; y++) {
-			dungeon.cells[x][y] = {
-				x: x,
-				y: y,
-				type: "grass",
-				discovered: false,
-				visible: false
+			if (dungeon.cells[x][y].type == "stairsDown") {
+				player.x = x;
+				player.y = y;
+				break;
 			}
 		}
 	}
-	dungeon.player.x = Math.round(dungeon.width / 2);
-	dungeon.player.y = Math.round(dungeon.height / 2);
-	dungeon.cells[dungeon.player.x][dungeon.player.y].type = "stairsDown";
+	// add to the list
 	game.dungeons.push(dungeon);
 }
 
@@ -282,11 +314,6 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 		height: height,
 		cells: [],
 		rooms: [],
-		// each dungeon keeps track of the player's position in that dungeon, rather than the player itself
-		player: {
-			x: 0,
-			y: 0
-		},
 		entities: [],
 		chests: [],
 		items: []
@@ -473,16 +500,6 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 		var y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
 		dungeon.cells[x][y].type = "stairsDown";
 	}
-	// move player to the stairs up
-	for (var x = 0; x < dungeon.width; x++) {
-		for (var y = 0; y < dungeon.height; y++) {
-			if (dungeon.cells[x][y].type == "stairsUp") {
-				dungeon.player.x = x;
-				dungeon.player.y = y;
-				break;
-			}
-		}
-	}
 	// spawn entities in random rooms at random locations
 	if (dungeon.rooms.length > 1) {
 		for (var i = 0; i < monsterAmount; i++) {
@@ -495,7 +512,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 				y: y,
 				name: "",
 				char: "",
-				level: game.level,
+				level: game.dungeons.length,
 				stats: {
 					level: 1,
 
@@ -600,16 +617,23 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 			dungeon.chests.push(chest);
 		}
 	}
-	// add to list
+	// add to the list
 	game.dungeons.push(dungeon);
+	console.log(dungeon);
+	return dungeon;
 }
 
 // this gets called when the player takes an action
 function tick() {
-	// update all the entities in all dungeons
-	for (var i = 0; i < game.dungeons.length; i++) {
-		for (var j = 0; j < game.dungeons[i].entities.length; j++) {
-			tickEntity(game.dungeons[i].entities[j]);
+	if (!game.stopTime) {
+		// update all the entities in all dungeons
+		for (var i = 0; i < game.dungeons.length; i++) {
+			for (var j = 0; j < game.dungeons[i].entities.length; j++) {
+				if (game.dungeons[i].entities[j].id == 0) {
+					continue;
+				}
+				tickEntity(game.dungeons[i].entities[j]);
+			}
 		}
 	}
 	game.turn++;
@@ -620,24 +644,6 @@ function tickEntity(entity) {
 	var targets = [];
 	for (var i = 0; i < 360; i++) {
 		raycast(game.dungeons[entity.level], entity.x, entity.y, entity.stats.sight, i, function (x, y) {
-			if (game.dungeons[entity.level] == game.dungeons[game.level]) {
-				if (x == game.dungeons[entity.level].player.x && y == game.dungeons[entity.level].player.y) {
-					if (arrayContains(targets, game.player)) {
-						return;
-					}
-					var hostile = false;
-					for (var j = 0; j < game.player.factions.length; j++) {
-						if (arrayContains(entity.hostileFactions, game.player.factions[j])) {
-							hostile = true;
-							break;
-						}
-					}
-					if (hostile) {
-						targets.push(game.player);
-						return true;
-					}
-				}
-			}
 			for (var j = 0; j < game.dungeons[entity.level].entities.length; j++) {
 				if (game.dungeons[entity.level].entities[j] == entity) {
 					continue;
@@ -663,18 +669,10 @@ function tickEntity(entity) {
 	}
 	if (targets.length > 0) {
 		var target = targets[0];
-		if (target.id == 0) {
-			var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, game.dungeons[entity.level].player.x, game.dungeons[entity.level].player.y);
-			if (path != null > 0 && path.length > 0) {
-				next = path.pop();
-				moveEntity(entity, next.x, next.y);
-			}
-		} else {
-			var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, target.x, target.y);
-			if (path != null && path.length > 0) {
-				next = path.pop();
-				moveEntity(entity, next.x, next.y);
-			}
+		var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, target.x, target.y);
+		if (path != null && path.length > 0) {
+			next = path.pop();
+			moveEntity(entity, next.x, next.y);
 		}
 	} else {
 		var roll = Math.random();
@@ -692,6 +690,8 @@ function tickEntity(entity) {
 
 function moveEntity(entity, x, y) {
 	var move = true;
+	var ascend = false;
+	var descend = false;
 	if (x >= 0 && x < game.dungeons[entity.level].width && y >= 0 && y < game.dungeons[entity.level].height) {
 		switch (game.dungeons[entity.level].cells[x][y].type) {
 			case "wall":
@@ -701,30 +701,22 @@ function moveEntity(entity, x, y) {
 				move = false;
 				var roll = Math.random();
 				if (roll > 0.5) {
-					game.dungeons[game.level].cells[x][y].type = "doorOpen";
+					game.dungeons[entity.level].cells[x][y].type = "doorOpen";
 				}
 				break;
-		}
-		if (game.dungeons[entity.level] == game.dungeons[game.level]) {
-			if (x == game.dungeons[entity.level].player.x && y == game.dungeons[entity.level].player.y) {
-				move = false;
-				var hostile = false;
-				for (var i = 0; i < game.player.factions.length; i++) {
-					if (arrayContains(entity.hostileFactions, game.player.factions[i])) {
-						hostile = true;
-						break;
-					}
+			case "stairsUp":
+				if (entity.level == 0) {
+					break;
 				}
-				if (hostile) {
-					var roll = Math.random();
-					if (roll < 0.5) {
-						game.messages.push("the " + entity.name + " misses you");
-					}
-					else {
-						game.messages.push("the " + entity.name + " attacks you");
-					}
+				else {
+					game.messages.push(entity.name + " ascends");
+					ascend = true;
 				}
-			}
+				break;
+			case "stairsDown":
+				game.messages.push(entity.name + " descends");
+				descend = true;
+				break;
 		}
 		for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
 			if (game.dungeons[entity.level].entities[i] == entity) {
@@ -733,7 +725,7 @@ function moveEntity(entity, x, y) {
 			if (x == game.dungeons[entity.level].entities[i].x && y == game.dungeons[entity.level].entities[i].y) {
 				move = false;
 				var hostile = false;
-				for (var j = 0; j < game.dungeons[entity.level].entities[j].factions.length; j++) {
+				for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
 					if (arrayContains(entity.hostileFactions, game.dungeons[entity.level].entities[i].factions[j])) {
 						hostile = true;
 						break;
@@ -742,18 +734,22 @@ function moveEntity(entity, x, y) {
 				if (hostile) {
 					var roll = Math.random();
 					if (roll < 0.5) {
-						game.messages.push("the " + entity.name + " misses the " + game.dungeons[game.level].entities[i].name);
+						game.messages.push("the " + entity.name + " misses the " + game.dungeons[entity.level].entities[i].name);
 					} else {
-						game.messages.push("the " + entity.name + " kills the " + game.dungeons[game.level].entities[i].name);
+						// FIXME
+						if (game.dungeons[entity.level].entities[i].id == 0) {
+							break;
+						}
+						game.messages.push("the " + entity.name + " kills the " + game.dungeons[entity.level].entities[i].name);
 						var corpse = {
 							x: x,
 							y: y,
-							name: game.dungeons[game.level].entities[i].name + " corpse",
+							name: game.dungeons[entity.level].entities[i].name + " corpse",
 							char: "%",
 							index: ""
 						}
-						game.dungeons[game.level].items.push(corpse);
-						game.dungeons[game.level].entities.splice(i, 1);
+						game.dungeons[entity.level].items.push(corpse);
+						game.dungeons[entity.level].entities.splice(i, 1);
 					}
 					break;
 				}
@@ -765,6 +761,12 @@ function moveEntity(entity, x, y) {
 	if (move) {
 		entity.x = x;
 		entity.y = y;
+	}
+	if (ascend) {
+		changeLevel(entity, entity.level - 1, "stairsDown");
+	}
+	if (descend) {
+		changeLevel(entity, entity.level + 1, "stairsUp");
 	}
 }
 
@@ -779,61 +781,65 @@ function getNextMessage() {
 }
 
 function draw() {
+	var player = getPlayer();
+	if (player == null) {
+		return;
+	}
 	// resize the canvas
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 	// center the view on the player, while staying within the bounds of the dungeon
 	view.width = Math.round(canvas.width / game.characterSize);
 	view.height = Math.round(canvas.height / game.characterSize);
-	view.x = game.dungeons[game.level].player.x - Math.round(view.width / 2);
-	view.y = game.dungeons[game.level].player.y - Math.round(view.height / 2);
+	view.x = player.x - Math.round(view.width / 2);
+	view.y = player.y - Math.round(view.height / 2);
 	if (view.x < 0) {
 		view.x = 0;
 	}
-	if (view.x + view.width > game.dungeons[game.level].width) {
-		view.x = game.dungeons[game.level].width - view.width;
+	if (view.x + view.width > game.dungeons[player.level].width) {
+		view.x = game.dungeons[player.level].width - view.width;
 	}
 	if (view.y < 0) {
 		view.y = 0;
 	}
-	if (view.y + view.height > game.dungeons[game.level].height) {
-		view.y = game.dungeons[game.level].height - view.height;
+	if (view.y + view.height > game.dungeons[player.level].height) {
+		view.y = game.dungeons[player.level].height - view.height;
 	}
 	// reset visibility
 	for (var x = view.x; x < view.x + view.width; x++) {
 		for (var y = view.y; y < view.y + view.height; y++) {
-			if (x >= 0 && x < game.dungeons[game.level].width && y >= 0 && y < game.dungeons[game.level].height) {
-				game.dungeons[game.level].cells[x][y].visible = false;
+			if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
+				game.dungeons[player.level].cells[x][y].visible = false;
 			}
 		}
 	}
 	// sends out rays to check visibility
 	for (var i = 0; i < 360; i++) {
-		raycast(game.dungeons[game.level], game.dungeons[game.level].player.x, game.dungeons[game.level].player.y, game.player.stats.sight, i, function (x, y) {
-			game.dungeons[game.level].cells[x][y].discovered = true;
-			game.dungeons[game.level].cells[x][y].visible = true;
+		raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, i, function (x, y) {
+			game.dungeons[player.level].cells[x][y].discovered = true;
+			game.dungeons[player.level].cells[x][y].visible = true;
 		});
 	}
 	// draw the cells within the view
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	for (var x = view.x; x < view.x + view.width; x++) {
 		for (var y = view.y; y < view.y + view.height; y++) {
-			if (x >= 0 && x < game.dungeons[game.level].width && y >= 0 && y < game.dungeons[game.level].height) {
+			if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
 				ctx.font = game.characterSize + "px mono";
 				ctx.fillStyle = "#fff";
 				ctx.globalAlpha = 1;
 				// draw player
-				if (x == game.dungeons[game.level].player.x && y == game.dungeons[game.level].player.y) {
-					ctx.fillText(game.player.char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+				if (x == player.x && y == player.y) {
+					ctx.fillText(player.char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
 					continue;
 				}
 				// draw objects only if the current cell is visible
-				if (game.dungeons[game.level].cells[x][y].visible) {
+				if (game.dungeons[player.level].cells[x][y].visible) {
 					// entities
 					var entity = false;
-					for (var i = 0; i < game.dungeons[game.level].entities.length; i++) {
-						if (x == game.dungeons[game.level].entities[i].x && y == game.dungeons[game.level].entities[i].y) {
-							ctx.fillText(game.dungeons[game.level].entities[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+					for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
+						if (x == game.dungeons[player.level].entities[i].x && y == game.dungeons[player.level].entities[i].y) {
+							ctx.fillText(game.dungeons[player.level].entities[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
 							entity = true;
 						}
 					}
@@ -842,8 +848,8 @@ function draw() {
 					}
 					// chests
 					var chest = false;
-					for (var i = 0; i < game.dungeons[game.level].chests.length; i++) {
-						if (x == game.dungeons[game.level].chests[i].x && y == game.dungeons[game.level].chests[i].y) {
+					for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
+						if (x == game.dungeons[player.level].chests[i].x && y == game.dungeons[player.level].chests[i].y) {
 							ctx.fillText("~", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
 							chest = true;
 						}
@@ -852,9 +858,9 @@ function draw() {
 						continue;
 					}
 					var item = false;
-					for (var i = 0; i < game.dungeons[game.level].items.length; i++) {
-						if (x == game.dungeons[game.level].items[i].x && y == game.dungeons[game.level].items[i].y) {
-							ctx.fillText(game.dungeons[game.level].items[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
+					for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
+						if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
+							ctx.fillText(game.dungeons[player.level].items[i].char, (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
 							item = true;
 						}
 					}
@@ -863,14 +869,14 @@ function draw() {
 					}
 				}
 				// draw the environment
-				if (game.dungeons[game.level].cells[x][y].visible || game.dungeons[game.level].cells[x][y].discovered) {
-					if (game.dungeons[game.level].cells[x][y].visible) {
+				if (game.dungeons[player.level].cells[x][y].visible || game.dungeons[player.level].cells[x][y].discovered) {
+					if (game.dungeons[player.level].cells[x][y].visible) {
 						ctx.globalAlpha = 1;
-					} else if (game.dungeons[game.level].cells[x][y].discovered) {
+					} else if (game.dungeons[player.level].cells[x][y].discovered) {
 						ctx.globalAlpha = 0.25;
 					}
 					ctx.fillStyle = "#fff";
-					switch (game.dungeons[game.level].cells[x][y].type) {
+					switch (game.dungeons[player.level].cells[x][y].type) {
 						case "empty":
 							ctx.fillText(" ", (x - view.x) * game.characterSize, (y - view.y + 1) * game.characterSize);
 							break;
@@ -909,24 +915,24 @@ function draw() {
 	ctx.globalAlpha = 1;
 	ctx.fillText(getNextMessage(), 0, game.characterSize);
 	ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
-	ctx.fillText("Level:" + (game.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
+	ctx.fillText("Level:" + (player.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 	// menus
 	if (ui.mode.includes("inventory")) {
-		for (var i = 0; i < game.player.inventory.length; i++) {
-			game.player.inventory[i].index = String.fromCharCode(97 + i);
+		for (var i = 0; i < player.inventory.length; i++) {
+			player.inventory[i].index = String.fromCharCode(97 + i);
 		}
 		ctx.fillStyle = "#000";
-		ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, game.player.inventory.length * 26);
+		ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, player.inventory.length * 26);
 		ctx.fillStyle = "#fff";
-		for (var i = 0; i < game.player.inventory.length; i++) {
-			ctx.fillText(game.player.inventory[i].index + ") " + game.player.inventory[i].name + (game.player.inventory[i].equipped ? " (equipped)" : ""), canvas.width - (game.characterSize * 10), (i + 1) * game.characterSize);
+		for (var i = 0; i < player.inventory.length; i++) {
+			ctx.fillText(player.inventory[i].index + ") " + player.inventory[i].name + (player.inventory[i].equipped ? " (equipped)" : ""), canvas.width - (game.characterSize * 10), (i + 1) * game.characterSize);
 		}
 	}
 	if (ui.mode == "character") {
 		ctx.fillStyle = "#000";
 		ctx.fillRect(canvas.width - game.characterSize * 10, 0, game.characterSize * 10, game.characterSize * 10);
 		ctx.fillStyle = "#fff";
-		ctx.fillText("Health: " + game.player.stats.health, canvas.width - (game.characterSize * 10), game.characterSize);
-		ctx.fillText("Mana: " + game.player.stats.mana, canvas.width - (game.characterSize * 10), game.characterSize * 2);
+		ctx.fillText("Health: " + player.stats.health, canvas.width - (game.characterSize * 10), game.characterSize);
+		ctx.fillText("Mana: " + player.stats.mana, canvas.width - (game.characterSize * 10), game.characterSize * 2);
 	}
 }
