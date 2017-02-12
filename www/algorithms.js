@@ -42,18 +42,14 @@ function pathfind(dungeon, x1, y1, x2, y2) {
     ];
     var cameFrom = [];
     var gScore = [];
-    for (var x = 0; x < dungeon.width; x++) {
-        for (var y = 0; y < dungeon.height; y++) {
-            mapSet(gScore, dungeon.cells[x][y], Infinity);
-        }
-    }
-    mapSet(gScore, dungeon.cells[x1][y1], 0);
     var fScore = [];
     for (var x = 0; x < dungeon.width; x++) {
         for (var y = 0; y < dungeon.height; y++) {
+            mapSet(gScore, dungeon.cells[x][y], Infinity);
             mapSet(fScore, dungeon.cells[x][y], Infinity);
         }
     }
+    mapSet(gScore, dungeon.cells[x1][y1], 0);
     mapSet(fScore, dungeon.cells[x1][y1], distanceBetween(x1, y1, x2, y2));
     var passes = 0;
     while (openSet.length > 0) {

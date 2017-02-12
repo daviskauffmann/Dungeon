@@ -237,7 +237,7 @@ function changeLevel(level) {
 			createTown();
 			game.messages.push("welcome to the town");
 		} else {
-			createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 5, 1);
+			createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 20, 1);
 			game.messages.push("welcome to level " + (game.level + 1));
 		}
 	}
@@ -676,7 +676,8 @@ function tickEntity(entity) {
 				moveEntity(entity, next.x, next.y);
 			}
 		}
-		/*var roll = Math.random();
+	} else {
+		var roll = Math.random();
 		if (roll < 0.25) {
 			moveEntity(entity, entity.x, entity.y - 1);
 		} else if (roll < 0.5) {
@@ -685,7 +686,7 @@ function tickEntity(entity) {
 			moveEntity(entity, entity.x, entity.y + 1);
 		} else {
 			moveEntity(entity, entity.x - 1, entity.y);
-		}*/
+		}
 	}
 }
 
@@ -703,22 +704,25 @@ function moveEntity(entity, x, y) {
 					game.dungeons[game.level].cells[x][y].type = "doorOpen";
 				}
 				break;
-			case "stairsUp":
-				move = false;
-				break;
-			case "stairsDown":
-				move = false;
-				break;
 		}
 		if (game.dungeons[entity.level] == game.dungeons[game.level]) {
 			if (x == game.dungeons[entity.level].player.x && y == game.dungeons[entity.level].player.y) {
 				move = false;
-				var roll = Math.random();
-				if (roll < 0.5) {
-					game.messages.push("the " + entity.name + " misses you");
+				var hostile = false;
+				for (var i = 0; i < game.player.factions.length; i++) {
+					if (arrayContains(entity.hostileFactions, game.player.factions[i])) {
+						hostile = true;
+						break;
+					}
 				}
-				else {
-					game.messages.push("the " + entity.name + " attacks you");
+				if (hostile) {
+					var roll = Math.random();
+					if (roll < 0.5) {
+						game.messages.push("the " + entity.name + " misses you");
+					}
+					else {
+						game.messages.push("the " + entity.name + " attacks you");
+					}
 				}
 			}
 		}
@@ -728,22 +732,31 @@ function moveEntity(entity, x, y) {
 			}
 			if (x == game.dungeons[entity.level].entities[i].x && y == game.dungeons[entity.level].entities[i].y) {
 				move = false;
-				var roll = Math.random();
-				if (roll < 0.5) {
-					game.messages.push("the " + entity.name + " misses the " + game.dungeons[game.level].entities[i].name);
-				} else {
-					game.messages.push("the " + entity.name + " kills the " + game.dungeons[game.level].entities[i].name);
-					var corpse = {
-						x: x,
-						y: y,
-						name: game.dungeons[game.level].entities[i].name + " corpse",
-						char: "%",
-						index: ""
+				var hostile = false;
+				for (var j = 0; j < game.dungeons[entity.level].entities[j].factions.length; j++) {
+					if (arrayContains(entity.hostileFactions, game.dungeons[entity.level].entities[i].factions[j])) {
+						hostile = true;
+						break;
 					}
-					game.dungeons[game.level].items.push(corpse);
-					game.dungeons[game.level].entities.splice(i, 1);
 				}
-				break;
+				if (hostile) {
+					var roll = Math.random();
+					if (roll < 0.5) {
+						game.messages.push("the " + entity.name + " misses the " + game.dungeons[game.level].entities[i].name);
+					} else {
+						game.messages.push("the " + entity.name + " kills the " + game.dungeons[game.level].entities[i].name);
+						var corpse = {
+							x: x,
+							y: y,
+							name: game.dungeons[game.level].entities[i].name + " corpse",
+							char: "%",
+							index: ""
+						}
+						game.dungeons[game.level].items.push(corpse);
+						game.dungeons[game.level].entities.splice(i, 1);
+					}
+					break;
+				}
 			}
 		}
 	} else {
