@@ -32,6 +32,7 @@ function raycast(dungeon, sx, sy, r, dir, action) {
 }
 
 // uses A* to find a path between two coordinates
+// returns an array of cells leading from the start position to the end position, or null if no path was found
 function pathfind(dungeon, x1, y1, x2, y2) {
     var closedSet = [];
     var openSet = [
