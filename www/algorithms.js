@@ -1,6 +1,6 @@
 ﻿// sends out a ray in a certain direction, calling the action on every cell it comes across
 // action() is a function that will stop the ray if it returns true
-// raycast() will then return the coordinates of where action() stopped, returning null otherwise
+// raycast() will then return the cell where action() stopped, returning null otherwise
 // with this implementation, some cells will be visited multiple times
 function raycast(dungeon, sx, sy, r, dir, action) {
     var dx = Math.cos(dir * (Math.PI / 180));
@@ -14,10 +14,7 @@ function raycast(dungeon, sx, sy, r, dir, action) {
             return;
         }
         if (action(x, y)) {
-            return {
-                x: x,
-                y: y
-            };
+            return dungeon.cells[x][y];
         }
         var blocked = false;
         switch (dungeon.cells[x][y].type) {
@@ -62,7 +59,7 @@ function pathfind(dungeon, x1, y1, x2, y2) {
                 lowestFScore = value;
             }
         }
-        if (current == dungeon.cells[x2][y2] || passes > 50) {
+        if (current == dungeon.cells[x2][y2] || passes > Infinity) {
             var path = [
                 current
             ];

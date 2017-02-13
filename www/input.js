@@ -6,19 +6,19 @@
 	switch (ui.mode) {
 		case "":
 			if (e.key == "ArrowUp") {
-				movePlayer(player.x, player.y - 1);
+				moveEntity(player, player.x, player.y - 1);
 				tick();
 			}
 			if (e.key == "ArrowRight") {
-				movePlayer(player.x + 1, player.y);
+				moveEntity(player, player.x + 1, player.y);
 				tick();
 			}
 			if (e.key == "ArrowDown") {
-				movePlayer(player.x, player.y + 1);
+				moveEntity(player, player.x, player.y + 1);
 				tick();
 			}
 			if (e.key == "ArrowLeft") {
-				movePlayer(player.x - 1, player.y);
+				moveEntity(player, player.x - 1, player.y);
 				tick();
 			}
 			if (e.key == ".") {
@@ -186,123 +186,6 @@
 		game.stopTime = !game.stopTime;
 	}
 });
-
-function movePlayer(x, y) {
-	var player = getPlayer();
-	if (player == null) {
-		return;
-	}
-	var move = true;
-	var ascend = false;
-	var descend = false;
-	if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
-		switch (game.dungeons[player.level].cells[x][y].type) {
-			case "wall":
-				move = false;
-				break;
-			case "doorClosed":
-				move = false;
-				var roll = Math.random();
-				if (roll > 0.5) {
-					game.messages.push("you open the door");
-					game.dungeons[player.level].cells[x][y].type = "doorOpen";
-				}
-				else {
-					game.messages.push("the door won't budge");
-				}
-				break;
-			case "trap":
-				game.messages.push("you triggered a trap!");
-				game.dungeons[player.level].cells[x][y].type = "floor";
-				break;
-			case "stairsUp":
-				if (player.level == 0) {
-					document.location.reload();
-				}
-				else {
-					game.messages.push("you ascend");
-					ascend = true;
-				}
-				break;
-			case "stairsDown":
-				game.messages.push("you descend");
-				descend = true;
-				break;
-		}
-		for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
-			if (x == game.dungeons[player.level].entities[i].x && y == game.dungeons[player.level].entities[i].y) {
-				move = false;
-				var friendly = true;
-				for (var j = 0; j < game.dungeons[player.level].entities[i].factions.length; j++) {
-					if (arrayContains(player.hostileFactions, game.dungeons[player.level].entities[i].factions[j])) {
-						friendly = false;
-					}
-				}
-				if (friendly) {
-					continue;
-				}
-				var roll = Math.random();
-				if (roll < 0.5) {
-					game.messages.push("you miss the " + game.dungeons[player.level].entities[i].name);
-				} else {
-					game.messages.push("you kill the " + game.dungeons[player.level].entities[i].name);
-					var corpse = {
-						x: x,
-						y: y,
-						name: game.dungeons[player.level].entities[i].name + " corpse",
-						char: "%",
-						index: ""
-					}
-					game.dungeons[player.level].items.push(corpse);
-					game.dungeons[player.level].entities.splice(i, 1);
-				}
-				break;
-			}
-		}
-		for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
-			if (x == game.dungeons[player.level].chests[i].x && y == game.dungeons[player.level].chests[i].y) {
-				move = false;
-				var roll = Math.random();
-				if (roll > 0.5) {
-					game.messages.push("you open the chest");
-					var loot = game.dungeons[player.level].chests[i].loot;
-					if (loot == null) {
-						game.messages.push("there is nothing inside");
-					} else {
-						if (player.inventory.length >= 26) {
-							game.messages.push("inventory is full");
-						} else {
-							game.messages.push("you loot a " + loot.name);
-							player.inventory.push(loot);
-						}
-					}
-					game.dungeons[player.level].chests.splice(i, 1);
-				} else {
-					game.messages.push("the chest won't open");
-				}
-				break;
-			}
-		}
-		for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
-			if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
-				game.messages.push("you see a " + game.dungeons[player.level].items[i].name);
-				break;
-			}
-		}
-	} else {
-		move = false;
-	}
-	if (move) {
-		player.x = x;
-		player.y = y;
-	}
-	if (ascend) {
-		changeLevel(player, player.level - 1, "stairsDown");
-	}
-	if (descend) {
-		changeLevel(player, player.level + 1, "stairsUp");
-	}
-}
 
 /*document.addEventListener("mousedown", function (e) {
 	var x = view.x + Math.floor(e.x / game.characterSize);
