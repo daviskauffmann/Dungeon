@@ -209,25 +209,6 @@ function getPlayer() {
 	return null;
 }
 
-function changeLevel(entity, level, cellType) {
-	if (level == game.dungeons.length) {
-		createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 20, 20);
-	}
-	game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
-	entity.level = level;
-	game.dungeons[entity.level].entities.push(entity);
-	for (var x = 0; x < game.dungeons[entity.level].width; x++) {
-		for (var y = 0; y < game.dungeons[entity.level].height; y++) {
-			if (game.dungeons[entity.level].cells[x][y].type == cellType) {
-				entity.x = x;
-				entity.y = y;
-				break;
-			}
-		}
-	}
-	game.messages.push(entity.name + " has moved to level " + (entity.level));
-}
-
 function createTown() {
 	var dungeon = {
 		width: 25,
@@ -648,6 +629,8 @@ function tick() {
 	draw();
 }
 
+// eventually, i want each type of entity to have their own prototype
+// these prototypes would implement a tick function which would be called instead of this
 function tickEntity(entity) {
 	var targets = [];
 	for (var i = 0; i < 360; i += 10) {
@@ -677,6 +660,7 @@ function tickEntity(entity) {
 	}
 	if (targets.length > 0) {
 		var target = targets[0];
+		game.messages.push("the " + entity.name + " targets a " + target.name);
 		var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, target.x, target.y);
 		if (path != null && path.length > 0) {
 			next = path.pop();
@@ -812,14 +796,23 @@ function moveEntity(entity, x, y) {
 	}
 }
 
-function getNextMessage() {
-	if (game.messages.length > 0) {
-		var message = game.messages.shift();
-		console.log(message);
-		return message;
-	} else {
-		return "";
+function changeLevel(entity, level, cellType) {
+	if (level == game.dungeons.length) {
+		createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 20, 20);
 	}
+	game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
+	entity.level = level;
+	game.dungeons[entity.level].entities.push(entity);
+	for (var x = 0; x < game.dungeons[entity.level].width; x++) {
+		for (var y = 0; y < game.dungeons[entity.level].height; y++) {
+			if (game.dungeons[entity.level].cells[x][y].type == cellType) {
+				entity.x = x;
+				entity.y = y;
+				break;
+			}
+		}
+	}
+	game.messages.push(entity.name + " has moved to level " + (entity.level));
 }
 
 function draw() {
@@ -958,8 +951,14 @@ function draw() {
 	// messages and level info
 	ctx.fillStyle = "#fff";
 	ctx.globalAlpha = 1;
-	ctx.fillText(getNextMessage(), 0, game.characterSize);
-	ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
+	ctx.fillText("--- Turn " + game.turn + " ---", 0, game.characterSize);
+	for (var i = 0; i < game.messages.length; i++) {
+		var message = game.messages.shift();
+		console.log(message);
+		ctx.fillText(message, 0, game.characterSize * (i + 2));
+	}
+	//ctx.fillText(getNextMessage(), 0, game.characterSize);
+	//ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
 	ctx.fillText("Level:" + (player.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 	// menus
 	if (ui.mode.includes("inventory")) {
