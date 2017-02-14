@@ -1,4 +1,4 @@
-var canvas = document.getElementById("canvas");
+var canvas = document.getElementById("game");
 var ctx = canvas.getContext("2d");
 var view = {
 	x: 0,
@@ -14,12 +14,11 @@ var ui = {
 
 function draw() {
 	var player = getPlayer();
-	if (player == null) {
-		return;
-	}
+	var maxWidth = window.innerWidth;
+	var maxHeight = window.innerHeight;
 	// resize the canvas
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	canvas.width = maxWidth;
+	canvas.height = maxHeight;
 	// center the view on the player, while staying within the bounds of the dungeon
 	view.width = Math.round(canvas.width / game.characterSize);
 	view.height = Math.round(canvas.height / game.characterSize);
@@ -41,7 +40,7 @@ function draw() {
 	for (var x = view.x; x < view.x + view.width; x++) {
 		for (var y = view.y; y < view.y + view.height; y++) {
 			if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
-				game.dungeons[player.level].cells[x][y].visible = false;
+				game.dungeons[player.level].cells[x][y].visible = true;
 			}
 		}
 	}
@@ -146,14 +145,11 @@ function draw() {
 	// messages and level info
 	ctx.fillStyle = "#fff";
 	ctx.globalAlpha = 1;
-	ctx.fillText("--- Turn " + game.turn + " ---", 0, game.characterSize);
-	for (var i = 0; i < game.messages.length; i++) {
-		var message = game.messages.shift();
-		console.log(message);
-		ctx.fillText(message, 0, game.characterSize * (i + 2));
-	}
-	//ctx.fillText(getNextMessage(), 0, game.characterSize);
-	//ctx.fillText(getNextMessage(), 0, game.characterSize * 2);
+	ctx.fillText(game.messages[game.messages.length - 5], 0, game.characterSize);
+	ctx.fillText(game.messages[game.messages.length - 4], 0, game.characterSize * 2);
+	ctx.fillText(game.messages[game.messages.length - 3], 0, game.characterSize * 3);
+	ctx.fillText(game.messages[game.messages.length - 2], 0, game.characterSize * 4);
+	ctx.fillText(game.messages[game.messages.length - 1], 0, game.characterSize * 5);
 	ctx.fillText("Level:" + (player.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 	// menus
 	if (ui.mode.includes("inventory")) {

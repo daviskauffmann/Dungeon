@@ -277,7 +277,10 @@ function moveEntity(entity, x, y) {
 				move = false;
 				var roll = Math.random();
 				if (roll > 0.5) {
+					game.messages.push("the " + entity.name + " opens the door");
 					game.dungeons[entity.level].cells[x][y].type = "doorOpen";
+				} else {
+					game.messages.push("the " + entity.name + " can't open the door");
 				}
 				break;
 			case "stairsUp":

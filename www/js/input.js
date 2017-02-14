@@ -1,8 +1,5 @@
 ﻿document.addEventListener("keydown", function (e) {
 	var player = getPlayer();
-	if (player == null) {
-		return;
-	}
 	switch (ui.mode) {
 		case "":
 			if (e.key == "ArrowUp") {

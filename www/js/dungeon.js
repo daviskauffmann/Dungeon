@@ -1,3 +1,97 @@
+function createBSPDungeon() {
+	var dungeon = {
+		width: 50,
+		height: 50,
+		cells: [],
+		rooms: [],
+		entities: [],
+		chests: [],
+		items: []
+	}
+	for (var x = 0; x < dungeon.width; x++) {
+		dungeon.cells[x] = [];
+		for (var y = 0; y < dungeon.height; y++) {
+			dungeon.cells[x][y] = {
+				x: x,
+				y: y,
+				type: "floor",
+				discovered: false,
+				visible: false
+			}
+		}
+	}
+	var rooms = [];
+	rooms.push({
+		x: 0,
+		y: 0,
+		width: dungeon.width - 1,
+		height: dungeon.height - 1
+	});
+
+	var room = rooms[0];
+	rooms.push({
+		x: 0,
+		y: 0,
+		width: 25,
+		height: 49
+	});
+	rooms.push({
+		x: 25,
+		y: 0,
+		width: 24,
+		height: 49
+	});
+	rooms.splice(0, 1);
+
+	for (var i = 0; i < rooms.length; i++) {
+		for (var x = 0; x < dungeon.width; x++) {
+			for (var y = 0; y < dungeon.height; y++) {
+				if (x == rooms[i].x || x == rooms[i].x + rooms[i].width || y == rooms[i].y || y == rooms[i].height) {
+					dungeon.cells[x][y].type = "wall";
+				}
+			}
+		}
+	}
+	var player = {
+		id: 0,
+		x: 25,
+		y: 25,
+		name: "player",
+		char: "@",
+		level: 0,
+		stats: {
+			level: 1,
+
+			health: 100,
+			energy: 100,
+			mana: 100,
+
+			stamina: 0,
+			endurance: 0,
+			attunement: 0,
+			resistance: 0,
+			strength: 0,
+			intellect: 0,
+			avoidance: 0,
+			precision: 0,
+			charisma: 0,
+			luck: 0,
+
+			sight: 10
+		},
+		inventory: [],
+		factions: [
+			"player"
+		],
+		hostileFactions: [
+			"monster"
+		],
+		hostileEntities: []
+	}
+	dungeon.entities.push(player);
+	game.dungeons.push(dungeon);
+}
+
 function createTown() {
 	var dungeon = {
 		width: 25,
