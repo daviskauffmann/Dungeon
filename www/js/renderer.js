@@ -45,8 +45,8 @@ function draw() {
 		}
 	}
 	// sends out rays to check visibility
-	for (var i = 0; i < 360; i++) {
-		raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, i, function (x, y) {
+	for (var dir = 0; dir < 360; dir++) {
+		raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
 			game.dungeons[player.level].cells[x][y].discovered = true;
 			game.dungeons[player.level].cells[x][y].visible = true;
 		});

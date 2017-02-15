@@ -5,21 +5,26 @@
 			if (e.key == "ArrowUp") {
 				moveEntity(player, player.x, player.y - 1);
 				tick();
+				draw();
 			}
 			if (e.key == "ArrowRight") {
 				moveEntity(player, player.x + 1, player.y);
 				tick();
+				draw();
 			}
 			if (e.key == "ArrowDown") {
 				moveEntity(player, player.x, player.y + 1);
 				tick();
+				draw();
 			}
 			if (e.key == "ArrowLeft") {
 				moveEntity(player, player.x - 1, player.y);
 				tick();
+				draw();
 			}
 			if (e.key == ".") {
 				tick();
+				draw();
 			}
 			if (e.key == "g") {
 				for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
@@ -31,6 +36,34 @@
 						break;
 					}
 				}
+			}
+			if (e.key == "s") {
+				var targets = [];
+				for (var dir = 0; dir < 360; dir++) {
+					raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
+						for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
+							if (game.dungeons[player.level].entities[i] == player) {
+								continue;
+							}
+							if (arrayContains(targets, game.dungeons[player.level].entities[i])) {
+								continue;
+							}
+							if (game.dungeons[player.level].entities[i].x == x && game.dungeons[player.level].entities[i].y == y) {
+								targets.push(game.dungeons[player.level].entities[i]);
+							}
+						}
+					});
+				}
+				if (targets.length > 0) {
+					var targetNames = [];
+					for (var i = 0; i < targets.length; i++) {
+						targetNames.push(targets[i].name);
+					}
+					game.messages.push("you spot a " + targetNames.join(", "));
+				} else {
+					game.messages.push("you don't see anything");
+				}
+				draw();
 			}
 			if (e.key == "c") {
 				if (game.dungeons[player.level].cells[player.x][player.y].type == "doorOpen") {

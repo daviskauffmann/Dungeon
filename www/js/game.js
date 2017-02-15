@@ -210,15 +210,14 @@ function tick() {
 		}
 	}
 	game.turn++;
-	draw();
 }
 
 // eventually, i want each type of entity to have their own prototype
 // these prototypes would implement a tick function which would be called instead of this
 function tickEntity(entity) {
 	var targets = [];
-	for (var i = 0; i < 360; i += 10) {
-		raycast(game.dungeons[entity.level], entity.x, entity.y, entity.stats.sight, i, function (x, y) {
+	for (var dir = 0; dir < 360; dir += 10) {
+		raycast(game.dungeons[entity.level], entity.x, entity.y, entity.stats.sight, dir, function (x, y) {
 			for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
 				if (game.dungeons[entity.level].entities[i] == entity) {
 					continue;
@@ -244,7 +243,7 @@ function tickEntity(entity) {
 	}
 	if (targets.length > 0) {
 		var target = targets[0];
-		game.messages.push("the " + entity.name + " targets a " + target.name);
+		game.messages.push("the " + entity.name + " spots a " + target.name);
 		var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, target.x, target.y);
 		if (path != null && path.length > 0) {
 			next = path.pop();
