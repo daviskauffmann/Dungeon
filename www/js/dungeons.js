@@ -28,21 +28,6 @@ function createBSPDungeon() {
 		height: dungeon.height - 1
 	});
 
-	var room = rooms[0];
-	rooms.push({
-		x: 0,
-		y: 0,
-		width: 25,
-		height: 49
-	});
-	rooms.push({
-		x: 25,
-		y: 0,
-		width: 24,
-		height: 49
-	});
-	rooms.splice(0, 1);
-
 	for (var i = 0; i < rooms.length; i++) {
 		for (var x = 0; x < dungeon.width; x++) {
 			for (var y = 0; y < dungeon.height; y++) {
