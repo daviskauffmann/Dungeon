@@ -40,7 +40,7 @@ function draw() {
 	for (var x = view.x; x < view.x + view.width; x++) {
 		for (var y = view.y; y < view.y + view.height; y++) {
 			if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
-				game.dungeons[player.level].cells[x][y].visible = true;
+				game.dungeons[player.level].cells[x][y].visible = false;
 			}
 		}
 	}
@@ -150,6 +150,7 @@ function draw() {
 	ctx.fillText(game.messages[game.messages.length - 3], 0, game.characterSize * 3);
 	ctx.fillText(game.messages[game.messages.length - 2], 0, game.characterSize * 4);
 	ctx.fillText(game.messages[game.messages.length - 1], 0, game.characterSize * 5);
+	game.messages.splice();
 	ctx.fillText("Level:" + (player.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 	// menus
 	if (ui.mode.includes("inventory")) {

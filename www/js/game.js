@@ -384,7 +384,7 @@ function moveEntity(entity, x, y) {
 
 function changeLevel(entity, level, cellType) {
 	if (level == game.dungeons.length) {
-		createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 20, 20);
+		createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 5, 5);
 	}
 	game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
 	entity.level = level;
