@@ -36,19 +36,12 @@ function draw() {
 	if (view.y + view.height > game.dungeons[player.level].height) {
 		view.y = game.dungeons[player.level].height - view.height;
 	}
-	// reset visibility
-	for (var x = view.x; x < view.x + view.width; x++) {
-		for (var y = view.y; y < view.y + view.height; y++) {
-			if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
-				game.dungeons[player.level].cells[x][y].visible = false;
-			}
-		}
-	}
 	// sends out rays to check visibility
-	for (var dir = 0; dir < 360; dir++) {
+	var cellVisibility = [];
+	for (var dir = 0; dir < 360; dir += 0.5) {
 		raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
 			game.dungeons[player.level].cells[x][y].discovered = true;
-			game.dungeons[player.level].cells[x][y].visible = true;
+			mapSet(cellVisibility, game.dungeons[player.level].cells[x][y], true);
 		});
 	}
 	// draw the cells within the view
@@ -63,7 +56,7 @@ function draw() {
 				var screenX = (x - view.x) * game.characterSize;
 				var screenY = (y - view.y + 1) * game.characterSize;
 				// draw objects only if the current cell is visible
-				if (game.dungeons[player.level].cells[x][y].visible) {
+				if (mapGet(cellVisibility, game.dungeons[player.level].cells[x][y])) {
 					// entities
 					var entity = false;
 					for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
@@ -88,6 +81,7 @@ function draw() {
 					if (chest) {
 						continue;
 					}
+					// items
 					var item = false;
 					for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
 						if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
@@ -101,8 +95,8 @@ function draw() {
 					}
 				}
 				// draw the environment
-				if (game.dungeons[player.level].cells[x][y].visible || game.dungeons[player.level].cells[x][y].discovered) {
-					if (game.dungeons[player.level].cells[x][y].visible) {
+				if (mapGet(cellVisibility, game.dungeons[player.level].cells[x][y]) || game.dungeons[player.level].cells[x][y].discovered) {
+					if (mapGet(cellVisibility, game.dungeons[player.level].cells[x][y])) {
 						ctx.globalAlpha = 1;
 					} else if (game.dungeons[player.level].cells[x][y].discovered) {
 						ctx.globalAlpha = 0.25;
