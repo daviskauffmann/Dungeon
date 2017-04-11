@@ -177,9 +177,10 @@ var game = {
 	id: 1,
 	dungeons: [],
 	turn: 0,
-	stopTime: false,
 	characterSize: 24,
-	messages: []
+	messages: [],
+	stopTime: false,
+	ignoreFov: false
 }
 createTown();
 draw();
@@ -384,7 +385,7 @@ function moveEntity(entity, x, y) {
 
 function changeLevel(entity, level, cellType) {
 	if (level == game.dungeons.length) {
-		createDungeon(50, 50, 20, 5, 15, true, 0.5, 3, 0, 5);
+		createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 20, 5);
 	}
 	game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
 	entity.level = level;

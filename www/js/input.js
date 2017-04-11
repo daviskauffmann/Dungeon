@@ -201,7 +201,7 @@
 			}
 			break;
 	}
-	if (e.key == "1") {
+	/*if (e.key == "1") {
 		localStorage.setItem("game", JSON.stringify(game));
 		console.log(JSON.stringify(game));
 		game.messages.push("game saved");
@@ -211,9 +211,13 @@
 		console.log(game);
 		game.messages.push("game loaded");
 		draw();
-	}
-	if (e.key == " ") {
+	}*/
+	if (e.key == "1") {
 		game.stopTime = !game.stopTime;
+	}
+	if (e.key == "2") {
+		game.ignoreFov = !game.ignoreFov;
+		draw();
 	}
 });
 

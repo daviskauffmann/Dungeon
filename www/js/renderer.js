@@ -38,11 +38,21 @@ function draw() {
 	}
 	// sends out rays to check visibility
 	var cellVisibility = [];
-	for (var dir = 0; dir < 360; dir += 0.5) {
-		raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
-			game.dungeons[player.level].cells[x][y].discovered = true;
-			mapSet(cellVisibility, game.dungeons[player.level].cells[x][y], true);
-		});
+	if (game.ignoreFov) {
+		for (var x = view.x; x < view.x + view.width; x++) {
+			for (var y = view.y; y < view.y + view.height; y++) {
+				if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
+					mapSet(cellVisibility, game.dungeons[player.level].cells[x][y], true);
+				}
+			}
+		}
+	} else {
+		for (var dir = 0; dir < 360; dir += 0.5) {
+			raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
+				game.dungeons[player.level].cells[x][y].discovered = true;
+				mapSet(cellVisibility, game.dungeons[player.level].cells[x][y], true);
+			});
+		}
 	}
 	// draw the cells within the view
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -111,7 +121,7 @@ function draw() {
 							break;
 						case "grass":
 							ctx.fillStyle = "#50ff50";
-							ctx.fillText(".", screenX, screenY);
+							ctx.fillText("^", screenX, screenY);
 							break;
 						case "wall":
 							ctx.fillText("#", screenX, screenY);
@@ -144,7 +154,6 @@ function draw() {
 	ctx.fillText(game.messages[game.messages.length - 3], 0, game.characterSize * 3);
 	ctx.fillText(game.messages[game.messages.length - 2], 0, game.characterSize * 4);
 	ctx.fillText(game.messages[game.messages.length - 1], 0, game.characterSize * 5);
-	game.messages.splice();
 	ctx.fillText("Level:" + (player.level + 1) + " " + "Turn:" + game.turn, 0, canvas.height);
 	// menus
 	if (ui.mode.includes("inventory")) {

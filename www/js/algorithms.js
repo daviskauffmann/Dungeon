@@ -34,21 +34,31 @@ function raycast(dungeon, sx, sy, r, dir, action) {
 // uses A* to find a path between two coordinates
 // returns an array of coordinates leading from the start position to the end position, or null if no path was found
 function pathfind(dungeon, x1, y1, x2, y2) {
+	var coords = [];
+	for (var x = 0; x < dungeon.width; x++) {
+		coords[x] = [];
+		for (var y = 0; y < dungeon.height; y++) {
+			coords[x][y] = {
+				x: x,
+				y: y
+			}
+		}
+	}
 	var closedSet = [];
 	var openSet = [
-		dungeon.cells[x1][y1]
+		coords[x1][y1]
 	];
 	var cameFrom = [];
 	var gScore = [];
 	var fScore = [];
 	for (var x = 0; x < dungeon.width; x++) {
 		for (var y = 0; y < dungeon.height; y++) {
-			mapSet(gScore, dungeon.cells[x][y], Infinity);
-			mapSet(fScore, dungeon.cells[x][y], Infinity);
+			mapSet(gScore, coords[x][y], Infinity);
+			mapSet(fScore, coords[x][y], Infinity);
 		}
 	}
-	mapSet(gScore, dungeon.cells[x1][y1], 0);
-	mapSet(fScore, dungeon.cells[x1][y1], distanceBetween(x1, y1, x2, y2));
+	mapSet(gScore, coords[x1][y1], 0);
+	mapSet(fScore, coords[x1][y1], distanceBetween(x1, y1, x2, y2));
 	var passes = 0;
 	while (openSet.length > 0) {
 		var current;
@@ -60,58 +70,48 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 				lowestFScore = value;
 			}
 		}
-		if (current == dungeon.cells[x2][y2] || passes > Infinity) {
-			var currentPos = indexOf2d(dungeon.cells, current);
+		if (current == coords[x2][y2] || passes > Infinity) {
 			var path = [
-				{
-					x: currentPos.x,
-					y: currentPos.y
-				}
+				current
 			];
 			while (mapGet(cameFrom, current) != null) {
-				var currentPos = indexOf2d(dungeon.cells, current);
 				current = mapGet(cameFrom, current);
-				path.push({
-					x: currentPos.x,
-					y: currentPos.y
-				});
+				path.push(current);
 			}
 			return path;
 		}
 		openSet.splice(openSet.indexOf(current), 1);
 		closedSet.push(current);
 		var neighbors = [];
-		var currentPos = indexOf2d(dungeon.cells, current);
-		if (currentPos.y - 1 >= 0) {
-			var neighbor = dungeon.cells[currentPos.x][currentPos.y - 1];
+		if (current.y - 1 >= 0) {
+			var neighbor = coords[current.x][current.y - 1];
 			neighbors.push(neighbor);
 		}
-		if (currentPos.x + 1 < dungeon.width) {
-			var neighbor = dungeon.cells[currentPos.x + 1][currentPos.y];
+		if (current.x + 1 < dungeon.width) {
+			var neighbor = coords[current.x + 1][current.y];
 			neighbors.push(neighbor);
 		}
-		if (currentPos.y + 1 < dungeon.height) {
-			var neighbor = dungeon.cells[currentPos.x][currentPos.y + 1];
+		if (current.y + 1 < dungeon.height) {
+			var neighbor = coords[current.x][current.y + 1];
 			neighbors.push(neighbor);
 		}
-		if (currentPos.x - 1 >= 0) {
-			var neighbor = dungeon.cells[currentPos.x - 1][currentPos.y];
+		if (current.x - 1 >= 0) {
+			var neighbor = coords[current.x - 1][current.y];
 			neighbors.push(neighbor);
 		}
 		for (var i = 0; i < neighbors.length; i++) {
 			var blocked = false;
-			switch (neighbors[i].type) {
+			switch (dungeon.cells[neighbors[i].x][neighbors[i].y].type) {
 				case "empty":
 				case "wall":
 					blocked = true;
 					break;
 			}
-			var neighborPos = indexOf2d(dungeon.cells, neighbors[i]);
 			for (var j = 0; j < dungeon.entities.length; j++) {
 				if (dungeon.entities[j].x == x2 && dungeon.entities[j].y == y2) {
 					continue;
 				}
-				if (dungeon.entities[j].x == neighborPos.x && dungeon.entities[j].y == neighborPos.y) {
+				if (dungeon.entities[j].x == neighbors[i].x && dungeon.entities[j].y == neighbors[i].y) {
 					blocked = true;
 					break;
 				}
@@ -120,7 +120,7 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 				if (dungeon.chests[j].x == x2 && dungeon.chests[j].y == y2) {
 					continue;
 				}
-				if (dungeon.chests[j].x == neighborPos.x && dungeon.chests[j].y == neighborPos.y) {
+				if (dungeon.chests[j].x == neighbors[i].x && dungeon.chests[j].y == neighbors[i].y) {
 					blocked = true;
 					break;
 				}
@@ -133,16 +133,17 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 			if (arrayContains(closedSet, neighbors[i])) {
 				continue;
 			}
-			var neighborPos = indexOf2d(dungeon.cells, neighbors[i]);
-			var tentativeGScore = mapGet(gScore, current) + distanceBetween(currentPos.x, currentPos.y, neighborPos.x, neighborPos.y);
+			var tentativeGScore = mapGet(gScore, current) + distanceBetween(current.x, current.y, neighbors[i].x, neighbors[i].y);
 			if (!arrayContains(openSet, neighbors[i])) {
 				openSet.push(neighbors[i]);
 			} else if (tentativeGScore >= mapGet(gScore, neighbors[i])) {
 				continue;
 			}
-			mapSet(cameFrom, neighbors[i], current);
+			if (current.x != x1 || current.y != y1) {
+				mapSet(cameFrom, neighbors[i], current);
+			}
 			mapSet(gScore, neighbors[i], tentativeGScore);
-			mapSet(fScore, neighbors[i], mapGet(gScore, neighbors[i]) + distanceBetween(neighborPos.x, neighborPos.y, x2, y2));
+			mapSet(fScore, neighbors[i], mapGet(gScore, neighbors[i]) + distanceBetween(neighbors[i].x, neighbors[i].y, x2, y2));
 		}
 		passes++;
 	}
