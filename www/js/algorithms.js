@@ -31,6 +31,17 @@ function raycast(dungeon, sx, sy, r, dir, action) {
 	}
 }
 
+function spherecast(dungeon, sx, sy, r, accuracy, action) {
+	var cells = [];
+	for (var dir = 0; dir < 360; dir += accuracy) {
+		var cell = raycast(dungeon, sx, sy, r, dir, action);
+		if (cell) {
+			cells.push(cell);
+		}
+	}
+	return cells;
+}
+
 // uses A* to find a path between two coordinates
 // returns an array of coordinates leading from the start position to the end position, or null if no path was found
 function pathfind(dungeon, x1, y1, x2, y2) {
