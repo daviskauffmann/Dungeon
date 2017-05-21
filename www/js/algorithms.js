@@ -1,41 +1,41 @@
 ﻿// sends out a ray in a certain direction, calling the action on every cell it comes across
+// blockedBy is an array of cell types that block the ray
 // action() is a function that will stop the ray if it returns true
 // raycast() will then return the cell where action() stopped, returning null otherwise
 // with this implementation, some cells will be visited multiple times
-function raycast(dungeon, sx, sy, r, dir, action) {
+function raycast(dungeon, sx, sy, r, dir, blockedBy, action) {
 	var dx = Math.cos(dir * (Math.PI / 180));
 	var dy = Math.sin(dir * (Math.PI / 180));
+
 	var cx = sx + 0.5;
 	var cy = sy + 0.5;
+
 	for (var i = 0; i < r; i++) {
 		var x = Math.trunc(cx);
 		var y = Math.trunc(cy);
+
 		if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-			return;
+			return null;
 		}
 		if (action(x, y)) {
 			return dungeon.cells[x][y];
 		}
-		var blocked = false;
-		switch (dungeon.cells[x][y].type) {
-			case "wall":
-			case "doorClosed":
-				blocked = true;
-				break;
+		if (blockedBy.indexOf(dungeon.cells[x][y].type) > -1) {
+			return null;
 		}
-		if (blocked) {
-			return;
-		}
+
 		cx += dx;
 		cy += dy;
 	}
 }
 
-function spherecast(dungeon, sx, sy, r, accuracy, action) {
+// sends out rays in a circle
+// returns an array of cells that were affected by action()
+function spherecast(dungeon, sx, sy, r, accuracy, blockedBy, action) {
 	var cells = [];
 	for (var dir = 0; dir < 360; dir += accuracy) {
-		var cell = raycast(dungeon, sx, sy, r, dir, action);
-		if (cell) {
+		var cell = raycast(dungeon, sx, sy, r, dir, blockedBy, action);
+		if (cell && cells.indexOf(cell) == -1) {
 			cells.push(cell);
 		}
 	}
@@ -55,44 +55,51 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 			}
 		}
 	}
+
 	var closedSet = [];
 	var openSet = [
 		coords[x1][y1]
 	];
-	var cameFrom = [];
-	var gScore = [];
-	var fScore = [];
+
+	var cameFrom = new Map();
+	var gScore = new Map();
+	var fScore = new Map();
 	for (var x = 0; x < dungeon.width; x++) {
 		for (var y = 0; y < dungeon.height; y++) {
-			mapSet(gScore, coords[x][y], Infinity);
-			mapSet(fScore, coords[x][y], Infinity);
+			gScore.set(coords[x][y], Infinity);
+			fScore.set(coords[x][y], Infinity);
 		}
 	}
-	mapSet(gScore, coords[x1][y1], 0);
-	mapSet(fScore, coords[x1][y1], distanceBetween(x1, y1, x2, y2));
+	gScore.set(coords[x1][y1], 0);
+	fScore.set(coords[x1][y1], distanceBetween(x1, y1, x2, y2));
+
 	var passes = 0;
 	while (openSet.length > 0) {
 		var current;
 		var lowestFScore = Infinity;
+
 		for (var i = 0; i < openSet.length; i++) {
-			var value = mapGet(fScore, openSet[i]);
+			var value = fScore.get(openSet[i]);
 			if (value < lowestFScore) {
 				current = openSet[i];
 				lowestFScore = value;
 			}
 		}
+
 		if (current == coords[x2][y2] || passes > Infinity) {
 			var path = [
 				current
 			];
-			while (mapGet(cameFrom, current) != null) {
-				current = mapGet(cameFrom, current);
+			while (cameFrom.get(current) != null) {
+				current = cameFrom.get(current);
 				path.push(current);
 			}
 			return path;
 		}
+
 		openSet.splice(openSet.indexOf(current), 1);
 		closedSet.push(current);
+
 		var neighbors = [];
 		if (current.y - 1 >= 0) {
 			var neighbor = coords[current.x][current.y - 1];
@@ -110,11 +117,12 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 			var neighbor = coords[current.x - 1][current.y];
 			neighbors.push(neighbor);
 		}
+
 		for (var i = 0; i < neighbors.length; i++) {
 			var blocked = false;
 			switch (dungeon.cells[neighbors[i].x][neighbors[i].y].type) {
-				case "empty":
-				case "wall":
+				case 'empty':
+				case 'wall':
 					blocked = true;
 					break;
 			}
@@ -140,23 +148,29 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 				neighbors.splice(i, 1);
 			}
 		}
+
 		for (var i = 0; i < neighbors.length; i++) {
-			if (arrayContains(closedSet, neighbors[i])) {
+			if (closedSet.indexOf(neighbors[i]) > -1) {
 				continue;
 			}
-			var tentativeGScore = mapGet(gScore, current) + distanceBetween(current.x, current.y, neighbors[i].x, neighbors[i].y);
-			if (!arrayContains(openSet, neighbors[i])) {
+
+			var tentativeGScore = gScore.get(current) + distanceBetween(current.x, current.y, neighbors[i].x, neighbors[i].y);
+			if (openSet.indexOf(neighbors[i]) == -1) {
 				openSet.push(neighbors[i]);
-			} else if (tentativeGScore >= mapGet(gScore, neighbors[i])) {
+			} else if (tentativeGScore >= gScore.get(neighbors[i])) {
 				continue;
 			}
+
 			if (current.x != x1 || current.y != y1) {
-				mapSet(cameFrom, neighbors[i], current);
+				cameFrom.set(neighbors[i], current);
 			}
-			mapSet(gScore, neighbors[i], tentativeGScore);
-			mapSet(fScore, neighbors[i], mapGet(gScore, neighbors[i]) + distanceBetween(neighbors[i].x, neighbors[i].y, x2, y2));
+
+			gScore.set(neighbors[i], tentativeGScore);
+			fScore.set(neighbors[i], gScore.get(neighbors[i]) + distanceBetween(neighbors[i].x, neighbors[i].y, x2, y2))
 		}
+
 		passes++;
 	}
+	
 	return null;
 }
