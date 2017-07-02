@@ -37,6 +37,7 @@ function draw() {
 			'doorClosed'
 		], function (x, y) {
 			game.dungeons[player.level].cells[x][y].discovered = true;
+
 			if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) == -1) {
 				cellVisibility.push(game.dungeons[player.level].cells[x][y]);
 			}
@@ -48,8 +49,9 @@ function draw() {
 
 	for (var x = view.x; x < view.x + view.width; x++) {
 		for (var y = view.y; y < view.y + view.height; y++) {
-			if (x < 0 || x >= game.dungeons[player.level].width || y < 0 || y >= game.dungeons[player.level].height)
-				continue
+			if (x < 0 || x >= game.dungeons[player.level].width || y < 0 || y >= game.dungeons[player.level].height) {
+				continue;
+			}
 
 			ctx.fillStyle = '#fff';
 			ctx.globalAlpha = 1;
@@ -60,42 +62,51 @@ function draw() {
 			if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
 				var entity = false;
 				for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
-					if (x == game.dungeons[player.level].entities[i].x && y == game.dungeons[player.level].entities[i].y) {
-						ctx.fillText(game.dungeons[player.level].entities[i].char, screenX, screenY);
-						
-						entity = true;
-						
-						break;
+					if (game.dungeons[player.level].entities[i].x !== x || game.dungeons[player.level].entities[i].y !== y) {
+						continue;
 					}
+
+					ctx.fillText(game.dungeons[player.level].entities[i].char, screenX, screenY);
+
+					entity = true;
+
+					break;
 				}
-				if (entity)
+				if (entity) {
 					continue;
+				}
 
 				var chest = false;
 				for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
-					if (x == game.dungeons[player.level].chests[i].x && y == game.dungeons[player.level].chests[i].y) {
-						ctx.fillText('~', screenX, screenY);
-						
-						chest = true;
-						
-						break;
+					if (game.dungeons[player.level].chests[i].x !== x || game.dungeons[player.level].chests[i].y !== y) {
+						continue;
 					}
+
+					ctx.fillText('~', screenX, screenY);
+
+					chest = true;
+
+					break;
 				}
-				if (chest)
+				if (chest) {
 					continue;
+				}
 
 				var item = false;
 				for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
-					if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
-						ctx.fillText(game.dungeons[player.level].items[i].char, screenX, screenY);
-						
-						item = true;
-						
-						break;
+					if (game.dungeons[player.level].items[i].x !== x || game.dungeons[player.level].items[i].y !== y) {
+						continue;
 					}
+
+					ctx.fillText(game.dungeons[player.level].items[i].char, screenX, screenY);
+
+					item = true;
+
+					break;
 				}
-				if (item)
+				if (item) {
 					continue;
+				}
 			}
 
 			if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1 || game.dungeons[player.level].cells[x][y].discovered) {

@@ -1,8 +1,9 @@
 function getPlayer() {
 	for (var i = 0; i < game.dungeons.length; i++) {
 		for (var j = 0; j < game.dungeons[i].entities.length; j++) {
-			if (game.dungeons[i].entities[j].id == 0)
+			if (game.dungeons[i].entities[j].id === 0) {
 				return game.dungeons[i].entities[j];
+			}
 		}
 	}
 	
@@ -13,8 +14,9 @@ function tick() {
 	if (!game.stopTime) {
 		for (var i = 0; i < game.dungeons.length; i++) {
 			for (var j = 0; j < game.dungeons[i].entities.length; j++) {
-				if (game.dungeons[i].entities[j].id == 0)
+				if (game.dungeons[i].entities[j].id === 0) {
 					continue;
+				}
 
 				tickEntity(game.dungeons[i].entities[j]);
 			}
@@ -32,19 +34,23 @@ function tickEntity(entity) {
 			'doorClosed'
 		], function (x, y) {
 			for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
-				if (game.dungeons[entity.level].entities[i] == entity)
+				if (game.dungeons[entity.level].entities[i] == entity) {
 					continue;
+				}
 
-				if (targets.indexOf(game.dungeons[entity.level].entities[i]) > -1)
+				if (targets.indexOf(game.dungeons[entity.level].entities[i]) > -1) {
 					continue;
+				}
 
-				if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y)
+				if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y) {
 					continue;
+				}
 
 				var hostile = false;
 				for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
-					if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1)
+					if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1) {
 						continue;
+					}
 
 					hostile = true;
 				}
@@ -83,8 +89,9 @@ function tickEntity(entity) {
 }
 
 function moveEntity(entity, x, y) {
-	if (x < 0 || x >= game.dungeons[entity.level].width || y < 0 || y >= game.dungeons[entity.level].height)
+	if (x < 0 || x >= game.dungeons[entity.level].width || y < 0 || y >= game.dungeons[entity.level].height) {
 		return;
+	}
 
 	switch (game.dungeons[entity.level].cells[x][y].type) {
 		case 'wall':
@@ -114,16 +121,19 @@ function moveEntity(entity, x, y) {
 	}
 
 	for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
-		if (game.dungeons[entity.level].entities[i] === entity)
+		if (game.dungeons[entity.level].entities[i] === entity) {
 			continue;
+		}
 
-		if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y)
+		if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y) {
 			continue;
+		}
 
 		var hostile = false;
 		for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
-			if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1)
+			if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1) {
 				continue;
+			}
 
 			hostile = true;
 		}
@@ -133,8 +143,9 @@ function moveEntity(entity, x, y) {
 				game.messages.push('the ' + entity.name + ' misses the ' + game.dungeons[entity.level].entities[i].name);
 			} else {
 				// FIXME
-				if (game.dungeons[entity.level].entities[i].id == 0)
+				if (game.dungeons[entity.level].entities[i].id == 0) {
 					return;
+				}
 
 				game.messages.push('the ' + entity.name + ' kills the ' + game.dungeons[entity.level].entities[i].name);
 
@@ -162,8 +173,9 @@ function moveEntity(entity, x, y) {
 	}
 
 	for (var i = 0; i < game.dungeons[entity.level].chests.length; i++) {
-		if (game.dungeons[entity.level].chests[i].x !== x || game.dungeons[entity.level].chests[i].y !== y)
+		if (game.dungeons[entity.level].chests[i].x !== x || game.dungeons[entity.level].chests[i].y !== y) {
 			continue;
+		}
 
 		var roll = Math.random();
 		if (roll > 0.5) {
@@ -192,8 +204,9 @@ function moveEntity(entity, x, y) {
 
 	var itemNames = [];
 	for (var i = 0; i < game.dungeons[entity.level].items.length; i++) {
-		if (game.dungeons[entity.level].items[i].x !== x || game.dungeons[entity.level].items[i].y !== y)
+		if (game.dungeons[entity.level].items[i].x !== x || game.dungeons[entity.level].items[i].y !== y) {
 			continue;
+		}
 
 		itemNames.push(game.dungeons[entity.level].items[i].name);
 	}

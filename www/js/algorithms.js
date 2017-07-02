@@ -15,13 +15,15 @@ function raycast(dungeon, sx, sy, r, dir, blockedBy, action) {
 		var y = Math.trunc(cy);
 
 		if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-			return null;
+			return;
 		}
+			
 		if (action(x, y)) {
 			return dungeon.cells[x][y];
 		}
+
 		if (blockedBy.indexOf(dungeon.cells[x][y].type) > -1) {
-			return null;
+			return;
 		}
 
 		cx += dx;
@@ -120,30 +122,37 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 
 		for (var i = 0; i < neighbors.length; i++) {
 			var blocked = false;
+
 			switch (dungeon.cells[neighbors[i].x][neighbors[i].y].type) {
 				case 'empty':
 				case 'wall':
 					blocked = true;
 					break;
 			}
+
 			for (var j = 0; j < dungeon.entities.length; j++) {
 				if (dungeon.entities[j].x == x2 && dungeon.entities[j].y == y2) {
 					continue;
 				}
+
 				if (dungeon.entities[j].x == neighbors[i].x && dungeon.entities[j].y == neighbors[i].y) {
 					blocked = true;
+					
 					break;
 				}
 			}
+
 			for (var j = 0; j < dungeon.chests.length; j++) {
 				if (dungeon.chests[j].x == x2 && dungeon.chests[j].y == y2) {
 					continue;
 				}
+
 				if (dungeon.chests[j].x == neighbors[i].x && dungeon.chests[j].y == neighbors[i].y) {
 					blocked = true;
 					break;
 				}
 			}
+			
 			if (blocked) {
 				neighbors.splice(i, 1);
 			}
