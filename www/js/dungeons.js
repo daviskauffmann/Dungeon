@@ -333,39 +333,41 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
 			var roomIndex = getRandomInt(0, dungeon.rooms.length);
 			var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
 			var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+
 			var chest = {
 				x: x,
 				y: y,
-				loot: null
+				loot: (function () {
+					var roll = Math.random();
+					if (roll < 0) {
+						chest.loot = null;
+					} else {
+						var item = {
+							x: -1,
+							y: -1,
+							name: '',
+							char: '',
+							index: ''
+						}
+						var roll = Math.random();
+						if (roll < 0.25) {
+							loot.name = 'sword';
+							loot.char = '|';
+						} else if (roll < 0.50) {
+							loot.name = 'spear';
+							loot.char = '/';
+						} else if (roll < 0.75) {
+							loot.name = 'shield';
+							loot.char = ')';
+						} else {
+							loot.name = 'bow';
+							loot.char = '}';
+						}
+						return item;
+					}
+				}())
 			}
-			var roll = Math.random();
-			if (roll < 0) {
-				chest.loot = null;
-			}
-			else {
-				var loot = {
-					x: -1,
-					y: -1,
-					name: '',
-					char: '',
-					index: ''
-				}
-				var roll = Math.random();
-				if (roll < 0.25) {
-					loot.name = 'sword';
-					loot.char = '|';
-				} else if (roll < 0.50) {
-					loot.name = 'spear';
-					loot.char = '/';
-				} else if (roll < 0.75) {
-					loot.name = 'shield';
-					loot.char = ')';
-				} else {
-					loot.name = 'bow';
-					loot.char = '}';
-				}
-				chest.loot = loot;
-			}
+
 			dungeon.chests.push(chest);
 		}
 	}
