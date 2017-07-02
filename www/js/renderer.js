@@ -168,7 +168,7 @@ function draw() {
 		ctx.fillRect(canvas.width - view.characterSize * 10, 0, view.characterSize * 10, player.inventory.length * 26);
 		ctx.fillStyle = '#fff';
 		for (var i = 0; i < player.inventory.length; i++) {
-			ctx.fillText(player.inventory[i].index + ') ' + player.inventory[i].name + player.inventory[i].equipped ? ' (equipped)' : '', canvas.width - (view.characterSize * 10), (i + 1) * view.characterSize);
+			ctx.fillText(player.inventory[i].index + ') ' + player.inventory[i].name + (player.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (view.characterSize * 10), (i + 1) * view.characterSize);
 		}
 	}
 
