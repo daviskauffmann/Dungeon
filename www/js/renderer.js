@@ -1,18 +1,3 @@
-var canvas = document.getElementById('game');
-var ctx = canvas.getContext('2d');
-var view = {
-	x: 0,
-	y: 0,
-	width: 0,
-	height: 0,
-	characterSize: 24
-}
-var ui = {
-	mode: '',
-	inventorySwapFirst: null,
-	inventorySwapSecond: null
-}
-
 function draw() {
 	var player = getPlayer();
 
@@ -60,90 +45,96 @@ function draw() {
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.font = view.characterSize + 'px mono';
+
 	for (var x = view.x; x < view.x + view.width; x++) {
 		for (var y = view.y; y < view.y + view.height; y++) {
-			if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
-				ctx.fillStyle = '#fff';
-				ctx.globalAlpha = 1;
+			if (x < 0 || x >= game.dungeons[player.level].width || y < 0 || y >= game.dungeons[player.level].height)
+				continue
 
-				var screenX = (x - view.x) * view.characterSize;
-				var screenY = (y - view.y + 1) * view.characterSize;
+			ctx.fillStyle = '#fff';
+			ctx.globalAlpha = 1;
 
-				if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
-					var entity = false;
-					for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
-						if (x == game.dungeons[player.level].entities[i].x && y == game.dungeons[player.level].entities[i].y) {
-							ctx.fillText(game.dungeons[player.level].entities[i].char, screenX, screenY);
-							entity = true;
-							break;
-						}
-					}
-					if (entity) {
-						continue;
-					}
+			var screenX = (x - view.x) * view.characterSize;
+			var screenY = (y - view.y + 1) * view.characterSize;
 
-					var chest = false;
-					for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
-						if (x == game.dungeons[player.level].chests[i].x && y == game.dungeons[player.level].chests[i].y) {
-							ctx.fillText('~', screenX, screenY);
-							chest = true;
-							break;
-						}
-					}
-					if (chest) {
-						continue;
-					}
-
-					var item = false;
-					for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
-						if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
-							ctx.fillText(game.dungeons[player.level].items[i].char, screenX, screenY);
-							item = true;
-							break;
-						}
-					}
-					if (item) {
-						continue;
+			if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
+				var entity = false;
+				for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
+					if (x == game.dungeons[player.level].entities[i].x && y == game.dungeons[player.level].entities[i].y) {
+						ctx.fillText(game.dungeons[player.level].entities[i].char, screenX, screenY);
+						
+						entity = true;
+						
+						break;
 					}
 				}
+				if (entity)
+					continue;
 
-				if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1 || game.dungeons[player.level].cells[x][y].discovered) {
-					if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
-						ctx.globalAlpha = 1;
-					} else if (game.dungeons[player.level].cells[x][y].discovered) {
-						ctx.globalAlpha = 0.25;
+				var chest = false;
+				for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
+					if (x == game.dungeons[player.level].chests[i].x && y == game.dungeons[player.level].chests[i].y) {
+						ctx.fillText('~', screenX, screenY);
+						
+						chest = true;
+						
+						break;
 					}
-					ctx.fillStyle = '#fff';
-					switch (game.dungeons[player.level].cells[x][y].type) {
-						case 'empty':
-							ctx.fillText(' ', screenX, screenY);
-							break;
-						case 'floor':
-							ctx.fillText('.', screenX, screenY);
-							break;
-						case 'grass':
-							ctx.fillStyle = '#50ff50';
-							ctx.fillText('^', screenX, screenY);
-							break;
-						case 'wall':
-							ctx.fillText('#', screenX, screenY);
-							break;
-						case 'doorClosed':
-							ctx.fillText('+', screenX, screenY);
-							break;
-						case 'doorOpen':
-							ctx.fillText('-', screenX, screenY);
-							break;
-						case 'stairsUp':
-							ctx.fillText('<', screenX, screenY);
-							break;
-						case 'stairsDown':
-							ctx.fillText('>', screenX, screenY);
-							break;
-						case 'trap':
-							ctx.fillText('^', screenX, screenY);
-							break;
+				}
+				if (chest)
+					continue;
+
+				var item = false;
+				for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
+					if (x == game.dungeons[player.level].items[i].x && y == game.dungeons[player.level].items[i].y) {
+						ctx.fillText(game.dungeons[player.level].items[i].char, screenX, screenY);
+						
+						item = true;
+						
+						break;
 					}
+				}
+				if (item)
+					continue;
+			}
+
+			if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1 || game.dungeons[player.level].cells[x][y].discovered) {
+				ctx.fillStyle = '#fff';
+				if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
+					ctx.globalAlpha = 1;
+				} else if (game.dungeons[player.level].cells[x][y].discovered) {
+					ctx.globalAlpha = 0.25;
+				}
+
+				switch (game.dungeons[player.level].cells[x][y].type) {
+					case 'empty':
+						ctx.fillText(' ', screenX, screenY);
+						break;
+					case 'floor':
+						ctx.fillText('.', screenX, screenY);
+						break;
+					case 'grass':
+						ctx.fillStyle = '#50ff50';
+						ctx.fillText('^', screenX, screenY);
+						break;
+					case 'wall':
+						ctx.fillText('#', screenX, screenY);
+						break;
+					case 'doorClosed':
+						ctx.fillText('+', screenX, screenY);
+						break;
+					case 'doorOpen':
+						ctx.fillText('-', screenX, screenY);
+						break;
+					case 'stairsUp':
+						ctx.fillText('<', screenX, screenY);
+						break;
+					case 'stairsDown':
+						ctx.fillText('>', screenX, screenY);
+						break;
+					case 'trap':
+						ctx.fillText('^', screenX, screenY);
+						break;
 				}
 			}
 		}
@@ -166,9 +157,10 @@ function draw() {
 		ctx.fillRect(canvas.width - view.characterSize * 10, 0, view.characterSize * 10, player.inventory.length * 26);
 		ctx.fillStyle = '#fff';
 		for (var i = 0; i < player.inventory.length; i++) {
-			ctx.fillText(player.inventory[i].index + ') ' + player.inventory[i].name + (player.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (view.characterSize * 10), (i + 1) * view.characterSize);
+			ctx.fillText(player.inventory[i].index + ') ' + player.inventory[i].name + player.inventory[i].equipped ? ' (equipped)' : '', canvas.width - (view.characterSize * 10), (i + 1) * view.characterSize);
 		}
 	}
+
 	if (ui.mode == 'character') {
 		ctx.fillStyle = '#000';
 		ctx.fillRect(canvas.width - view.characterSize * 10, 0, view.characterSize * 10, view.characterSize * 10);

@@ -1,32 +1,32 @@
-﻿document.addEventListener('keydown', function (e) {
+﻿document.addEventListener('keydown', function (ev) {
 	var player = getPlayer();
 	switch (ui.mode) {
 		case '':
-			if (e.key == 'ArrowUp') {
+			if (ev.key == 'ArrowUp') {
 				moveEntity(player, player.x, player.y - 1);
 				tick();
 				draw();
 			}
-			if (e.key == 'ArrowRight') {
+			if (ev.key == 'ArrowRight') {
 				moveEntity(player, player.x + 1, player.y);
 				tick();
 				draw();
 			}
-			if (e.key == 'ArrowDown') {
+			if (ev.key == 'ArrowDown') {
 				moveEntity(player, player.x, player.y + 1);
 				tick();
 				draw();
 			}
-			if (e.key == 'ArrowLeft') {
+			if (ev.key == 'ArrowLeft') {
 				moveEntity(player, player.x - 1, player.y);
 				tick();
 				draw();
 			}
-			if (e.key == '.') {
+			if (ev.key == '.') {
 				tick();
 				draw();
 			}
-			if (e.key == 'g') {
+			if (ev.key == 'g') {
 				for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
 					if (player.x == game.dungeons[player.level].items[i].x && player.y == game.dungeons[player.level].items[i].y) {
 						game.messages.push('you pick up a ' + game.dungeons[player.level].items[i].name);
@@ -37,7 +37,7 @@
 					}
 				}
 			}
-			if (e.key == 's') {
+			if (ev.key == 's') {
 				var targets = [];
 				for (var dir = 0; dir < 360; dir++) {
 					raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
@@ -65,20 +65,20 @@
 				}
 				draw();
 			}
-			if (e.key == 'c') {
+			if (ev.key == 'c') {
 				if (game.dungeons[player.level].cells[player.x][player.y].type == 'doorOpen') {
 					game.messages.push('you close the door');
 					game.dungeons[player.level].cells[player.x][player.y].type = 'doorClosed'
 					draw();
 				}
 			}
-			if (e.key == 'i') {
+			if (ev.key == 'i') {
 				if (player.inventory.length > 0) {
 					ui.mode = 'inventory';
 					draw();
 				}
 			}
-			if (e.key == 'o') {
+			if (ev.key == 'o') {
 				ui.mode = 'character';
 				draw();
 			}
@@ -88,29 +88,29 @@
             }*/
 			break;
 		case 'inventory':
-			if (e.key == 'i') {
+			if (ev.key == 'i') {
 				ui.mode = '';
 				draw();
 			}
-			if (e.key == 'd') {
+			if (ev.key == 'd') {
 				game.messages.push('select item to drop');
 				game.messages.push('press space to cancel');
 				ui.mode = 'inventory_drop';
 				draw();
 			}
-			if (e.key == 'e') {
+			if (ev.key == 'e') {
 				game.messages.push('select item to equip');
 				game.messages.push('press space to cancel');
 				ui.mode = 'inventory_equip';
 				draw();
 			}
-			if (e.key == 'u') {
+			if (ev.key == 'u') {
 				game.messages.push('select item to unequip');
 				game.messages.push('press space to cancel');
 				ui.mode = 'inventory_unequip';
 				draw();
 			}
-			if (e.key == 's') {
+			if (ev.key == 's') {
 				game.messages.push('select first item to swap');
 				game.messages.push('press space to cancel');
 				ui.mode = 'inventory_swapFirst';
@@ -119,7 +119,7 @@
 			break;
 		case 'inventory_drop':
 			for (var i = 0; i < player.inventory.length; i++) {
-				if (player.inventory[i].index == e.key) {
+				if (player.inventory[i].index == ev.key) {
 					game.messages.push('you drop a ' + player.inventory[i].name);
 					player.inventory[i].x = player.x;
 					player.inventory[i].y = player.y;
@@ -129,42 +129,42 @@
 					draw();
 				}
 			}
-			if (e.key == ' ') {
+			if (ev.key == ' ') {
 				ui.mode = '';
 				draw();
 			}
 			break;
 		case 'inventory_equip':
 			for (var i = 0; i < player.inventory.length; i++) {
-				if (player.inventory[i].index == e.key) {
+				if (player.inventory[i].index == ev.key) {
 					game.messages.push('you equip a ' + player.inventory[i].name);
 					player.inventory[i].equipped = true;
 					ui.mode = '';
 					draw();
 				}
 			}
-			if (e.key == ' ') {
+			if (ev.key == ' ') {
 				ui.mode = '';
 				draw();
 			}
 			break;
 		case 'inventory_unequip':
 			for (var i = 0; i < player.inventory.length; i++) {
-				if (player.inventory[i].index == e.key) {
+				if (player.inventory[i].index == ev.key) {
 					game.messages.push('you unequip a ' + player.inventory[i].name);
 					player.inventory[i].equipped = false;
 					ui.mode = '';
 					draw();
 				}
 			}
-			if (e.key == ' ') {
+			if (ev.key == ' ') {
 				ui.mode = '';
 				draw();
 			}
 			break;
 		case 'inventory_swapFirst':
 			for (var i = 0; i < player.inventory.length; i++) {
-				if (player.inventory[i].index == e.key) {
+				if (player.inventory[i].index == ev.key) {
 					ui.inventorySwapFirst = i;
 					game.messages.push('select second item to swap');
 					game.messages.push('press space to cancel');
@@ -172,14 +172,14 @@
 					draw();
 				}
 			}
-			if (e.key == ' ') {
+			if (ev.key == ' ') {
 				ui.mode = '';
 				draw();
 			}
 			break;
 		case 'inventory_swapSecond':
 			for (var i = 0; i < player.inventory.length; i++) {
-				if (player.inventory[i].index == e.key) {
+				if (player.inventory[i].index == ev.key) {
 					ui.inventorySwapSecond = i;
 					game.messages.push('you swap the ' + player.inventory[ui.inventorySwapFirst].name + ' with the ' + player.inventory[ui.inventorySwapSecond].name);
 					var t = player.inventory[ui.inventorySwapFirst];
@@ -189,13 +189,13 @@
 					draw();
 				}
 			}
-			if (e.key == ' ') {
+			if (ev.key == ' ') {
 				ui.mode = '';
 				draw();
 			}
 			break;
 		case 'character':
-			if (e.key == 'o') {
+			if (ev.key == 'o') {
 				ui.mode = '';
 				draw();
 			}
@@ -212,10 +212,10 @@
 		game.messages.push('game loaded');
 		draw();
 	}*/
-	if (e.key == '1') {
+	if (ev.key == '1') {
 		game.stopTime = !game.stopTime;
 	}
-	if (e.key == '2') {
+	if (ev.key == '2') {
 		game.ignoreFov = !game.ignoreFov;
 		draw();
 	}
