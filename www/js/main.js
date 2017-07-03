@@ -20,8 +20,12 @@ var view = {
 
 var ui = {
     mode: '',
-    inventorySwapFirst: null,
-    inventorySwapSecond: null
+    inventorySwapFirst: undefined,
+    inventorySwapSecond: undefined,
+    target: {
+        x: 0,
+        y: 0
+    }
 }
 
 createTown();

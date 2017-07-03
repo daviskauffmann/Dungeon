@@ -1,241 +1,244 @@
 function getPlayer() {
-	for (var i = 0; i < game.dungeons.length; i++) {
-		for (var j = 0; j < game.dungeons[i].entities.length; j++) {
-			if (game.dungeons[i].entities[j].id === 0) {
-				return game.dungeons[i].entities[j];
-			}
-		}
-	}
-	
-	throw new Error('A player should always exist');
+    for (var i = 0; i < game.dungeons.length; i++) {
+        for (var j = 0; j < game.dungeons[i].entities.length; j++) {
+            if (game.dungeons[i].entities[j].id === 0) {
+                return game.dungeons[i].entities[j];
+            }
+        }
+    }
+
+    throw new Error('A player should always exist');
 }
 
 function tick() {
-	if (!game.stopTime) {
-		for (var i = 0; i < game.dungeons.length; i++) {
-			for (var j = 0; j < game.dungeons[i].entities.length; j++) {
-				if (game.dungeons[i].entities[j].id === 0) {
-					continue;
-				}
+    if (!game.stopTime) {
+        for (var i = 0; i < game.dungeons.length; i++) {
+            for (var j = 0; j < game.dungeons[i].entities.length; j++) {
+                if (game.dungeons[i].entities[j].id === 0) {
+                    continue;
+                }
 
-				tickEntity(game.dungeons[i].entities[j]);
-			}
-		}
-	}
+                tickEntity(game.dungeons[i].entities[j]);
+            }
+        }
+    }
 
-	game.turn++;
+    game.turn++;
 }
 
 function tickEntity(entity) {
-	var targets = [];
-	for (var dir = 0; dir < 360; dir += 10) {
-		raycast(game.dungeons[entity.level], entity.x, entity.y, entity.stats.sight, dir, [
-			'wall',
-			'doorClosed'
-		], function (x, y) {
-			for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
-				if (game.dungeons[entity.level].entities[i] == entity) {
-					continue;
-				}
+    var targets = [];
+    for (var dir = 0; dir < 360; dir += 10) {
+        raycast(game.dungeons[entity.level], entity.x, entity.y, entity.stats.sight, dir, [
+            'wall',
+            'doorClosed'
+        ], (x, y) => {
+            for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
+                if (game.dungeons[entity.level].entities[i] === entity) {
+                    continue;
+                }
 
-				if (targets.indexOf(game.dungeons[entity.level].entities[i]) > -1) {
-					continue;
-				}
+                if (targets.indexOf(game.dungeons[entity.level].entities[i]) > -1) {
+                    continue;
+                }
 
-				if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y) {
-					continue;
-				}
+                if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y) {
+                    continue;
+                }
 
-				var hostile = false;
-				for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
-					if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1) {
-						continue;
-					}
+                if ((() => {
+                    for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
+                        if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1) {
+                            continue;
+                        }
 
-					hostile = true;
-				}
-				if (hostile) {
-					targets.push(game.dungeons[entity.level].entities[i]);
+                        return true;
+                    }
+                })()) {
+                    targets.push(game.dungeons[entity.level].entities[i]);
 
-					return true;
-				}
-			}
-		});
-	}
+                    return true;
+                }
+            }
+        });
+    }
 
-	if (targets.length > 0) {
-		var target = targets[0];
+    if (targets.length > 0) {
+        var target = targets[0];
 
-		game.messages.push('the ' + entity.name + ' spots a ' + target.name);
+        game.messages.push('the ' + entity.name + ' spots a ' + target.name);
 
-		var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, target.x, target.y);
-		if (path != null && path.length > 0) {
-			next = path.pop();
+        var path = pathfind(game.dungeons[entity.level], entity.x, entity.y, target.x, target.y);
+        if (path && path.length > 0) {
+            next = path.pop();
 
-			moveEntity(entity, next.x, next.y);
-		}
-	} else {
-		var roll = Math.random();
-		if (roll < 0.25) {
-			moveEntity(entity, entity.x, entity.y - 1);
-		} else if (roll < 0.5) {
-			moveEntity(entity, entity.x + 1, entity.y);
-		} else if (roll < 0.75) {
-			moveEntity(entity, entity.x, entity.y + 1);
-		} else {
-			moveEntity(entity, entity.x - 1, entity.y);
-		}
-	}
+            moveEntity(entity, next.x, next.y);
+        }
+    } else {
+        var roll = Math.random();
+        if (roll < 0.25) {
+            moveEntity(entity, entity.x, entity.y - 1);
+        } else if (roll < 0.5) {
+            moveEntity(entity, entity.x + 1, entity.y);
+        } else if (roll < 0.75) {
+            moveEntity(entity, entity.x, entity.y + 1);
+        } else {
+            moveEntity(entity, entity.x - 1, entity.y);
+        }
+    }
 }
 
 function moveEntity(entity, x, y) {
-	if (x < 0 || x >= game.dungeons[entity.level].width || y < 0 || y >= game.dungeons[entity.level].height) {
-		return;
-	}
+    if (x < 0 || x >= game.dungeons[entity.level].width || y < 0 || y >= game.dungeons[entity.level].height) {
+        return;
+    }
 
-	switch (game.dungeons[entity.level].cells[x][y].type) {
-		case 'wall':
-			return;
-		case 'doorClosed':
-			var roll = Math.random();
-			if (roll > 0.5) {
-				game.messages.push('the ' + entity.name + ' opens the door');
-				game.dungeons[entity.level].cells[x][y].type = 'doorOpen';
-			} else {
-				game.messages.push('the ' + entity.name + ' can\'t open the door');
-			}
+    switch (game.dungeons[entity.level].cells[x][y].type) {
+        case 'wall':
+            return;
+        case 'doorClosed':
+            var roll = Math.random();
+            if (roll > 0.5) {
+                game.messages.push('the ' + entity.name + ' opens the door');
+                game.dungeons[entity.level].cells[x][y].type = 'doorOpen';
+            } else {
+                game.messages.push('the ' + entity.name + ' can\'t open the door');
+            }
 
-			return;
-		case 'stairsUp':
-			game.messages.push(entity.name + ' ascends');
+            return;
+        case 'stairsUp':
+            game.messages.push(entity.name + ' ascends');
 
-			changeLevel(entity, entity.level - 1, 'stairsDown');
+            changeLevel(entity, entity.level - 1, 'stairsDown');
 
-			return;
-		case 'stairsDown':
-			game.messages.push(entity.name + ' descends');
+            return;
+        case 'stairsDown':
+            game.messages.push(entity.name + ' descends');
 
-			changeLevel(entity, entity.level + 1, 'stairsUp');
+            changeLevel(entity, entity.level + 1, 'stairsUp');
 
-			return;
-	}
+            return;
+    }
 
-	for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
-		if (game.dungeons[entity.level].entities[i] === entity) {
-			continue;
-		}
+    for (var i = 0; i < game.dungeons[entity.level].entities.length; i++) {
+        if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y) {
+            continue;
+        }
 
-		if (game.dungeons[entity.level].entities[i].x !== x || game.dungeons[entity.level].entities[i].y !== y) {
-			continue;
-		}
+        if (game.dungeons[entity.level].entities[i] === entity) {
+            continue;
+        }
 
-		var hostile = false;
-		for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
-			if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1) {
-				continue;
-			}
+        if ((() => {
+            for (var j = 0; j < game.dungeons[entity.level].entities[i].factions.length; j++) {
+                if (entity.hostileFactions.indexOf(game.dungeons[entity.level].entities[i].factions[j]) === -1) {
+                    continue;
+                }
 
-			hostile = true;
-		}
-		if (hostile) {
-			var roll = Math.random();
-			if (roll < 0.5) {
-				game.messages.push('the ' + entity.name + ' misses the ' + game.dungeons[entity.level].entities[i].name);
-			} else {
-				// FIXME
-				if (game.dungeons[entity.level].entities[i].id == 0) {
-					return;
-				}
+                return true;
+            }
+        })()) {
+            var roll = Math.random();
+            if (roll < 0.5) {
+                game.messages.push('the ' + entity.name + ' misses the ' + game.dungeons[entity.level].entities[i].name);
+            } else {
+                // FIXME
+                if (game.dungeons[entity.level].entities[i].id === 0) {
+                    game.messages.push('the ' + entity.name + ' cannot kill the ' + game.dungeons[entity.level].entities[i].name);
 
-				game.messages.push('the ' + entity.name + ' kills the ' + game.dungeons[entity.level].entities[i].name);
+                    return;
+                }
 
-				for (var j = 0; j < game.dungeons[entity.level].entities[i].inventory.length; j++) {
-					game.messages.push('the ' + game.dungeons[entity.level].entities[i].name + ' drops a ' + game.dungeons[entity.level].entities[i].inventory[j].name);
-					game.dungeons[entity.level].entities[i].inventory[j].x = x;
-					game.dungeons[entity.level].entities[i].inventory[j].y = y;
-					game.dungeons[entity.level].items.push(game.dungeons[entity.level].entities[i].inventory[j]);
-				}
+                game.messages.push('the ' + entity.name + ' kills the ' + game.dungeons[entity.level].entities[i].name);
 
-				var corpse = {
-					x: x,
-					y: y,
-					name: game.dungeons[entity.level].entities[i].name + ' corpse',
-					char: '%',
-					index: ''
-				}
-				game.dungeons[entity.level].items.push(corpse);
+                for (var j = 0; j < game.dungeons[entity.level].entities[i].inventory.length; j++) {
+                    game.messages.push('the ' + game.dungeons[entity.level].entities[i].name + ' drops a ' + game.dungeons[entity.level].entities[i].inventory[j].name);
+                    game.dungeons[entity.level].entities[i].inventory[j].x = x;
+                    game.dungeons[entity.level].entities[i].inventory[j].y = y;
+                    game.dungeons[entity.level].items.push(game.dungeons[entity.level].entities[i].inventory[j]);
+                }
 
-				game.dungeons[entity.level].entities.splice(i, 1);
-			}
-		}
+                var corpse = {
+                    x: x,
+                    y: y,
+                    name: game.dungeons[entity.level].entities[i].name + ' corpse',
+                    char: '%',
+                    index: ''
+                }
+                game.dungeons[entity.level].items.push(corpse);
 
-		return;
-	}
+                game.dungeons[entity.level].entities.splice(i, 1);
+            }
+        }
 
-	for (var i = 0; i < game.dungeons[entity.level].chests.length; i++) {
-		if (game.dungeons[entity.level].chests[i].x !== x || game.dungeons[entity.level].chests[i].y !== y) {
-			continue;
-		}
+        return;
+    }
 
-		var roll = Math.random();
-		if (roll > 0.5) {
-			game.messages.push('the ' + entity.name + ' opens the chest');
+    for (var i = 0; i < game.dungeons[entity.level].chests.length; i++) {
+        if (game.dungeons[entity.level].chests[i].x !== x || game.dungeons[entity.level].chests[i].y !== y) {
+            continue;
+        }
 
-			var loot = game.dungeons[entity.level].chests[i].loot;
-			if (loot == null) {
-				game.messages.push('the ' + entity.name + ' sees nothing inside');
-			} else {
-				if (entity.inventory.length >= 26) {
-					game.messages.push(entity.name + '\'s inventory is full');
-				} else {
-					game.messages.push('the ' + entity.name + ' loots a ' + loot.name);
+        var roll = Math.random();
+        if (roll > 0.5) {
+            game.messages.push('the ' + entity.name + ' opens the chest');
 
-					entity.inventory.push(loot);
-				}
-			}
+            var loot = game.dungeons[entity.level].chests[i].loot;
+            if (loot) {
+                if (entity.inventory.length >= 26) {
+                    game.messages.push(entity.name + '\'s inventory is full');
+                } else {
+                    game.messages.push('the ' + entity.name + ' loots a ' + loot.name);
 
-			game.dungeons[entity.level].chests.splice(i, 1);
-		} else {
-			game.messages.push('the ' + entity.name + ' can\'t open the chest');
-		}
+                    entity.inventory.push(loot);
+                }
+            } else {
+                game.messages.push('the ' + entity.name + ' sees nothing inside');
+            }
 
-		return;
-	}
+            game.dungeons[entity.level].chests.splice(i, 1);
+        } else {
+            game.messages.push('the ' + entity.name + ' can\'t open the chest');
+        }
 
-	var itemNames = [];
-	for (var i = 0; i < game.dungeons[entity.level].items.length; i++) {
-		if (game.dungeons[entity.level].items[i].x !== x || game.dungeons[entity.level].items[i].y !== y) {
-			continue;
-		}
+        return;
+    }
 
-		itemNames.push(game.dungeons[entity.level].items[i].name);
-	}
-	if (itemNames.length > 0) {
-		game.messages.push('the ' + entity.name + ' sees a ' + itemNames.join(', '));
-	}
+    var itemNames = [];
+    for (var i = 0; i < game.dungeons[entity.level].items.length; i++) {
+        if (game.dungeons[entity.level].items[i].x !== x || game.dungeons[entity.level].items[i].y !== y) {
+            continue;
+        }
 
-	entity.x = x;
-	entity.y = y;
+        itemNames.push(game.dungeons[entity.level].items[i].name);
+    }
+    if (itemNames.length > 0) {
+        game.messages.push('the ' + entity.name + ' sees a ' + itemNames.join(', '));
+    }
+
+    entity.x = x;
+    entity.y = y;
 }
 
 function changeLevel(entity, level, cellType) {
-	if (level == game.dungeons.length) {
-		createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 5, 5);
-	}
+    if (level === game.dungeons.length) {
+        createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 5, 5);
+    }
 
-	game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
-	entity.level = level;
-	game.dungeons[entity.level].entities.push(entity);
+    game.dungeons[entity.level].entities.splice(game.dungeons[entity.level].entities.indexOf(entity), 1);
+    entity.level = level;
+    game.dungeons[entity.level].entities.push(entity);
 
-	for (var x = 0; x < game.dungeons[entity.level].width; x++) {
-		for (var y = 0; y < game.dungeons[entity.level].height; y++) {
-			if (game.dungeons[entity.level].cells[x][y].type == cellType) {
-				entity.x = x;
-				entity.y = y;
-				break;
-			}
-		}
-	}
+    for (var x = 0; x < game.dungeons[entity.level].width; x++) {
+        for (var y = 0; y < game.dungeons[entity.level].height; y++) {
+            if (game.dungeons[entity.level].cells[x][y].type === cellType) {
+                entity.x = x;
+                entity.y = y;
 
-	game.messages.push(entity.name + ' has moved to level ' + (entity.level));
+                break;
+            }
+        }
+    }
+
+    game.messages.push(entity.name + ' has moved to level ' + (entity.level));
 }
