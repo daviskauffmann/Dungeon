@@ -1,6 +1,4 @@
-﻿/// <reference path="main.ts" />
-
-function getRandomInt(min: number, max: number) {
+﻿function getRandomInt(min: number, max: number) {
     min = Math.ceil(min);
     max = Math.floor(max);
     //return 4;

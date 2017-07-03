@@ -1,4 +1,5 @@
-/// <reference path="main.ts" />
+const canvas: any = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
 function draw() {
     const player = getPlayer();

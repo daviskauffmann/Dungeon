@@ -1,28 +1,40 @@
 {
-  "name": "dungeon",
-  "version": "1.0.0",
-  "description": "",
-  "main": "gulpfile.js",
-  "dependencies": {},
-  "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-clean": "^0.3.2",
-    "gulp-inject": "^4.2.0",
-    "gulp-sequence": "^0.4.6",
-    "gulp-typescript": "^3.1.7",
-    "typescript": "^2.4.1"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/daviskauffmann/Dungeon.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/daviskauffmann/Dungeon/issues"
-  },
-  "homepage": "https://github.com/daviskauffmann/Dungeon#readme"
+    "name": "dungeon",
+    "version": "1.0.0",
+    "description": "",
+    "main": "gulpfile.js",
+    "dependencies": {
+        "cordova-browser": "^4.1.0",
+        "cordova-plugin-whitelist": "1"
+    },
+    "devDependencies": {
+        "gulp": "^3.9.1",
+        "gulp-clean": "^0.3.2",
+        "gulp-inject": "^4.2.0",
+        "gulp-sass": "^3.1.0",
+        "gulp-sequence": "^0.4.6",
+        "gulp-typescript": "^3.1.7",
+        "typescript": "^2.4.1"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/daviskauffmann/Dungeon.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/daviskauffmann/Dungeon/issues"
+    },
+    "homepage": "https://github.com/daviskauffmann/Dungeon#readme",
+    "cordova": {
+        "plugins": {
+            "cordova-plugin-whitelist": {}
+        },
+        "platforms": [
+            "browser"
+        ]
+    }
 }

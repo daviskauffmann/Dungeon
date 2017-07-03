@@ -1,6 +1,4 @@
-﻿/// <reference path="main.ts" />
-
-// sends out a ray in a certain direction, calling the action on every cell it comes across
+﻿// sends out a ray in a certain direction, calling the action on every cell it comes across
 // blockedBy is an array of cell types that block the ray
 // action() is a function that will stop the ray if it returns true
 // raycast() will then return the cell where action() stopped, returning nothing otherwise

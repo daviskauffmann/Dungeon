@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "outFile": "main.js",
+        "removeComments": true,
+        "target": "es6"
+    }
+}

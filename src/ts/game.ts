@@ -1,5 +1,3 @@
-/// <reference path="main.ts" />
-
 function getPlayer() {
     for (let i = 0; i < game.dungeons.length; i++) {
         for (let j = 0; j < game.dungeons[i].entities.length; j++) {
@@ -174,7 +172,8 @@ function moveEntity(entity: Entity, x: number, y: number) {
                     y: y,
                     name: target.name + ' corpse',
                     char: '%',
-                    index: ''
+                    index: '',
+                    equipped: false
                 }
                 dungeon.items.push(corpse);
 

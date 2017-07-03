@@ -1,6 +1,4 @@
-﻿/// <reference path="main.ts" />
-
-document.addEventListener('keydown', ev => {
+﻿function input(ev: KeyboardEvent) {
 	const player = getPlayer();
 	const dungeon = game.dungeons[player.level];
 
@@ -373,7 +371,7 @@ document.addEventListener('keydown', ev => {
 			view.characterSize++;
 
 			draw();
-			
+
 			break;
 		case '1':
 			game.godMode = !game.godMode;
@@ -390,4 +388,4 @@ document.addEventListener('keydown', ev => {
 
 			break;
 	}
-});
+}

@@ -1,5 +1,3 @@
-/// <reference path="main.ts" />
-
 function createTown() {
     const town: Dungeon = {
         width: 25,
@@ -130,7 +128,7 @@ function createDungeon(width: number,
             continue;
         }
 
-        const room: Room = {
+        const room: Rect = {
             x: roomX,
             y: roomY,
             width: roomWidth,
