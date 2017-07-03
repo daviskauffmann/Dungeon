@@ -347,14 +347,14 @@ document.addEventListener('keydown', ev => {
 	}
 
 	switch (ev.key) {
-		case '-':
+		case '[':
 			game.messages.push('game saved');
 
 			localStorage.setItem('game', JSON.stringify(game));
 			console.log(JSON.stringify(game));
 
 			break;
-		case '=':
+		case ']':
 			game.messages.push('game loaded');
 
 			game = JSON.parse(localStorage.getItem('game'));
@@ -362,6 +362,18 @@ document.addEventListener('keydown', ev => {
 
 			draw();
 
+			break;
+		case '-':
+			view.characterSize--;
+
+			draw();
+
+			break;
+		case '=':
+			view.characterSize++;
+
+			draw();
+			
 			break;
 		case '1':
 			game.godMode = !game.godMode;
