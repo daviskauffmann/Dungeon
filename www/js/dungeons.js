@@ -348,6 +348,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             const chest = {
                 x: x,
                 y: y,
+                char: '~',
                 loot: (() => {
                     const roll = Math.random();
                     if (roll < 0) {

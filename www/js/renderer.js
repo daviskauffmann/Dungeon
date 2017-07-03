@@ -56,7 +56,7 @@ function draw() {
                 continue;
             }
 
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = view.color.default;
             ctx.globalAlpha = 1;
 
             const screenX = (x - view.x) * view.characterSize;
@@ -93,7 +93,7 @@ function draw() {
                         return false;
                     }
 
-                    ctx.fillText('~', screenX, screenY);
+                    ctx.fillText(chest.char, screenX, screenY);
 
                     return true;
                 })) {
@@ -114,43 +114,15 @@ function draw() {
             }
 
             if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1 || dungeon.cells[x][y].discovered) {
-                ctx.fillStyle = '#fff';
                 if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
                     ctx.globalAlpha = 1;
                 } else if (dungeon.cells[x][y].discovered) {
                     ctx.globalAlpha = 0.25;
                 }
 
-                switch (dungeon.cells[x][y].type) {
-                    case 'empty':
-                        ctx.fillText(' ', screenX, screenY);
-                        break;
-                    case 'floor':
-                        ctx.fillText('.', screenX, screenY);
-                        break;
-                    case 'grass':
-                        ctx.fillStyle = '#50ff50';
-                        ctx.fillText('^', screenX, screenY);
-                        break;
-                    case 'wall':
-                        ctx.fillText('#', screenX, screenY);
-                        break;
-                    case 'doorClosed':
-                        ctx.fillText('+', screenX, screenY);
-                        break;
-                    case 'doorOpen':
-                        ctx.fillText('-', screenX, screenY);
-                        break;
-                    case 'stairsUp':
-                        ctx.fillText('<', screenX, screenY);
-                        break;
-                    case 'stairsDown':
-                        ctx.fillText('>', screenX, screenY);
-                        break;
-                    case 'trap':
-                        ctx.fillText('^', screenX, screenY);
-                        break;
-                }
+                let cellType = view.cellType[dungeon.cells[x][y].type] || view.cellType.default;
+                ctx.fillStyle = cellType.color || view.color.default;
+                ctx.fillText(cellType.char, screenX, screenY);
             }
         }
     }

@@ -7,7 +7,9 @@
 
 let game = {
     id: 1,
-    dungeons: [],
+    dungeons: [
+        createTown()
+    ],
     turn: 0,
     messages: [],
     godMode: true,
@@ -23,7 +25,44 @@ const view = {
     y: 0,
     width: 0,
     height: 0,
-    characterSize: 24
+    characterSize: 24,
+    color: {
+        default: '#fff'
+    },
+    cellType: {
+        default: {
+            color: '#ff0000',
+            char: '/'
+        },
+        'empty': {
+            char: ' '
+        },
+        'floor': {
+            char: '.'
+        },
+        'grass': {
+            color: '#50ff50',
+            char: '^'
+        },
+        'wall': {
+            char: '#'
+        },
+        'doorClosed': {
+            char: '+'
+        },
+        'doorOpen': {
+            char: '-'
+        },
+        'stairsDown': {
+            char: '<'
+        },
+        'stairsUp': {
+            char: '>'
+        },
+        'trap': {
+            char: '^'
+        }
+    }
 }
 
 const ui = {
@@ -38,8 +77,6 @@ const ui = {
 
 // need to find a proper way to save the rng state when saving/loading
 Math.seedrandom();
-
-game.dungeons.push(createTown());
 
 draw();
 window.addEventListener('resize', draw);
