@@ -1,5 +1,7 @@
+/// <reference path="main.js" />
+
 function createTown() {
-    var dungeon = {
+    const town = {
         width: 25,
         height: 25,
         cells: [],
@@ -7,23 +9,23 @@ function createTown() {
         entities: [],
         chests: [],
         items: []
-    }
+    };
 
-    for (var x = 0; x < dungeon.width; x++) {
-        dungeon.cells[x] = [];
-        for (var y = 0; y < dungeon.height; y++) {
-            dungeon.cells[x][y] = {
+    for (let x = 0; x < town.width; x++) {
+        town.cells[x] = [];
+        for (let y = 0; y < town.height; y++) {
+            town.cells[x][y] = {
                 type: 'grass',
                 discovered: false
             }
         }
     }
 
-    var x = Math.round(dungeon.width / 2);
-    var y = Math.round(dungeon.height / 2);
-    dungeon.cells[x][y].type = 'stairsDown';
+    const x = Math.round(town.width / 2);
+    const y = Math.round(town.height / 2);
+    town.cells[x][y].type = 'stairsDown';
 
-    var player = {
+    const player = {
         id: 0,
         x: x,
         y: y,
@@ -58,14 +60,14 @@ function createTown() {
             'monster'
         ],
         hostileEntities: []
-    }
-    dungeon.entities.push(player);
+    };
+    town.entities.push(player);
 
-    game.dungeons.push(dungeon);
+    return town;
 }
 
 function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, monsterAmount, chestAmount) {
-    var dungeon = {
+    const dungeon = {
         width: width,
         height: height,
         cells: [],
@@ -73,11 +75,11 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         entities: [],
         chests: [],
         items: []
-    }
+    };
 
-    for (var x = 0; x < dungeon.width; x++) {
+    for (let x = 0; x < dungeon.width; x++) {
         dungeon.cells[x] = [];
-        for (var y = 0; y < dungeon.height; y++) {
+        for (let y = 0; y < dungeon.height; y++) {
             dungeon.cells[x][y] = {
                 type: 'empty',
                 discovered: false
@@ -85,19 +87,19 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         }
     }
 
-    for (var i = 0; i < roomAttempts; i++) {
-        var roomX = getRandomInt(0, dungeon.width);
-        var roomY = getRandomInt(0, dungeon.height);
-        var roomWidth = getRandomInt(minRoomSize, maxRoomSize);
-        var roomHeight = getRandomInt(minRoomSize, maxRoomSize);
+    for (let i = 0; i < roomAttempts; i++) {
+        const roomX = getRandomInt(0, dungeon.width);
+        const roomY = getRandomInt(0, dungeon.height);
+        const roomWidth = getRandomInt(minRoomSize, maxRoomSize);
+        const roomHeight = getRandomInt(minRoomSize, maxRoomSize);
 
         if (roomX < 1 || roomX + roomWidth > dungeon.width - 1 || roomY < 1 || roomY + roomHeight > dungeon.height - 1) {
             continue;
         }
 
         if (preventOverlap && (() => {
-            for (var x = roomX; x < roomX + roomWidth; x++) {
-                for (var y = roomY; y < roomY + roomHeight; y++) {
+            for (let x = roomX; x < roomX + roomWidth; x++) {
+                for (let y = roomY; y < roomY + roomHeight; y++) {
                     if (dungeon.cells[x][y].type === 'floor') {
                         return true;
                     }
@@ -119,15 +121,15 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             continue;
         }
 
-        var room = {
+        const room = {
             x: roomX,
             y: roomY,
             width: roomWidth,
             height: roomHeight
         }
 
-        for (var x = room.x; x < room.x + room.width; x++) {
-            for (var y = room.y; y < room.y + room.height; y++) {
+        for (let x = room.x; x < room.x + room.width; x++) {
+            for (let y = room.y; y < room.y + room.height; y++) {
                 dungeon.cells[x][y].type = 'floor';
             }
         }
@@ -135,25 +137,25 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         dungeon.rooms.push(room);
     }
 
-    for (var i = 0; i < dungeon.rooms.length - 1; i++) {
-        var x1 = getRandomInt(dungeon.rooms[i].x, dungeon.rooms[i].x + dungeon.rooms[i].width);
-        var y1 = getRandomInt(dungeon.rooms[i].y, dungeon.rooms[i].y + dungeon.rooms[i].height);
-        var x2 = getRandomInt(dungeon.rooms[i + 1].x, dungeon.rooms[i + 1].x + dungeon.rooms[i + 1].width);
-        var y2 = getRandomInt(dungeon.rooms[i + 1].y, dungeon.rooms[i + 1].y + dungeon.rooms[i + 1].height);
-        
+    for (let i = 0; i < dungeon.rooms.length - 1; i++) {
+        let x1 = getRandomInt(dungeon.rooms[i].x, dungeon.rooms[i].x + dungeon.rooms[i].width);
+        let y1 = getRandomInt(dungeon.rooms[i].y, dungeon.rooms[i].y + dungeon.rooms[i].height);
+        let x2 = getRandomInt(dungeon.rooms[i + 1].x, dungeon.rooms[i + 1].x + dungeon.rooms[i + 1].width);
+        let y2 = getRandomInt(dungeon.rooms[i + 1].y, dungeon.rooms[i + 1].y + dungeon.rooms[i + 1].height);
+
         if (x1 > x2) {
-            var t = x1;
+            const t = x1;
             x1 = x2;
             x2 = t;
         }
         if (y1 > y2) {
-            var t = y1;
+            const t = y1;
             y1 = y2;
             y2 = t;
         }
 
-        for (var x = x1; x <= x2; x++) {
-            for (var y = y1; y <= y2; y++) {
+        for (let x = x1; x <= x2; x++) {
+            for (let y = y1; y <= y2; y++) {
                 if (x === x1 || x === x2 || y === y1 || y === y2) {
                     dungeon.cells[x][y].type = 'floor';
                 }
@@ -161,8 +163,8 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         }
     }
 
-    for (var x = 0; x < dungeon.width; x++) {
-        for (var y = 0; y < dungeon.height; y++) {
+    for (let x = 0; x < dungeon.width; x++) {
+        for (let y = 0; y < dungeon.height; y++) {
             if (dungeon.cells[x][y].type === 'floor') {
                 if (dungeon.cells[x][y - 1].type === 'empty') {
                     dungeon.cells[x][y - 1].type = 'wall';
@@ -192,9 +194,9 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
         }
     }
 
-    for (var x = 0; x < dungeon.width; x++) {
-        for (var y = 0; y < dungeon.height; y++) {
-            var roll = Math.random();
+    for (let x = 0; x < dungeon.width; x++) {
+        for (let y = 0; y < dungeon.height; y++) {
+            const roll = Math.random();
             if (roll < doorChance) {
                 if (dungeon.cells[x][y].type === 'floor') {
                     if (dungeon.cells[x][y - 1].type === 'floor' && dungeon.cells[x + 1][y - 1].type === 'floor' && dungeon.cells[x - 1][y - 1].type === 'floor') {
@@ -223,38 +225,38 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
     }
 
     if (dungeon.rooms.length > 0) {
-        for (var i = 0; i < trapAmount; i++) {
-            var roomIndex = getRandomInt(0, dungeon.rooms.length);
+        for (let i = 0; i < trapAmount; i++) {
+            const roomIndex = getRandomInt(0, dungeon.rooms.length);
 
-            var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-            var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+            const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+            const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
             dungeon.cells[x][y].type = 'trap';
         }
     }
 
     if (dungeon.rooms.length > 0) {
-        var x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
-        var y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
+        const x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
+        const y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
 
         dungeon.cells[x][y].type = 'stairsUp';
     }
 
     if (dungeon.rooms.length > 0) {
-        var x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
-        var y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
+        const x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
+        const y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
 
         dungeon.cells[x][y].type = 'stairsDown';
     }
 
     if (dungeon.rooms.length > 1) {
-        for (var i = 0; i < monsterAmount; i++) {
-            var roomIndex = getRandomInt(1, dungeon.rooms.length);
+        for (let i = 0; i < monsterAmount; i++) {
+            const roomIndex = getRandomInt(1, dungeon.rooms.length);
 
-            var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-            var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+            const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+            const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
-            var monster = {
+            const monster = {
                 id: game.id++,
                 x: x,
                 y: y,
@@ -285,9 +287,9 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                 factions: [],
                 hostileFactions: [],
                 hostileEntities: []
-            }
+            };
 
-            var roll = Math.random();
+            const roll = Math.random();
             if (roll < 0.25) {
                 monster.name = 'rat';
                 monster.char = 'r';
@@ -337,28 +339,28 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
     }
 
     if (dungeon.rooms.length > 0) {
-        for (var i = 0; i < chestAmount; i++) {
-            var roomIndex = getRandomInt(0, dungeon.rooms.length);
+        for (let i = 0; i < chestAmount; i++) {
+            const roomIndex = getRandomInt(0, dungeon.rooms.length);
 
-            var x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-            var y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+            const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+            const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
-            var chest = {
+            const chest = {
                 x: x,
                 y: y,
                 loot: (() => {
-                    var roll = Math.random();
+                    const roll = Math.random();
                     if (roll < 0) {
                         return undefined;
                     } else {
-                        var item = {
+                        const item = {
                             x: -1,
                             y: -1,
                             name: '',
                             char: '',
                             index: ''
                         }
-                        var roll = Math.random();
+                        const roll = Math.random();
                         if (roll < 0.25) {
                             item.name = 'sword';
                             item.char = '|';
@@ -375,11 +377,114 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                         return item;
                     }
                 })()
-            }
+            };
 
             dungeon.chests.push(chest);
         }
     }
 
-    game.dungeons.push(dungeon);
+    return dungeon;
+}
+
+function createDungeon_bspTree(width, height) {
+    const dungeon = {
+        width: width,
+        height: height,
+        cells: [],
+        rooms: [],
+        entities: [],
+        chests: [],
+        items: []
+    };
+
+    for (let x = 0; x < dungeon.width; x++) {
+        dungeon.cells[x] = [];
+        for (let y = 0; y < dungeon.height; y++) {
+            dungeon.cells[x][y] = {
+                type: 'empty',
+                discovered: false
+            }
+        }
+    }
+
+    function Leaf(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.MIN_LEAF_SIZE = 10;
+        this.child1 = undefined;
+        this.child2 = undefined;
+        this.room = undefined;
+        this.hall = undefined;
+
+        this.split = function () {
+            if (this.child1 || this.child2) {
+                return false;
+            }
+
+            splitHorizontally = Math.random() < 0.5;
+            if (this.width / this.height >= 1.25) {
+                splitHorizontally = false;
+            } else if (this.height / this.width >= 1.25) {
+                splitHorizontally = true;
+            }
+
+            let max;
+            if (splitHorizontally) {
+                max = this.height - this.MIN_LEAF_SIZE;
+            } else {
+                max = this.width - this.MIN_LEAF_SIZE;
+            }
+
+            if (max <= this.MIN_LEAF_SIZE) {
+                return false;
+            }
+
+            let split = getRandomInt(this.MIN_LEAF_SIZE, max);
+
+            if (splitHorizontally) {
+                this.child1 = new Leaf(this.x, this.y, this.width, split);
+                this.child2 = new Leaf(this.x, this.y + split, this.width, this.height - split);
+            } else {
+                this.child1 = new Leaf(this.x, this.y, split, this.height);
+                this.child2 = new Leaf(this.x + split, this.y, this.width - split, this.height);
+            }
+
+            return true;
+        }
+
+        this.createRooms = function (bspTree) {
+            if (this.child1 || this.child2) {
+                if (this.child1) {
+                    this.child1.createRooms(bspTree);
+                }
+                if (this.child2) {
+                    this.child2.createRooms(bspTree);
+                }
+
+                if (this.child1 && this.child2) {
+                    bspTree.createHall(this.child1.getRoom(), this.child2.getRoom());
+                }
+            } else {
+                let w;
+                let h;
+                let x;
+                let y;
+                this.room = new Rect(x, y, w, h);
+                bspTree.createRoom(this.room);
+            }
+        }
+
+        this.getRoom = function () {
+
+        }
+    }
+
+    const leafs = [];
+
+    const rootLeaf = new Leaf(0, 0, width, height);
+    leafs.push(rootLeaf);
+
+    return dungeon;
 }

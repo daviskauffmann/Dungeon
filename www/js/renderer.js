@@ -1,5 +1,8 @@
+/// <reference path="main.js" />
+
 function draw() {
-    var player = getPlayer();
+    const player = getPlayer();
+    const dungeon = game.dungeons[player.level];
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -11,35 +14,35 @@ function draw() {
     if (view.x < 0) {
         view.x = 0;
     }
-    if (view.x + view.width > game.dungeons[player.level].width) {
-        view.x = game.dungeons[player.level].width - view.width;
+    if (view.x + view.width > dungeon.width) {
+        view.x = dungeon.width - view.width;
     }
     if (view.y < 0) {
         view.y = 0;
     }
-    if (view.y + view.height > game.dungeons[player.level].height) {
-        view.y = game.dungeons[player.level].height - view.height;
+    if (view.y + view.height > dungeon.height) {
+        view.y = dungeon.height - view.height;
     }
 
-    var cellVisibility = [];
+    const cellVisibility = [];
     if (game.ignoreFov) {
-        for (var x = view.x; x < view.x + view.width; x++) {
-            for (var y = view.y; y < view.y + view.height; y++) {
-                if (x >= 0 && x < game.dungeons[player.level].width && y >= 0 && y < game.dungeons[player.level].height) {
-                    cellVisibility.push(game.dungeons[player.level].cells[x][y]);
+        for (let x = view.x; x < view.x + view.width; x++) {
+            for (let y = view.y; y < view.y + view.height; y++) {
+                if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
+                    cellVisibility.push(dungeon.cells[x][y]);
                 }
             }
         }
     }
-    for (var dir = 0; dir < 360; dir += 0.5) {
-        raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, [
+    for (let dir = 0; dir < 360; dir += 0.5) {
+        raycast(dungeon, player.x, player.y, player.stats.sight, dir, [
             'wall',
             'doorClosed'
         ], (x, y) => {
-            game.dungeons[player.level].cells[x][y].discovered = true;
+            dungeon.cells[x][y].discovered = true;
 
-            if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) === -1) {
-                cellVisibility.push(game.dungeons[player.level].cells[x][y]);
+            if (cellVisibility.indexOf(dungeon.cells[x][y]) === -1) {
+                cellVisibility.push(dungeon.cells[x][y]);
             }
         });
     }
@@ -47,79 +50,78 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = view.characterSize + 'px mono';
 
-    for (var x = view.x; x < view.x + view.width; x++) {
-        for (var y = view.y; y < view.y + view.height; y++) {
-            if (x < 0 || x >= game.dungeons[player.level].width || y < 0 || y >= game.dungeons[player.level].height) {
+    for (let x = view.x; x < view.x + view.width; x++) {
+        for (let y = view.y; y < view.y + view.height; y++) {
+            if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
                 continue;
             }
 
             ctx.fillStyle = '#fff';
             ctx.globalAlpha = 1;
 
-            var screenX = (x - view.x) * view.characterSize;
-            var screenY = (y - view.y + 1) * view.characterSize;
+            const screenX = (x - view.x) * view.characterSize;
+            const screenY = (y - view.y + 1) * view.characterSize;
 
             if (ui.mode === 'target') {
-                if (ui.target.x === x && ui.target.y === y) {
-                    ctx.fillText('O', screenX, screenY);
+                if (ui.target.x + 1 === x && ui.target.y === y) {
+                    ctx.fillText(']', screenX, screenY);
+
+                    continue;
+                }
+                if (ui.target.x - 1 === x && ui.target.y === y) {
+                    ctx.fillText('[', screenX, screenY);
 
                     continue;
                 }
             }
 
-            if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
-                if (function () {
-                    for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
-                        if (game.dungeons[player.level].entities[i].x !== x || game.dungeons[player.level].entities[i].y !== y) {
-                            continue;
-                        }
-
-                        ctx.fillText(game.dungeons[player.level].entities[i].char, screenX, screenY);
-
-                        return true;
+            if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+                if (dungeon.entities.some(entity => {
+                    if (entity.x !== x || entity.y !== y) {
+                        return false;
                     }
-                }()) {
+
+                    ctx.fillText(entity.char, screenX, screenY);
+
+                    return true;
+                })) {
                     continue;
                 }
 
-                if (function () {
-                    for (var i = 0; i < game.dungeons[player.level].chests.length; i++) {
-                        if (game.dungeons[player.level].chests[i].x !== x || game.dungeons[player.level].chests[i].y !== y) {
-                            continue;
-                        }
-
-                        ctx.fillText('~', screenX, screenY);
-
-                        return true;
+                if (dungeon.chests.some(chest => {
+                    if (chest.x !== x || chest.y !== y) {
+                        return false;
                     }
-                }()) {
+
+                    ctx.fillText('~', screenX, screenY);
+
+                    return true;
+                })) {
                     continue;
                 }
 
-                if (function () {
-                    for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
-                        if (game.dungeons[player.level].items[i].x !== x || game.dungeons[player.level].items[i].y !== y) {
-                            continue;
-                        }
-
-                        ctx.fillText(game.dungeons[player.level].items[i].char, screenX, screenY);
-
-                        return true;
+                if (dungeon.items.some(item => {
+                    if (item.x !== x || item.y !== y) {
+                        return false;
                     }
-                }()) {
+
+                    ctx.fillText(item.char, screenX, screenY);
+
+                    return true;
+                })) {
                     continue;
                 }
             }
 
-            if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1 || game.dungeons[player.level].cells[x][y].discovered) {
+            if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1 || dungeon.cells[x][y].discovered) {
                 ctx.fillStyle = '#fff';
-                if (cellVisibility.indexOf(game.dungeons[player.level].cells[x][y]) > -1) {
+                if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
                     ctx.globalAlpha = 1;
-                } else if (game.dungeons[player.level].cells[x][y].discovered) {
+                } else if (dungeon.cells[x][y].discovered) {
                     ctx.globalAlpha = 0.25;
                 }
 
-                switch (game.dungeons[player.level].cells[x][y].type) {
+                switch (dungeon.cells[x][y].type) {
                     case 'empty':
                         ctx.fillText(' ', screenX, screenY);
                         break;
@@ -163,13 +165,13 @@ function draw() {
     ctx.fillText('Level:' + (player.level + 1) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
-        for (var i = 0; i < player.inventory.length; i++) {
+        for (let i = 0; i < player.inventory.length; i++) {
             player.inventory[i].index = String.fromCharCode(97 + i);
         }
         ctx.fillStyle = '#000';
         ctx.fillRect(canvas.width - view.characterSize * 10, 0, view.characterSize * 10, player.inventory.length * 26);
         ctx.fillStyle = '#fff';
-        for (var i = 0; i < player.inventory.length; i++) {
+        for (let i = 0; i < player.inventory.length; i++) {
             ctx.fillText(player.inventory[i].index + ') ' + player.inventory[i].name + (player.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (view.characterSize * 10), (i + 1) * view.characterSize);
         }
     }

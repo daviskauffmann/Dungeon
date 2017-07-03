@@ -1,21 +1,29 @@
-﻿// needs a major overhaul
+﻿/// <reference path="main.js" />
+
+// needs a major overhaul
 document.addEventListener('keydown', ev => {
-	var player = getPlayer();
+	const player = getPlayer();
+	
 	switch (ui.mode) {
 		case 'target':
 			if (ev.key === 't') {
 				ui.mode = '';
+				draw();
 			}
 			if (ev.key === 'ArrowUp') {
+				ui.target.y--;
 				draw();
 			}
 			if (ev.key === 'ArrowRight') {
+				ui.target.x++;
 				draw();
 			}
 			if (ev.key === 'ArrowDown') {
+				ui.target.y++;
 				draw();
 			}
 			if (ev.key === 'ArrowLeft') {
+				ui.target.x--;
 				draw();
 			}
 			break;
@@ -24,6 +32,7 @@ document.addEventListener('keydown', ev => {
 				ui.mode = 'target';
 				ui.target.x = player.x;
 				ui.target.y = player.y;
+				draw();
 			}
 			if (ev.key === 'ArrowUp') {
 				moveEntity(player, player.x, player.y - 1);
@@ -50,7 +59,7 @@ document.addEventListener('keydown', ev => {
 				draw();
 			}
 			if (ev.key === 'g') {
-				for (var i = 0; i < game.dungeons[player.level].items.length; i++) {
+				for (let i = 0; i < game.dungeons[player.level].items.length; i++) {
 					if (player.x === game.dungeons[player.level].items[i].x && player.y === game.dungeons[player.level].items[i].y) {
 						game.messages.push('you pick up a ' + game.dungeons[player.level].items[i].name);
 						player.inventory.push(game.dungeons[player.level].items[i]);
@@ -61,10 +70,10 @@ document.addEventListener('keydown', ev => {
 				}
 			}
 			if (ev.key === 's') {
-				var targets = [];
-				for (var dir = 0; dir < 360; dir++) {
+				const targets = [];
+				for (let dir = 0; dir < 360; dir++) {
 					raycast(game.dungeons[player.level], player.x, player.y, player.stats.sight, dir, function (x, y) {
-						for (var i = 0; i < game.dungeons[player.level].entities.length; i++) {
+						for (let i = 0; i < game.dungeons[player.level].entities.length; i++) {
 							if (game.dungeons[player.level].entities[i] === player) {
 								continue;
 							}
@@ -78,8 +87,8 @@ document.addEventListener('keydown', ev => {
 					});
 				}
 				if (targets.length > 0) {
-					var targetNames = [];
-					for (var i = 0; i < targets.length; i++) {
+					const targetNames = [];
+					for (let i = 0; i < targets.length; i++) {
 						targetNames.push(targets[i].name);
 					}
 					game.messages.push('you spot a ' + targetNames.join(', '));
@@ -141,7 +150,7 @@ document.addEventListener('keydown', ev => {
 			}
 			break;
 		case 'inventory_drop':
-			for (var i = 0; i < player.inventory.length; i++) {
+			for (let i = 0; i < player.inventory.length; i++) {
 				if (player.inventory[i].index === ev.key) {
 					game.messages.push('you drop a ' + player.inventory[i].name);
 					player.inventory[i].x = player.x;
@@ -158,7 +167,7 @@ document.addEventListener('keydown', ev => {
 			}
 			break;
 		case 'inventory_equip':
-			for (var i = 0; i < player.inventory.length; i++) {
+			for (let i = 0; i < player.inventory.length; i++) {
 				if (player.inventory[i].index === ev.key) {
 					game.messages.push('you equip a ' + player.inventory[i].name);
 					player.inventory[i].equipped = true;
@@ -172,7 +181,7 @@ document.addEventListener('keydown', ev => {
 			}
 			break;
 		case 'inventory_unequip':
-			for (var i = 0; i < player.inventory.length; i++) {
+			for (let i = 0; i < player.inventory.length; i++) {
 				if (player.inventory[i].index === ev.key) {
 					game.messages.push('you unequip a ' + player.inventory[i].name);
 					player.inventory[i].equipped = false;
@@ -186,7 +195,7 @@ document.addEventListener('keydown', ev => {
 			}
 			break;
 		case 'inventory_swapFirst':
-			for (var i = 0; i < player.inventory.length; i++) {
+			for (let i = 0; i < player.inventory.length; i++) {
 				if (player.inventory[i].index === ev.key) {
 					ui.inventorySwapFirst = i;
 					game.messages.push('select second item to swap');
@@ -201,11 +210,11 @@ document.addEventListener('keydown', ev => {
 			}
 			break;
 		case 'inventory_swapSecond':
-			for (var i = 0; i < player.inventory.length; i++) {
+			for (let i = 0; i < player.inventory.length; i++) {
 				if (player.inventory[i].index === ev.key) {
 					ui.inventorySwapSecond = i;
 					game.messages.push('you swap the ' + player.inventory[ui.inventorySwapFirst].name + ' with the ' + player.inventory[ui.inventorySwapSecond].name);
-					var t = player.inventory[ui.inventorySwapFirst];
+					const t = player.inventory[ui.inventorySwapFirst];
 					player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
 					player.inventory[ui.inventorySwapSecond] = t;
 					ui.mode = '';
@@ -224,21 +233,24 @@ document.addEventListener('keydown', ev => {
 			}
 			break;
 	}
-	/*if (e.key === '1') {
+	if (ev.key === '-') {
 		localStorage.setItem('game', JSON.stringify(game));
 		console.log(JSON.stringify(game));
 		game.messages.push('game saved');
 	}
-	if (e.key === '2') {
+	if (ev.key === '=') {
 		game = JSON.parse(localStorage.getItem('game'));
 		console.log(game);
 		game.messages.push('game loaded');
 		draw();
-	}*/
+	}
 	if (ev.key === '1') {
-		game.stopTime = !game.stopTime;
+		game.godMode = !game.godMode;
 	}
 	if (ev.key === '2') {
+		game.stopTime = !game.stopTime;
+	}
+	if (ev.key === '3') {
 		game.ignoreFov = !game.ignoreFov;
 		draw();
 	}
