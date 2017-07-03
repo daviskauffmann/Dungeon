@@ -116,41 +116,39 @@ function pathfind(dungeon, x1, y1, x2, y2) {
             neighbors.push(coords[current.x - 1][current.y]);
         }
 
-        for (var i = 0; i < neighbors.length; i++) {
-            if ((() => {
-                switch (dungeon.cells[neighbors[i].x][neighbors[i].y].type) {
-                    case 'empty':
-                    case 'wall':
-                        return true;
-                }
-            })() || (() => {
-                for (var j = 0; j < dungeon.entities.length; j++) {
-                    if (dungeon.entities[j].x !== neighbors[i].x || dungeon.entities[j].y !== neighbors[i].y) {
-                        continue;
-                    }
-
-                    if (dungeon.entities[j].x === x2 && dungeon.entities[j].y === y2) {
-                        continue;
-                    }
-
-                    return true;
-                }
-            })() || (() => {
-                for (var j = 0; j < dungeon.chests.length; j++) {
-                    if (dungeon.chests[j].x !== neighbors[i].x || dungeon.chests[j].y !== neighbors[i].y) {
-                        continue;
-                    }
-
-                    if (dungeon.chests[j].x === x2 && dungeon.chests[j].y === y2) {
-                        continue;
-                    }
-
-                    return true;
-                }
-            })()) {
-                neighbors.splice(i, 1);
+        neighbors = neighbors.filter(neighbor => {
+            switch (dungeon.cells[neighbor.x][neighbor.y].type) {
+                case 'empty':
+                case 'wall':
+                    return false;
             }
-        }
+
+            for (var j = 0; j < dungeon.entities.length; j++) {
+                if (dungeon.entities[j].x !== neighbor.x || dungeon.entities[j].y !== neighbor.y) {
+                    continue;
+                }
+
+                if (dungeon.entities[j].x === x2 && dungeon.entities[j].y === y2) {
+                    continue;
+                }
+
+                return false;
+            }
+
+            for (var j = 0; j < dungeon.chests.length; j++) {
+                if (dungeon.chests[j].x !== neighbor.x || dungeon.chests[j].y !== neighbor.y) {
+                    continue;
+                }
+
+                if (dungeon.chests[j].x === x2 && dungeon.chests[j].y === y2) {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return true;
+        });
 
         for (var i = 0; i < neighbors.length; i++) {
             if (closedSet.indexOf(neighbors[i]) > -1) {
