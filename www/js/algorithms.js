@@ -123,27 +123,27 @@ function pathfind(dungeon, x1, y1, x2, y2) {
                     return false;
             }
 
-            for (var j = 0; j < dungeon.entities.length; j++) {
-                if (dungeon.entities[j].x !== neighbor.x || dungeon.entities[j].y !== neighbor.y) {
-                    continue;
+            if (dungeon.entities.some(entity => {
+                if (entity.x !== neighbor.x || entity.y !== neighbor.y) {
+                    return false;
                 }
 
-                if (dungeon.entities[j].x === x2 && dungeon.entities[j].y === y2) {
-                    continue;
+                if (entity.x === x2 && entity.y === y2) {
+                    return false;
                 }
 
-                return false;
-            }
-
-            for (var j = 0; j < dungeon.chests.length; j++) {
-                if (dungeon.chests[j].x !== neighbor.x || dungeon.chests[j].y !== neighbor.y) {
-                    continue;
+                return true;
+            }) || dungeon.chests.some(chest => {
+                if (chest.x !== neighbor.x || chest.y !== neighbor.y) {
+                    return false;
                 }
 
-                if (dungeon.chests[j].x === x2 && dungeon.chests[j].y === y2) {
-                    continue;
+                if (chest.x === x2 && chest.y === y2) {
+                    return false;
                 }
 
+                return true;
+            })) {
                 return false;
             }
 
