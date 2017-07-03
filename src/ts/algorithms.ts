@@ -1,11 +1,17 @@
-﻿/// <reference path="main.js" />
+﻿/// <reference path="main.ts" />
 
 // sends out a ray in a certain direction, calling the action on every cell it comes across
 // blockedBy is an array of cell types that block the ray
 // action() is a function that will stop the ray if it returns true
 // raycast() will then return the cell where action() stopped, returning nothing otherwise
 // with this implementation, some cells will be visited multiple times
-function raycast(dungeon, sx, sy, r, dir, blockedBy, action) {
+function raycast(dungeon: Dungeon,
+                 sx: number,
+                 sy: number,
+                 r: number,
+                 dir: number,
+                 blockedBy: Array<string>,
+                 action: (x: number, y: number) => boolean | void) {
     const dx = Math.cos(dir * (Math.PI / 180));
     const dy = Math.sin(dir * (Math.PI / 180));
 
@@ -35,8 +41,14 @@ function raycast(dungeon, sx, sy, r, dir, blockedBy, action) {
 
 // sends out rays in a circle
 // returns an array of cells that were affected by action()
-function spherecast(dungeon, sx, sy, r, accuracy, blockedBy, action) {
-    const cells = [];
+function spherecast(dungeon: Dungeon,
+                    sx: number,
+                    sy: number,
+                    r: number,
+                    accuracy: number,
+                    blockedBy: Array<string>,
+                    action: (x: number, y: number) => boolean | void) {
+    const cells: Array<Cell> = [];
     for (let dir = 0; dir < 360; dir += accuracy) {
         const cell = raycast(dungeon, sx, sy, r, dir, blockedBy, action);
         if (cell && cells.indexOf(cell) === -1) {
@@ -48,8 +60,12 @@ function spherecast(dungeon, sx, sy, r, accuracy, blockedBy, action) {
 
 // uses A* to find a path between two coordinates
 // returns an array of coordinates leading from the start position to the end position, or undefined if no path was found
-function pathfind(dungeon, x1, y1, x2, y2) {
-    const coords = [];
+function pathfind(dungeon: Dungeon,
+                  x1: number,
+                  y1: number,
+                  x2: number,
+                  y2: number) {
+    const coords: Array<Array<Coord>> = [];
     for (let x = 0; x < dungeon.width; x++) {
         coords[x] = [];
         for (let y = 0; y < dungeon.height; y++) {
@@ -60,14 +76,12 @@ function pathfind(dungeon, x1, y1, x2, y2) {
         }
     }
 
-    const closedSet = [];
-    const openSet = [
-        coords[x1][y1]
-    ];
+    const closedSet: Array<Coord> = [];
+    const openSet = [ coords[x1][y1] ];
 
-    const cameFrom = new Map();
-    const gScore = new Map();
-    const fScore = new Map();
+    const cameFrom = new Map<Coord, Coord>();
+    const gScore = new Map<Coord, number>();
+    const fScore = new Map<Coord, number>();
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
             gScore.set(coords[x][y], Infinity);
@@ -79,7 +93,7 @@ function pathfind(dungeon, x1, y1, x2, y2) {
 
     let passes = 0;
     while (openSet.length > 0) {
-        let current;
+        let current: Coord;
         let lowestFScore = Infinity;
 
         for (let i = 0; i < openSet.length; i++) {
@@ -104,7 +118,7 @@ function pathfind(dungeon, x1, y1, x2, y2) {
         openSet.splice(openSet.indexOf(current), 1);
         closedSet.push(current);
 
-        const neighbors = [];
+        const neighbors: Array<Coord> = [];
         if (current.y - 1 >= 0) {
             neighbors.push(coords[current.x][current.y - 1]);
         }

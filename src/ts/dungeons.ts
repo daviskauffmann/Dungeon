@@ -1,7 +1,7 @@
-/// <reference path="main.js" />
+/// <reference path="main.ts" />
 
 function createTown() {
-    const town = {
+    const town: Dungeon = {
         width: 25,
         height: 25,
         cells: [],
@@ -25,7 +25,7 @@ function createTown() {
     const y = Math.round(town.height / 2);
     town.cells[x][y].type = 'stairsDown';
 
-    const player = {
+    const player: Entity = {
         id: 0,
         x: x,
         y: y,
@@ -66,8 +66,17 @@ function createTown() {
     return town;
 }
 
-function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, preventOverlap, doorChance, trapAmount, monsterAmount, chestAmount) {
-    const dungeon = {
+function createDungeon(width: number,
+                       height: number,
+                       roomAttempts: number,
+                       minRoomSize: number,
+                       maxRoomSize: number,
+                       preventOverlap: boolean,
+                       doorChance: number,
+                       trapAmount: number,
+                       monsterAmount: number,
+                       chestAmount: number) {
+    const dungeon: Dungeon = {
         width: width,
         height: height,
         cells: [],
@@ -121,7 +130,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             continue;
         }
 
-        const room = {
+        const room: Room = {
             x: roomX,
             y: roomY,
             width: roomWidth,
@@ -256,7 +265,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
             const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
-            const monster = {
+            const monster: Entity = {
                 id: game.id++,
                 x: x,
                 y: y,
@@ -345,7 +354,7 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
             const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
-            const chest = {
+            const chest: Chest = {
                 x: x,
                 y: y,
                 char: '~',
@@ -354,12 +363,13 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
                     if (roll < 0) {
                         return undefined;
                     } else {
-                        const item = {
+                        const item: Item = {
                             x: -1,
                             y: -1,
                             name: '',
                             char: '',
-                            index: ''
+                            index: '',
+                            equipped: false
                         }
                         const roll = Math.random();
                         if (roll < 0.25) {
@@ -383,109 +393,6 @@ function createDungeon(width, height, roomAttempts, minRoomSize, maxRoomSize, pr
             dungeon.chests.push(chest);
         }
     }
-
-    return dungeon;
-}
-
-function createDungeon_bspTree(width, height) {
-    const dungeon = {
-        width: width,
-        height: height,
-        cells: [],
-        rooms: [],
-        entities: [],
-        chests: [],
-        items: []
-    };
-
-    for (let x = 0; x < dungeon.width; x++) {
-        dungeon.cells[x] = [];
-        for (let y = 0; y < dungeon.height; y++) {
-            dungeon.cells[x][y] = {
-                type: 'empty',
-                discovered: false
-            }
-        }
-    }
-
-    function Leaf(x, y, width, height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.MIN_LEAF_SIZE = 10;
-        this.child1 = undefined;
-        this.child2 = undefined;
-        this.room = undefined;
-        this.hall = undefined;
-
-        this.split = function () {
-            if (this.child1 || this.child2) {
-                return false;
-            }
-
-            splitHorizontally = Math.random() < 0.5;
-            if (this.width / this.height >= 1.25) {
-                splitHorizontally = false;
-            } else if (this.height / this.width >= 1.25) {
-                splitHorizontally = true;
-            }
-
-            let max;
-            if (splitHorizontally) {
-                max = this.height - this.MIN_LEAF_SIZE;
-            } else {
-                max = this.width - this.MIN_LEAF_SIZE;
-            }
-
-            if (max <= this.MIN_LEAF_SIZE) {
-                return false;
-            }
-
-            let split = getRandomInt(this.MIN_LEAF_SIZE, max);
-
-            if (splitHorizontally) {
-                this.child1 = new Leaf(this.x, this.y, this.width, split);
-                this.child2 = new Leaf(this.x, this.y + split, this.width, this.height - split);
-            } else {
-                this.child1 = new Leaf(this.x, this.y, split, this.height);
-                this.child2 = new Leaf(this.x + split, this.y, this.width - split, this.height);
-            }
-
-            return true;
-        }
-
-        this.createRooms = function (bspTree) {
-            if (this.child1 || this.child2) {
-                if (this.child1) {
-                    this.child1.createRooms(bspTree);
-                }
-                if (this.child2) {
-                    this.child2.createRooms(bspTree);
-                }
-
-                if (this.child1 && this.child2) {
-                    bspTree.createHall(this.child1.getRoom(), this.child2.getRoom());
-                }
-            } else {
-                let w;
-                let h;
-                let x;
-                let y;
-                this.room = new Rect(x, y, w, h);
-                bspTree.createRoom(this.room);
-            }
-        }
-
-        this.getRoom = function () {
-
-        }
-    }
-
-    const leafs = [];
-
-    const rootLeaf = new Leaf(0, 0, width, height);
-    leafs.push(rootLeaf);
 
     return dungeon;
 }

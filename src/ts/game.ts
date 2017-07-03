@@ -1,3 +1,5 @@
+/// <reference path="main.ts" />
+
 function getPlayer() {
     for (let i = 0; i < game.dungeons.length; i++) {
         for (let j = 0; j < game.dungeons[i].entities.length; j++) {
@@ -26,10 +28,10 @@ function tick() {
     game.turn++;
 }
 
-function tickEntity(entity) {
+function tickEntity(entity: Entity) {
     const dungeon = game.dungeons[entity.level];
 
-    const targets = [];
+    const targets: Array<Entity> = [];
     for (let dir = 0; dir < 360; dir += 10) {
         raycast(dungeon, entity.x, entity.y, entity.stats.sight, dir, [
             'wall',
@@ -86,7 +88,7 @@ function tickEntity(entity) {
     }
 }
 
-function moveEntity(entity, x, y) {
+function moveEntity(entity: Entity, x: number, y: number) {
     const dungeon = game.dungeons[entity.level];
 
     if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
@@ -223,7 +225,7 @@ function moveEntity(entity, x, y) {
     entity.y = y;
 }
 
-function changeLevel(entity, level, calcSpawn) {
+function changeLevel(entity: Entity, level: number, calcSpawn: (newDungeon: Dungeon) => Coord) {
     while (level >= game.dungeons.length) {
         game.dungeons.push(createDungeon(50, 50, 20, 5, 15, false, 0.5, 3, 5, 5));
     }

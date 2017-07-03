@@ -1,4 +1,4 @@
-/// <reference path="main.js" />
+/// <reference path="main.ts" />
 
 function draw() {
     const player = getPlayer();
@@ -24,7 +24,7 @@ function draw() {
         view.y = dungeon.height - view.height;
     }
 
-    const cellVisibility = [];
+    const cellVisibility: Array<Cell> = [];
     if (game.ignoreFov) {
         for (let x = view.x; x < view.x + view.width; x++) {
             for (let y = view.y; y < view.y + view.height; y++) {

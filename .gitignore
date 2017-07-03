@@ -14,3 +14,6 @@ resources/signing
 
 # Bower
 /bower_components
+
+# Build
+

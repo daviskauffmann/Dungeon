@@ -1,4 +1,4 @@
-﻿/// <reference path="main.js" />
+﻿/// <reference path="main.ts" />
 
 document.addEventListener('keydown', ev => {
 	const player = getPlayer();
@@ -99,7 +99,7 @@ document.addEventListener('keydown', ev => {
 
 					break;
 				case 's':
-					const targets = [];
+					const targets: Array<Entity> = [];
 					for (let dir = 0; dir < 360; dir++) {
 						raycast(dungeon, player.x, player.y, player.stats.sight, dir, [
 							'wall',
@@ -132,7 +132,7 @@ document.addEventListener('keydown', ev => {
 
 					break;
 				case 'c':
-					if (dungeon.cells[player.x][player.y] === 'doorOpen') {
+					if (dungeon.cells[player.x][player.y].type === 'doorOpen') {
 						game.messages.push('you close the door');
 
 						dungeon.cells[player.x][player.y].type = 'doorClosed'
