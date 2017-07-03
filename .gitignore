@@ -16,4 +16,4 @@ resources/signing
 /bower_components
 
 # Build
-
+/www
