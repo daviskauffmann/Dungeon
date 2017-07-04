@@ -1,9 +1,12 @@
-const gulp = require("gulp");
+const gulp = require('gulp');
+const babili = require('gulp-babili');
 const clean = require('gulp-clean');
+const concat = require('gulp-concat');
 const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
-const typescript = require("gulp-typescript").createProject('tsconfig.json');
+const sourcemaps = require('gulp-sourcemaps');
+const typescript = require('gulp-typescript').createProject('tsconfig.json');
 
 gulp.task('watch', () => {
     gulp.watch('./src/**/*', [ 'build' ]);
@@ -20,7 +23,11 @@ gulp.task('clean', () => {
 
 gulp.task('typescript', () => {
     return gulp.src('./src/ts/**/*.ts')
+        .pipe(sourcemaps.init())
         .pipe(typescript())
+        .pipe(concat('main.js'))
+        .pipe(babili())
+        .pipe(sourcemaps.write())
         .pipe(gulp.dest('./www/js'));
 });
 
