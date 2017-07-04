@@ -65,15 +65,15 @@ function createTown() {
 }
 
 function createDungeon(width: number,
-                       height: number,
-                       roomAttempts: number,
-                       minRoomSize: number,
-                       maxRoomSize: number,
-                       preventOverlap: boolean,
-                       doorChance: number,
-                       trapAmount: number,
-                       monsterAmount: number,
-                       chestAmount: number) {
+    height: number,
+    roomAttempts: number,
+    minRoomSize: number,
+    maxRoomSize: number,
+    preventOverlap: boolean,
+    doorChance: number,
+    trapAmount: number,
+    monsterAmount: number,
+    chestAmount: number) {
     const dungeon: Dungeon = {
         width: width,
         height: height,
@@ -358,9 +358,7 @@ function createDungeon(width: number,
                 char: '~',
                 loot: (() => {
                     const roll = Math.random();
-                    if (roll < 0) {
-                        return undefined;
-                    } else {
+                    if (roll < 0.5) {
                         const item: Item = {
                             x: -1,
                             y: -1,
@@ -384,6 +382,8 @@ function createDungeon(width: number,
                             item.char = '}';
                         }
                         return item;
+                    } else {
+                        return undefined;
                     }
                 })()
             };

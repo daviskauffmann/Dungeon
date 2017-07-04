@@ -5,7 +5,13 @@ const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
 const typescript = require("gulp-typescript").createProject('tsconfig.json');
 
-gulp.task('default', sequence('clean' , 'typescript', 'sass', 'inject'));
+gulp.task('watch', () => {
+    gulp.watch('./src/**/*', [ 'build' ]);
+})
+
+gulp.task('build', callback => {
+    sequence('clean' , 'typescript', 'sass', 'inject')(callback);
+});
 
 gulp.task('clean', () => {
     return gulp.src('./www')
