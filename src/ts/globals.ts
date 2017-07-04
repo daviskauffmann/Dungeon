@@ -10,11 +10,7 @@ let game: Game = {
     ignoreFov: false
 }
 
-const view: View = {
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
+const graphics: Graphics = {
     characterSize: 24,
     color: {
         default: '#fff'

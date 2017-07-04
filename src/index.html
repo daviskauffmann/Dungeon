@@ -19,9 +19,9 @@
     <!-- endinject -->
 
     <script>
-        draw();
-        window.addEventListener('resize', draw);
-        document.addEventListener('keydown', input);
+        draw(undefined, getPlayer());
+        window.addEventListener('resize', (ev) => draw(ev, getPlayer()));
+        document.addEventListener('keydown', (ev) => input(ev, getPlayer()));
     </script>
 </body>
 

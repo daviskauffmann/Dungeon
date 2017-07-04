@@ -49,6 +49,19 @@ interface Game {
     ignoreFov: boolean;
 }
 
+interface Graphics {
+    characterSize: number;
+    color: {
+        default: string;
+    };
+    cellType: {
+        [key: string]: {
+            color?: string;
+            char: string;
+        };
+    };
+}
+
 interface Item {
     x: number;
     y: number;
@@ -91,21 +104,4 @@ interface UI {
     inventorySwapFirst: number;
     inventorySwapSecond: number;
     target: Coord;
-}
-
-interface View {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    characterSize: number;
-    color: {
-        default: string;
-    };
-    cellType: {
-        [key: string]: {
-            color?: string;
-            char: string;
-        };
-    };
 }
