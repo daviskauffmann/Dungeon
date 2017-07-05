@@ -32,12 +32,12 @@ function createTown() {
     town.cells[x][y].type = CellType.StairsDown;
 
     const player: Entity = {
-        id: game.currentId++,
         x: x,
         y: y,
         char: '@',
         color: '#ffffff',
         alpha: 1,
+        id: game.currentId++,
         name: 'player',
         level: 0,
         class: Class.Warrior,
@@ -267,12 +267,12 @@ function createDungeon(width: number,
             const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
             const monster: Entity = {
-                id: game.currentId++,
                 x: x,
                 y: y,
                 char: '',
                 color: '#ffffff',
                 alpha: 1,
+                id: game.currentId++,
                 name: '',
                 level: game.dungeons.length,
                 class: Class.Warrior,

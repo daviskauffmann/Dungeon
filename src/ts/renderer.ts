@@ -151,13 +151,14 @@ function draw(ev: UIEvent, entity: Entity) {
         }
     }
 
-    ctx.fillStyle = '#fff';
-    ctx.globalAlpha = 1;
-    ctx.fillText(game.messages[game.messages.length - 5], 0, graphics.fontSize);
-    ctx.fillText(game.messages[game.messages.length - 4], 0, graphics.fontSize * 2);
-    ctx.fillText(game.messages[game.messages.length - 3], 0, graphics.fontSize * 3);
-    ctx.fillText(game.messages[game.messages.length - 2], 0, graphics.fontSize * 4);
-    ctx.fillText(game.messages[game.messages.length - 1], 0, graphics.fontSize * 5);
+    for (let i = 0; i < game.messages.length; i++) {
+        ctx.fillStyle = '#fffff';
+        ctx.globalAlpha = 1;
+        ctx.fillText(game.messages[i], 0, graphics.fontSize * (i + 1));
+    }
+
+    ctx.fillStyle = '#ffffff';
+
     ctx.fillText('Level:' + (entity.level + 1) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {

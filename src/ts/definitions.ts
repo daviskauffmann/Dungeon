@@ -8,10 +8,10 @@ enum CellType {
     Floor,
     Grass,
     Wall,
-    DoorClosed,
     DoorOpen,
-    StairsDown,
-    StairsUp
+    DoorClosed,
+    StairsUp,
+    StairsDown
 }
 
 interface Chest extends Coord, Glyph {
@@ -21,10 +21,6 @@ interface Chest extends Coord, Glyph {
 enum Class {
     Warrior,
     Shaman
-}
-
-enum Color {
-    Default
 }
 
 interface Coord {
@@ -128,6 +124,7 @@ interface Stats {
 
 interface UI {
     mode: string;
+    maxMessages: number;
     inventorySwapFirst: number;
     inventorySwapSecond: number;
     target: Coord;

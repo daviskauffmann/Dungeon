@@ -7,31 +7,21 @@
 				case 't':
 					ui.mode = '';
 
-					draw(undefined, entity);
-
 					break;
 				case 'ArrowUp':
 					ui.target.y--;
-
-					draw(undefined, entity);
 
 					break;
 				case 'ArrowRight':
 					ui.target.x++;
 
-					draw(undefined, entity);
-
 					break;
 				case 'ArrowDown':
 					ui.target.y++;
 
-					draw(undefined, entity);
-
 					break;
 				case 'ArrowLeft':
 					ui.target.x--;
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -44,40 +34,33 @@
 					ui.target.x = entity.x;
 					ui.target.y = entity.y;
 
-					draw(undefined, entity);
-
 					break;
 				case 'ArrowUp':
 					moveEntity(entity, entity.x, entity.y - 1);
 
 					tick();
-					draw(undefined, entity);
 
 					break;
 				case 'ArrowRight':
 					moveEntity(entity, entity.x + 1, entity.y);
 
 					tick();
-					draw(undefined, entity);
 
 					break;
 				case 'ArrowDown':
 					moveEntity(entity, entity.x, entity.y + 1);
 
 					tick();
-					draw(undefined, entity);
 
 					break;
 				case 'ArrowLeft':
 					moveEntity(entity, entity.x - 1, entity.y);
 
 					tick();
-					draw(undefined, entity);
 
 					break;
 				case '.':
 					tick();
-					draw(undefined, entity);
 
 					break;
 				case 'g':
@@ -86,12 +69,10 @@
 							return;
 						}
 
-						game.messages.push(entity.name + ' picks up a ' + item.name);
+						addMessage(entity.name + ' picks up a ' + item.name);
 
 						entity.inventory.push(item);
 						dungeon.items.splice(index, 1);
-
-						draw(undefined, entity);
 					});
 
 					break;
@@ -120,12 +101,10 @@
 						});
 					}
 					if (targets.length > 0) {
-						game.messages.push(entity.name + ' spots a ' + targets.map(target => target.name).join(', '));
+						addMessage(entity.name + ' spots a ' + targets.map(target => target.name).join(', '));
 					} else {
-						game.messages.push(entity.name + ' doesn\'t see anything');
+						addMessage(entity.name + ' doesn\'t see anything');
 					}
-
-					draw(undefined, entity);
 
 					break;
 				case 'r':
@@ -166,31 +145,23 @@
 						});
 					}
 
-					draw(undefined, entity);
-
 					break;
 				case 'c':
 					if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
-						game.messages.push(entity.name + ' closes the door');
+						addMessage(entity.name + ' closes the door');
 
 						dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
-
-						draw(undefined, entity);
 					}
 
 					break;
 				case 'i':
 					if (entity.inventory.length > 0) {
 						ui.mode = 'inventory';
-
-						draw(undefined, entity);
 					}
 
 					break;
 				case 'o':
 					ui.mode = 'character';
-
-					draw(undefined, entity);
 
 					break;
 				/*case 'i':
@@ -205,43 +176,33 @@
 				case 'i':
 					ui.mode = '';
 
-					draw(undefined, entity);
-
 					break;
 				case 'd':
-					game.messages.push('select item to drop');
-					game.messages.push('press space to cancel');
+					addMessage('select item to drop');
+					addMessage('press space to cancel');
 
 					ui.mode = 'inventory_drop';
 
-					draw(undefined, entity);
-
 					break;
 				case 'e':
-					game.messages.push('select item to equip');
-					game.messages.push('press space to cancel');
+					addMessage('select item to equip');
+					addMessage('press space to cancel');
 
 					ui.mode = 'inventory_equip';
 
-					draw(undefined, entity);
-
 					break;
 				case 'u':
-					game.messages.push('select item to unequip');
-					game.messages.push('press space to cancel');
+					addMessage('select item to unequip');
+					addMessage('press space to cancel');
 
 					ui.mode = 'inventory_unequip';
 
-					draw(undefined, entity);
-
 					break;
 				case 's':
-					game.messages.push('select first item to swap');
-					game.messages.push('press space to cancel');
+					addMessage('select first item to swap');
+					addMessage('press space to cancel');
 
 					ui.mode = 'inventory_swapFirst';
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -250,7 +211,7 @@
 		case 'inventory_drop':
 			entity.inventory.forEach(item => {
 				if (item.index === ev.key) {
-					game.messages.push(entity.name + ' drops a ' + item.name);
+					addMessage(entity.name + ' drops a ' + item.name);
 
 					item.x = entity.x;
 					item.y = entity.y;
@@ -259,16 +220,12 @@
 					entity.inventory.splice(entity.inventory.indexOf(item), 1);
 
 					ui.mode = '';
-
-					draw(undefined, entity);
 				}
 			});
 
 			switch (ev.key) {
 				case ' ':
 					ui.mode = '';
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -277,21 +234,17 @@
 		case 'inventory_equip':
 			entity.inventory.forEach(item => {
 				if (item.index === ev.key) {
-					game.messages.push(entity.name + ' equips a ' + item.name);
+					addMessage(entity.name + ' equips a ' + item.name);
 
 					item.equipped = true;
 
 					ui.mode = '';
-
-					draw(undefined, entity);
 				}
 			});
 
 			switch (ev.key) {
 				case ' ':
 					ui.mode = '';
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -300,21 +253,17 @@
 		case 'inventory_unequip':
 			entity.inventory.forEach(item => {
 				if (item.index === ev.key) {
-					game.messages.push(entity.name + ' unequips a ' + item.name);
+					addMessage(entity.name + ' unequips a ' + item.name);
 
 					item.equipped = false;
 
 					ui.mode = '';
-
-					draw(undefined, entity);
 				}
 			});
 
 			switch (ev.key) {
 				case ' ':
 					ui.mode = '';
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -325,20 +274,16 @@
 				if (item.index === ev.key) {
 					ui.inventorySwapFirst = entity.inventory.indexOf(item);
 
-					game.messages.push('select second item to swap');
-					game.messages.push('press space to cancel');
+					addMessage('select second item to swap');
+					addMessage('press space to cancel');
 
 					ui.mode = 'inventory_swapSecond';
-
-					draw(undefined, entity);
 				}
 			});
 
 			switch (ev.key) {
 				case ' ':
 					ui.mode = '';
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -349,23 +294,19 @@
 				if (item.index === ev.key) {
 					ui.inventorySwapSecond = entity.inventory.indexOf(item);
 
-					game.messages.push(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
+					addMessage(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
 
 					const t = entity.inventory[ui.inventorySwapFirst];
 					entity.inventory[ui.inventorySwapFirst] = entity.inventory[ui.inventorySwapSecond];
 					entity.inventory[ui.inventorySwapSecond] = t;
 
 					ui.mode = '';
-
-					draw(undefined, entity);
 				}
 			});
 
 			switch (ev.key) {
 				case ' ':
 					ui.mode = '';
-
-					draw(undefined, entity);
 
 					break;
 			}
@@ -376,8 +317,6 @@
 				case 'o':
 					ui.mode = '';
 
-					draw(undefined, entity);
-
 					break;
 			}
 
@@ -386,19 +325,17 @@
 
 	switch (ev.key) {
 		case '[':
-			game.messages.push('game saved');
+			addMessage('game saved');
 
 			localStorage.setItem('game', JSON.stringify(game));
 			console.log(JSON.stringify(game));
 
 			break;
 		case ']':
-			game.messages.push('game loaded');
+			addMessage('game loaded');
 
 			game = JSON.parse(localStorage.getItem('game'));
 			console.log(game);
-
-			draw(undefined, getPlayer());
 
 			break;
 		case '\\':
@@ -408,13 +345,9 @@
 		case '-':
 			graphics.fontSize--;
 
-			draw(undefined, entity);
-
 			break;
 		case '=':
 			graphics.fontSize++;
-
-			draw(undefined, entity);
 
 			break;
 		case '1':
@@ -428,8 +361,8 @@
 		case '3':
 			game.ignoreFov = !game.ignoreFov;
 
-			draw(undefined, entity);
-
 			break;
 	}
+
+	draw(undefined, entity);
 }

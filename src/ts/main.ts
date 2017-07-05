@@ -19,8 +19,8 @@ const graphics: Graphics = {
         { char: '.', color: '#ffffff', alpha: 1 },
         { char: '^', color: '#50ff50', alpha: 1 },
         { char: '#', color: '#ffffff', alpha: 1 }, 
-        { char: '+', color: '#ffffff', alpha: 1 },
         { char: '-', color: '#ffffff', alpha: 1 },
+        { char: '+', color: '#ffffff', alpha: 1 },
         { char: '<', color: '#ffffff', alpha: 1 },
         { char: '>', color: '#ffffff', alpha: 1 }
     ]
@@ -28,6 +28,7 @@ const graphics: Graphics = {
 
 const ui: UI = {
     mode: '',
+    maxMessages: 10,
     inventorySwapFirst: -1,
     inventorySwapSecond: -1,
     target: {

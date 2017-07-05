@@ -61,7 +61,7 @@ function tick() {
                         if (targets.length > 0) {
                             const target = targets[0];
 
-                            game.messages.push(entity.name + ' spots a ' + target.name);
+                            addMessage(`${entity.name} spots a ${target.name}`);
 
                             const path = pathfind(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
                             if (path && path.length > 0) {
@@ -101,16 +101,16 @@ function moveEntity(entity: Entity, x: number, y: number) {
         case CellType.DoorClosed:
             const roll = Math.random();
             if (roll > 0.5) {
-                game.messages.push(entity.name + ' opens the door');
+                addMessage(entity.name + ' opens the door');
 
                 dungeon.cells[x][y].type = CellType.DoorOpen;
             } else {
-                game.messages.push(entity.name + ' can\'t open the door');
+                addMessage(entity.name + ' can\'t open the door');
             }
 
             return;
         case CellType.StairsUp:
-            game.messages.push(entity.name + ' ascends');
+            addMessage(entity.name + ' ascends');
 
             changeLevel(entity, entity.level - 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
@@ -124,7 +124,7 @@ function moveEntity(entity: Entity, x: number, y: number) {
 
             return;
         case CellType.StairsDown:
-            game.messages.push(entity.name + ' descends');
+            addMessage(entity.name + ' descends');
 
             changeLevel(entity, entity.level + 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
@@ -151,18 +151,18 @@ function moveEntity(entity: Entity, x: number, y: number) {
         if (target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
             const roll = Math.random();
             if (roll < 0.5) {
-                game.messages.push(entity.name + ' misses the ' + target.name);
+                addMessage(entity.name + ' misses the ' + target.name);
             } else {
                 if (target.id === 0 && game.godMode) {
-                    game.messages.push(entity.name + ' cannot kill the ' + target.name);
+                    addMessage(entity.name + ' cannot kill the ' + target.name);
 
                     return true;
                 }
 
-                game.messages.push(entity.name + ' kills the ' + target.name);
+                addMessage(entity.name + ' kills the ' + target.name);
 
                 target.inventory.forEach((item, index) => {
-                    game.messages.push(target.name + ' drops a ' + item.name);
+                    addMessage(target.name + ' drops a ' + item.name);
 
                     dungeon.items.push({
                         ...item,
@@ -207,23 +207,23 @@ function moveEntity(entity: Entity, x: number, y: number) {
 
         const roll = Math.random();
         if (roll > 0.5) {
-            game.messages.push(entity.name + ' opens the chest');
+            addMessage(entity.name + ' opens the chest');
 
             if (chest.loot) {
                 if (entity.inventory.length < 26) {
-                    game.messages.push(entity.name + ' loots a ' + chest.loot.name);
+                    addMessage(entity.name + ' loots a ' + chest.loot.name);
 
                     entity.inventory.push(chest.loot);
                 } else {
-                    game.messages.push(entity.name + '\'s inventory is full');
+                    addMessage(entity.name + '\'s inventory is full');
                 }
             } else {
-                game.messages.push(entity.name + ' sees nothing inside');
+                addMessage(entity.name + ' sees nothing inside');
             }
 
             dungeon.chests.splice(index, 1);
         } else {
-            game.messages.push(entity.name + ' can\'t open the chest');
+            addMessage(entity.name + ' can\'t open the chest');
         }
 
         return true;
@@ -233,7 +233,7 @@ function moveEntity(entity: Entity, x: number, y: number) {
 
     const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
     if (itemNames) {
-        game.messages.push(entity.name + ' sees a ' + itemNames);
+        addMessage(entity.name + ' sees a ' + itemNames);
     }
 
     entity.x = x;
@@ -269,5 +269,13 @@ function changeLevel(entity: Entity, level: number, calcSpawn: (newDungeon: Dung
     entity.x = spawn.x;
     entity.y = spawn.y;
 
-    game.messages.push(entity.name + ' has moved to level ' + entity.level);
+    addMessage(entity.name + ' has moved to level ' + entity.level);
+}
+
+function addMessage(message: string) {
+    game.messages.push(message);
+
+    if (game.messages.length > ui.maxMessages) {
+        game.messages.shift();
+    }
 }
