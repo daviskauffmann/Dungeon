@@ -1,8 +1,6 @@
 let game: Game = {
-    currentId: 1,
-    dungeons: [
-        createTown()
-    ],
+    currentId: 0,
+    dungeons: [],
     turn: 0,
     messages: [],
     godMode: true,
@@ -38,6 +36,9 @@ const ui: UI = {
     }
 }
 
+game.dungeons.push(createTown());
+
 draw(undefined, getPlayer());
+
 window.addEventListener('resize', (ev) => draw(ev, getPlayer()));
 document.addEventListener('keydown', (ev) => input(ev, getPlayer()));

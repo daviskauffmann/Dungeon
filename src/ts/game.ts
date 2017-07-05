@@ -187,7 +187,7 @@ function moveEntity(entity: Entity, x: number, y: number) {
                     inventory: target.inventory,
                     factions: target.factions,
                     hostileFactions: target.hostileFactions,
-                    hostileEntities: target.hostileEntities,
+                    hostileEntityIds: target.hostileEntityIds,
                     disposition: target.disposition,
                     index: '',
                     equipped: false,

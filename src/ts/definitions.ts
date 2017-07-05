@@ -63,10 +63,17 @@ interface Entity extends Coord, Glyph {
     class: Class;
     stats: Stats;
     inventory: Array<Item>;
-    factions: Array<string>;
-    hostileFactions: Array<string>;
-    hostileEntities: Array<number>;
+    factions: Array<Faction>;
+    hostileFactions: Array<Faction>;
+    hostileEntityIds: Array<number>;
     disposition: Disposition;
+}
+
+enum Faction {
+    Player,
+    Monster,
+    Bugbear,
+    Orc
 }
 
 interface Game {

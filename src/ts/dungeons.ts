@@ -32,7 +32,7 @@ function createTown() {
     town.cells[x][y].type = CellType.StairsDown;
 
     const player: Entity = {
-        id: 0,
+        id: game.currentId++,
         x: x,
         y: y,
         char: '@',
@@ -63,12 +63,12 @@ function createTown() {
         },
         inventory: [],
         factions: [
-            'player'
+            Faction.Player
         ],
         hostileFactions: [
-            'monster'
+            Faction.Monster
         ],
-        hostileEntities: [],
+        hostileEntityIds: [],
         disposition: Disposition.Aggressive
     };
     town.entities.push(player);
@@ -299,7 +299,7 @@ function createDungeon(width: number,
                 inventory: [],
                 factions: [],
                 hostileFactions: [],
-                hostileEntities: [],
+                hostileEntityIds: [],
                 disposition: Disposition.Aggressive
             };
 
@@ -308,34 +308,27 @@ function createDungeon(width: number,
                 monster.name = 'rat';
                 monster.char = 'r';
                 monster.factions = [
-                    'monster',
-                    'rat'
+                    Faction.Monster
                 ];
-                monster.hostileFactions = [
-                    'player'
-                ];
+                monster.hostileFactions = [];
                 monster.disposition = Disposition.Cowardly;
             } else if (roll < 0.50) {
                 monster.name = 'slime';
                 monster.char = 's';
                 monster.factions = [
-                    'monster',
-                    'slime'
-                ];
-                monster.hostileFactions = [
-                    'player'
+                    Faction.Monster
                 ];
                 monster.disposition = Disposition.Passive;
             } else if (roll < 0.75) {
                 monster.name = 'orc';
                 monster.char = 'o';
                 monster.factions = [
-                    'monster',
-                    'orc'
+                    Faction.Monster,
+                    Faction.Orc
                 ];
                 monster.hostileFactions = [
-                    'player',
-                    'bugbear'
+                    Faction.Player,
+                    Faction.Bugbear
                 ];
                 const roll = Math.random();
                 if (roll < 0.5) {
@@ -347,12 +340,12 @@ function createDungeon(width: number,
                 monster.name = 'bugbear';
                 monster.char = 'b';
                 monster.factions = [
-                    'monster',
-                    'bugbear'
+                    Faction.Monster,
+                    Faction.Bugbear
                 ];
                 monster.hostileFactions = [
-                    'player',
-                    'orc'
+                    Faction.Player,
+                    Faction.Orc
                 ];
                 const roll = Math.random();
                 if (roll < 0.5) {

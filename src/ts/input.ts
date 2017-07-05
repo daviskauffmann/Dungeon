@@ -155,7 +155,7 @@
 										inventory: corpse.inventory,
 										factions: corpse.factions,
 										hostileFactions: corpse.hostileFactions,
-										hostileEntities: corpse.hostileEntities,
+										hostileEntityIds: corpse.hostileEntityIds,
 										disposition: corpse.disposition
 									}
 									dungeon.entities.push(newEntity);
