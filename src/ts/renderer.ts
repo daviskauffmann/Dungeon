@@ -1,9 +1,6 @@
-const canvas: any = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-
 function draw(ev: UIEvent, entity: Entity) {
     const dungeon = game.dungeons[entity.level];
-    
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -13,8 +10,8 @@ function draw(ev: UIEvent, entity: Entity) {
         width: 0,
         height: 0
     };
-    view.width = Math.round(canvas.width / graphics.characterSize);
-    view.height = Math.round(canvas.height / graphics.characterSize);
+    view.width = Math.round(canvas.width / graphics.fontSize);
+    view.height = Math.round(canvas.height / graphics.fontSize);
     view.x = entity.x - Math.round(view.width / 2);
     view.y = entity.y - Math.round(view.height / 2);
     if (view.x < 0) {
@@ -41,9 +38,9 @@ function draw(ev: UIEvent, entity: Entity) {
         }
     }
     for (let dir = 0; dir < 360; dir += 0.5) {
-        raycast(dungeon, entity.x, entity.y, entity.stats.sight, dir, [
-            'wall',
-            'doorClosed'
+        raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+            CellType.Wall,
+            CellType.DoorClosed
         ], (x, y) => {
             dungeon.cells[x][y].discovered = true;
 
@@ -52,9 +49,30 @@ function draw(ev: UIEvent, entity: Entity) {
             }
         });
     }
+    if (dungeon.litRooms) {
+        dungeon.rooms.forEach(room => {
+            if (!isInside({ x: entity.x, y: entity.y }, room)) {
+                return;
+            }
+
+            for (let x = room.x - 1; x < room.x + room.width + 1; x++) {
+                for (let y = room.y - 1; y < room.y + room.height + 1; y++) {
+                    if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
+                        continue;
+                    }
+
+                    dungeon.cells[x][y].discovered = true;
+
+                    if (cellVisibility.indexOf(dungeon.cells[x][y]) === -1) {
+                        cellVisibility.push(dungeon.cells[x][y]);
+                    }
+                }
+            }
+        });
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = graphics.characterSize + 'px mono';
+    ctx.font = graphics.fontSize + 'px mono';
 
     for (let x = view.x; x < view.x + view.width; x++) {
         for (let y = view.y; y < view.y + view.height; y++) {
@@ -62,19 +80,20 @@ function draw(ev: UIEvent, entity: Entity) {
                 continue;
             }
 
-            ctx.fillStyle = graphics.color.default;
-            ctx.globalAlpha = 1;
-
-            const screenX = (x - view.x) * graphics.characterSize;
-            const screenY = (y - view.y + 1) * graphics.characterSize;
+            const screenX = (x - view.x) * graphics.fontSize;
+            const screenY = (y - view.y + 1) * graphics.fontSize;
 
             if (ui.mode === 'target') {
                 if (ui.target.x + 1 === x && ui.target.y === y) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 1;
                     ctx.fillText(']', screenX, screenY);
 
                     continue;
                 }
                 if (ui.target.x - 1 === x && ui.target.y === y) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 1;
                     ctx.fillText('[', screenX, screenY);
 
                     continue;
@@ -87,6 +106,8 @@ function draw(ev: UIEvent, entity: Entity) {
                         return false;
                     }
 
+                    ctx.fillStyle = entity.color;
+                    ctx.globalAlpha = entity.alpha;
                     ctx.fillText(entity.char, screenX, screenY);
 
                     return true;
@@ -99,6 +120,8 @@ function draw(ev: UIEvent, entity: Entity) {
                         return false;
                     }
 
+                    ctx.fillStyle = chest.color;
+                    ctx.globalAlpha = chest.alpha;
                     ctx.fillText(chest.char, screenX, screenY);
 
                     return true;
@@ -111,6 +134,8 @@ function draw(ev: UIEvent, entity: Entity) {
                         return false;
                     }
 
+                    ctx.fillStyle = item.color;
+                    ctx.globalAlpha = item.alpha;
                     ctx.fillText(item.char, screenX, screenY);
 
                     return true;
@@ -119,27 +144,20 @@ function draw(ev: UIEvent, entity: Entity) {
                 }
             }
 
-            if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1 || dungeon.cells[x][y].discovered) {
-                if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
-                    ctx.globalAlpha = 1;
-                } else if (dungeon.cells[x][y].discovered) {
-                    ctx.globalAlpha = 0.25;
-                }
-
-                let cellType = graphics.cellType[dungeon.cells[x][y].type] || graphics.cellType.default;
-                ctx.fillStyle = cellType.color || graphics.color.default;
-                ctx.fillText(cellType.char, screenX, screenY);
-            }
+            let cellType = graphics.cellTypes[dungeon.cells[x][y].type];
+            ctx.fillStyle = cellType.color;
+            ctx.globalAlpha = cellVisibility.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
+            ctx.fillText(cellType.char, screenX, screenY);
         }
     }
 
     ctx.fillStyle = '#fff';
     ctx.globalAlpha = 1;
-    ctx.fillText(game.messages[game.messages.length - 5], 0, graphics.characterSize);
-    ctx.fillText(game.messages[game.messages.length - 4], 0, graphics.characterSize * 2);
-    ctx.fillText(game.messages[game.messages.length - 3], 0, graphics.characterSize * 3);
-    ctx.fillText(game.messages[game.messages.length - 2], 0, graphics.characterSize * 4);
-    ctx.fillText(game.messages[game.messages.length - 1], 0, graphics.characterSize * 5);
+    ctx.fillText(game.messages[game.messages.length - 5], 0, graphics.fontSize);
+    ctx.fillText(game.messages[game.messages.length - 4], 0, graphics.fontSize * 2);
+    ctx.fillText(game.messages[game.messages.length - 3], 0, graphics.fontSize * 3);
+    ctx.fillText(game.messages[game.messages.length - 2], 0, graphics.fontSize * 4);
+    ctx.fillText(game.messages[game.messages.length - 1], 0, graphics.fontSize * 5);
     ctx.fillText('Level:' + (entity.level + 1) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
@@ -147,18 +165,18 @@ function draw(ev: UIEvent, entity: Entity) {
             entity.inventory[i].index = String.fromCharCode(97 + i);
         }
         ctx.fillStyle = '#000';
-        ctx.fillRect(canvas.width - graphics.characterSize * 10, 0, graphics.characterSize * 10, entity.inventory.length * 26);
+        ctx.fillRect(canvas.width - graphics.fontSize * 10, 0, graphics.fontSize * 10, entity.inventory.length * 26);
         ctx.fillStyle = '#fff';
         for (let i = 0; i < entity.inventory.length; i++) {
-            ctx.fillText(entity.inventory[i].index + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.characterSize * 10), (i + 1) * graphics.characterSize);
+            ctx.fillText(entity.inventory[i].index + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.fontSize * 10), (i + 1) * graphics.fontSize);
         }
     }
 
     if (ui.mode === 'character') {
         ctx.fillStyle = '#000';
-        ctx.fillRect(canvas.width - graphics.characterSize * 10, 0, graphics.characterSize * 10, graphics.characterSize * 10);
+        ctx.fillRect(canvas.width - graphics.fontSize * 10, 0, graphics.fontSize * 10, graphics.fontSize * 10);
         ctx.fillStyle = '#fff';
-        ctx.fillText('Health: ' + entity.stats.health, canvas.width - (graphics.characterSize * 10), graphics.characterSize);
-        ctx.fillText('Mana: ' + entity.stats.mana, canvas.width - (graphics.characterSize * 10), graphics.characterSize * 2);
+        ctx.fillText('Health: ' + entity.stats.health, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
+        ctx.fillText('Mana: ' + entity.stats.mana, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
     }
 }

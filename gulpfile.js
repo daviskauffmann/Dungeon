@@ -8,7 +8,7 @@ const sequence = require('gulp-sequence');
 const sourcemaps = require('gulp-sourcemaps');
 const typescript = require('gulp-typescript').createProject('tsconfig.json');
 
-gulp.task('watch', () => {
+gulp.task('watch', [ 'build' ], () => {
     gulp.watch('./src/**/*', [ 'build' ]);
 })
 

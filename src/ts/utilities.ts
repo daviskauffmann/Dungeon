@@ -5,10 +5,17 @@
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function distanceBetween(x1: number, y1: number, x2: number, y2: number) {
-    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+function distanceBetweenSquared(coord1: Coord, coord2: Coord): number {
+    return Math.pow(coord2.x - coord1.x, 2) + Math.pow(coord2.y - coord1.y, 2);
 }
 
-function distanceBetweenSquared(x1: number, y1: number, x2: number, y2: number): number {
-    return Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2);
+function distanceBetween(coord1: Coord, coord2: Coord) {
+    return Math.sqrt(distanceBetweenSquared(coord1, coord2));
+}
+
+function isInside(coord: Coord, rect: Rect) {
+    return Math.min(rect.x, rect.x + rect.width) <= coord.x &&
+        coord.x <= Math.max(rect.x, rect.x + rect.width) &&
+        Math.min(rect.y, rect.y + rect.height) <= coord.y &&
+        coord.y <= Math.max(rect.y, rect.y + rect.height);
 }

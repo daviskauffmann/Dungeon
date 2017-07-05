@@ -81,7 +81,7 @@
 
 					break;
 				case 'g':
-					dungeon.items.forEach(item => {
+					dungeon.items.forEach((item, index) => {
 						if (item.x !== entity.x || item.y !== entity.y) {
 							return;
 						}
@@ -89,7 +89,7 @@
 						game.messages.push(entity.name + ' picks up a ' + item.name);
 
 						entity.inventory.push(item);
-						dungeon.items.splice(dungeon.items.indexOf(item), 1);
+						dungeon.items.splice(index, 1);
 
 						draw(undefined, entity);
 					});
@@ -98,9 +98,9 @@
 				case 's':
 					const targets: Array<Entity> = [];
 					for (let dir = 0; dir < 360; dir++) {
-						raycast(dungeon, entity.x, entity.y, entity.stats.sight, dir, [
-							'wall',
-							'doorClosed'
+						raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+							CellType.Wall,
+							CellType.DoorClosed
 						], (x, y) => {
 							dungeon.entities.forEach(target => {
 								if (target === entity) {
@@ -128,11 +128,52 @@
 					draw(undefined, entity);
 
 					break;
+				case 'r':
+					for (let dir = 0; dir < 360; dir++) {
+						raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+							CellType.Wall,
+							CellType.DoorClosed
+						], (x, y) => {
+							dungeon.items.forEach((item, index) => {
+								if (item.x !== x || item.y !== y) {
+									return;
+								}
+
+								if ('id' in item) {
+									const corpse = (<Corpse>item);
+									const newEntity: Entity = {
+										x: corpse.x,
+										y: corpse.y,
+										char: corpse.originalChar,
+										color: corpse.color,
+										alpha: corpse.alpha,
+										id: corpse.id,
+										name: corpse.name.replace(' corpse', ''),
+										level: entity.level,
+										class: corpse.class,
+										stats: corpse.stats,
+										inventory: corpse.inventory,
+										factions: corpse.factions,
+										hostileFactions: corpse.hostileFactions,
+										hostileEntities: corpse.hostileEntities,
+										disposition: corpse.disposition
+									}
+									dungeon.entities.push(newEntity);
+
+									dungeon.items.splice(index, 1);
+								}
+							});
+						});
+					}
+
+					draw(undefined, entity);
+
+					break;
 				case 'c':
-					if (dungeon.cells[entity.x][entity.y].type === 'doorOpen') {
+					if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
 						game.messages.push(entity.name + ' closes the door');
 
-						dungeon.cells[entity.x][entity.y].type = 'doorClosed'
+						dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
 
 						draw(undefined, entity);
 					}
@@ -357,17 +398,21 @@
 			game = JSON.parse(localStorage.getItem('game'));
 			console.log(game);
 
-			draw(undefined, entity);
+			draw(undefined, getPlayer());
+
+			break;
+		case '\\':
+			console.log(game);
 
 			break;
 		case '-':
-			graphics.characterSize--;
+			graphics.fontSize--;
 
 			draw(undefined, entity);
 
 			break;
 		case '=':
-			graphics.characterSize++;
+			graphics.fontSize++;
 
 			draw(undefined, entity);
 

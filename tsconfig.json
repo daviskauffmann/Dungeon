@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "noImplicitAny": true,
-        "removeComments": true,
         "target": "es6"
     }
 }

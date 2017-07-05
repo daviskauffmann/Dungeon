@@ -4,17 +4,16 @@
 // raycast() will then return the cell where action() stopped, returning nothing otherwise
 // with this implementation, some cells will be visited multiple times
 function raycast(dungeon: Dungeon,
-                 sx: number,
-                 sy: number,
+                 origin: Coord,
                  r: number,
                  dir: number,
-                 blockedBy: Array<string>,
+                 blockedBy: Array<CellType>,
                  action: (x: number, y: number) => boolean | void) {
     const dx = Math.cos(dir * (Math.PI / 180));
     const dy = Math.sin(dir * (Math.PI / 180));
 
-    let cx = sx + 0.5;
-    let cy = sy + 0.5;
+    let cx = origin.x + 0.5;
+    let cy = origin.y + 0.5;
 
     for (let i = 0; i < r; i++) {
         const x = Math.trunc(cx);
@@ -40,15 +39,14 @@ function raycast(dungeon: Dungeon,
 // sends out rays in a circle
 // returns an array of cells that were affected by action()
 function spherecast(dungeon: Dungeon,
-                    sx: number,
-                    sy: number,
+                    origin: Coord,
                     r: number,
                     accuracy: number,
-                    blockedBy: Array<string>,
+                    blockedBy: Array<CellType>,
                     action: (x: number, y: number) => boolean | void) {
     const cells: Array<Cell> = [];
     for (let dir = 0; dir < 360; dir += accuracy) {
-        const cell = raycast(dungeon, sx, sy, r, dir, blockedBy, action);
+        const cell = raycast(dungeon, origin, r, dir, blockedBy, action);
         if (cell && cells.indexOf(cell) === -1) {
             cells.push(cell);
         }
@@ -58,11 +56,7 @@ function spherecast(dungeon: Dungeon,
 
 // uses A* to find a path between two coordinates
 // returns an array of coordinates leading from the start position to the end position, or undefined if no path was found
-function pathfind(dungeon: Dungeon,
-                  x1: number,
-                  y1: number,
-                  x2: number,
-                  y2: number) {
+function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
     const coords: Array<Array<Coord>> = [];
     for (let x = 0; x < dungeon.width; x++) {
         coords[x] = [];
@@ -75,7 +69,7 @@ function pathfind(dungeon: Dungeon,
     }
 
     const closedSet: Array<Coord> = [];
-    const openSet = [ coords[x1][y1] ];
+    const openSet = [ coords[start.x][start.y] ];
 
     const cameFrom = new Map<Coord, Coord>();
     const gScore = new Map<Coord, number>();
@@ -86,8 +80,8 @@ function pathfind(dungeon: Dungeon,
             fScore.set(coords[x][y], Infinity);
         }
     }
-    gScore.set(coords[x1][y1], 0);
-    fScore.set(coords[x1][y1], distanceBetweenSquared(x1, y1, x2, y2));
+    gScore.set(coords[start.x][start.y], 0);
+    fScore.set(coords[start.x][start.y], distanceBetweenSquared(start, goal));
 
     let passes = 0;
     while (openSet.length > 0) {
@@ -102,7 +96,7 @@ function pathfind(dungeon: Dungeon,
             }
         }
 
-        if (current === coords[x2][y2] || passes > Infinity) {
+        if (current === coords[goal.x][goal.y] || passes > Infinity) {
             const path = [
                 current
             ];
@@ -132,8 +126,8 @@ function pathfind(dungeon: Dungeon,
 
         neighbors.filter(neighbor => {
             switch (dungeon.cells[neighbor.x][neighbor.y].type) {
-                case 'empty':
-                case 'wall':
+                case CellType.Empty:
+                case CellType.Wall:
                     return false;
             }
 
@@ -142,7 +136,7 @@ function pathfind(dungeon: Dungeon,
                     return false;
                 }
 
-                if (entity.x === x2 && entity.y === y2) {
+                if (entity.x === goal.x && entity.y === goal.y) {
                     return false;
                 }
 
@@ -152,7 +146,7 @@ function pathfind(dungeon: Dungeon,
                     return false;
                 }
 
-                if (chest.x === x2 && chest.y === y2) {
+                if (chest.x === goal.x && chest.y === goal.y) {
                     return false;
                 }
 
@@ -167,19 +161,19 @@ function pathfind(dungeon: Dungeon,
                 return;
             }
 
-            const tentativeGScore = gScore.get(current) + distanceBetweenSquared(current.x, current.y, neighbor.x, neighbor.y);
+            const tentativeGScore = gScore.get(current) + distanceBetweenSquared(current, neighbor);
             if (openSet.indexOf(neighbor) === -1) {
                 openSet.push(neighbor);
             } else if (tentativeGScore >= gScore.get(neighbor)) {
                 return;
             }
 
-            if (current.x !== x1 || current.y !== y1) {
+            if (current.x !== start.x || current.y !== start.y) {
                 cameFrom.set(neighbor, current);
             }
 
             gScore.set(neighbor, tentativeGScore);
-            fScore.set(neighbor, gScore.get(neighbor) + distanceBetweenSquared(neighbor.x, neighbor.y, x2, y2))
+            fScore.set(neighbor, gScore.get(neighbor) + distanceBetweenSquared(neighbor, goal))
         });
 
         passes++;

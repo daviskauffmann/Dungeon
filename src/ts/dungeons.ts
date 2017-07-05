@@ -4,6 +4,7 @@ function createTown() {
         height: 25,
         cells: [],
         rooms: [],
+        litRooms: false,
         entities: [],
         chests: [],
         items: []
@@ -13,23 +14,33 @@ function createTown() {
         town.cells[x] = [];
         for (let y = 0; y < town.height; y++) {
             town.cells[x][y] = {
-                type: 'grass',
+                type: CellType.Grass,
                 discovered: false
             }
         }
     }
 
+    town.rooms.push({
+        x: 0,
+        y: 0,
+        width: town.width,
+        height: town.height
+    });
+
     const x = Math.round(town.width / 2);
     const y = Math.round(town.height / 2);
-    town.cells[x][y].type = 'stairsDown';
+    town.cells[x][y].type = CellType.StairsDown;
 
     const player: Entity = {
         id: 0,
         x: x,
         y: y,
-        name: 'player',
         char: '@',
+        color: '#ffffff',
+        alpha: 1,
+        name: 'player',
         level: 0,
+        class: Class.Warrior,
         stats: {
             level: 1,
 
@@ -48,7 +59,7 @@ function createTown() {
             charisma: 0,
             luck: 0,
 
-            sight: 10
+            sight: 5
         },
         inventory: [],
         factions: [
@@ -57,7 +68,8 @@ function createTown() {
         hostileFactions: [
             'monster'
         ],
-        hostileEntities: []
+        hostileEntities: [],
+        disposition: Disposition.Aggressive
     };
     town.entities.push(player);
 
@@ -65,20 +77,22 @@ function createTown() {
 }
 
 function createDungeon(width: number,
-    height: number,
-    roomAttempts: number,
-    minRoomSize: number,
-    maxRoomSize: number,
-    preventOverlap: boolean,
-    doorChance: number,
-    trapAmount: number,
-    monsterAmount: number,
-    chestAmount: number) {
+                       height: number,
+                       roomAttempts: number,
+                       minRoomSize: number,
+                       maxRoomSize: number,
+                       preventOverlap: boolean,
+                       litRooms: boolean,
+                       doorChance: number,
+                       trapAmount: number,
+                       monsterAmount: number,
+                       chestAmount: number) {
     const dungeon: Dungeon = {
         width: width,
         height: height,
         cells: [],
         rooms: [],
+        litRooms: litRooms,
         entities: [],
         chests: [],
         items: []
@@ -88,7 +102,7 @@ function createDungeon(width: number,
         dungeon.cells[x] = [];
         for (let y = 0; y < dungeon.height; y++) {
             dungeon.cells[x][y] = {
-                type: 'empty',
+                type: CellType.Empty,
                 discovered: false
             }
         }
@@ -107,19 +121,19 @@ function createDungeon(width: number,
         if (preventOverlap && (() => {
             for (let x = roomX; x < roomX + roomWidth; x++) {
                 for (let y = roomY; y < roomY + roomHeight; y++) {
-                    if (dungeon.cells[x][y].type === 'floor') {
+                    if (dungeon.cells[x][y].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x][y - 1].type === 'floor') {
+                    if (dungeon.cells[x][y - 1].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x + 1][y].type === 'floor') {
+                    if (dungeon.cells[x + 1][y].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x][y + 1].type === 'floor') {
+                    if (dungeon.cells[x][y + 1].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x - 1][y].type === 'floor') {
+                    if (dungeon.cells[x - 1][y].type === CellType.Floor) {
                         return true;
                     }
                 }
@@ -137,7 +151,7 @@ function createDungeon(width: number,
 
         for (let x = room.x; x < room.x + room.width; x++) {
             for (let y = room.y; y < room.y + room.height; y++) {
-                dungeon.cells[x][y].type = 'floor';
+                dungeon.cells[x][y].type = CellType.Floor;
             }
         }
 
@@ -164,7 +178,7 @@ function createDungeon(width: number,
         for (let x = x1; x <= x2; x++) {
             for (let y = y1; y <= y2; y++) {
                 if (x === x1 || x === x2 || y === y1 || y === y2) {
-                    dungeon.cells[x][y].type = 'floor';
+                    dungeon.cells[x][y].type = CellType.Floor;
                 }
             }
         }
@@ -172,30 +186,30 @@ function createDungeon(width: number,
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            if (dungeon.cells[x][y].type === 'floor') {
-                if (dungeon.cells[x][y - 1].type === 'empty') {
-                    dungeon.cells[x][y - 1].type = 'wall';
+            if (dungeon.cells[x][y].type === CellType.Floor) {
+                if (dungeon.cells[x][y - 1].type === CellType.Empty) {
+                    dungeon.cells[x][y - 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x + 1][y - 1].type === 'empty') {
-                    dungeon.cells[x + 1][y - 1].type = 'wall';
+                if (dungeon.cells[x + 1][y - 1].type === CellType.Empty) {
+                    dungeon.cells[x + 1][y - 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x + 1][y].type === 'empty') {
-                    dungeon.cells[x + 1][y].type = 'wall';
+                if (dungeon.cells[x + 1][y].type === CellType.Empty) {
+                    dungeon.cells[x + 1][y].type = CellType.Wall;
                 }
-                if (dungeon.cells[x + 1][y + 1].type === 'empty') {
-                    dungeon.cells[x + 1][y + 1].type = 'wall';
+                if (dungeon.cells[x + 1][y + 1].type === CellType.Empty) {
+                    dungeon.cells[x + 1][y + 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x][y + 1].type === 'empty') {
-                    dungeon.cells[x][y + 1].type = 'wall';
+                if (dungeon.cells[x][y + 1].type === CellType.Empty) {
+                    dungeon.cells[x][y + 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x - 1][y - 1].type === 'empty') {
-                    dungeon.cells[x - 1][y - 1].type = 'wall';
+                if (dungeon.cells[x - 1][y - 1].type === CellType.Empty) {
+                    dungeon.cells[x - 1][y - 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x - 1][y].type === 'empty') {
-                    dungeon.cells[x - 1][y].type = 'wall';
+                if (dungeon.cells[x - 1][y].type === CellType.Empty) {
+                    dungeon.cells[x - 1][y].type = CellType.Wall;
                 }
-                if (dungeon.cells[x - 1][y + 1].type === 'empty') {
-                    dungeon.cells[x - 1][y + 1].type = 'wall';
+                if (dungeon.cells[x - 1][y + 1].type === CellType.Empty) {
+                    dungeon.cells[x - 1][y + 1].type = CellType.Wall;
                 }
             }
         }
@@ -205,25 +219,25 @@ function createDungeon(width: number,
         for (let y = 0; y < dungeon.height; y++) {
             const roll = Math.random();
             if (roll < doorChance) {
-                if (dungeon.cells[x][y].type === 'floor') {
-                    if (dungeon.cells[x][y - 1].type === 'floor' && dungeon.cells[x + 1][y - 1].type === 'floor' && dungeon.cells[x - 1][y - 1].type === 'floor') {
-                        if (dungeon.cells[x - 1][y].type === 'wall' && dungeon.cells[x + 1][y].type === 'wall') {
-                            dungeon.cells[x][y].type = 'doorClosed';
+                if (dungeon.cells[x][y].type === CellType.Floor) {
+                    if (dungeon.cells[x][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
+                        if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                            dungeon.cells[x][y].type = CellType.DoorClosed;
                         }
                     }
-                    if (dungeon.cells[x + 1][y].type === 'floor' && dungeon.cells[x + 1][y - 1].type === 'floor' && dungeon.cells[x + 1][y + 1].type === 'floor') {
-                        if (dungeon.cells[x][y + 1].type === 'wall' && dungeon.cells[x][y - 1].type === 'wall') {
-                            dungeon.cells[x][y].type = 'doorClosed';
+                    if (dungeon.cells[x + 1][y].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
+                        if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                            dungeon.cells[x][y].type = CellType.DoorClosed;
                         }
                     }
-                    if (dungeon.cells[x][y + 1].type === 'floor' && dungeon.cells[x + 1][y + 1].type === 'floor' && dungeon.cells[x - 1][y + 1].type === 'floor') {
-                        if (dungeon.cells[x - 1][y].type === 'wall' && dungeon.cells[x + 1][y].type === 'wall') {
-                            dungeon.cells[x][y].type = 'doorClosed';
+                    if (dungeon.cells[x][y + 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                        if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                            dungeon.cells[x][y].type = CellType.DoorClosed;
                         }
                     }
-                    if (dungeon.cells[x - 1][y].type === 'floor' && dungeon.cells[x - 1][y - 1].type === 'floor' && dungeon.cells[x - 1][y + 1].type === 'floor') {
-                        if (dungeon.cells[x][y + 1].type === 'wall' && dungeon.cells[x][y - 1].type === 'wall') {
-                            dungeon.cells[x][y].type = 'doorClosed';
+                    if (dungeon.cells[x - 1][y].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                        if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                            dungeon.cells[x][y].type = CellType.DoorClosed;
                         }
                     }
                 }
@@ -232,28 +246,17 @@ function createDungeon(width: number,
     }
 
     if (dungeon.rooms.length > 0) {
-        for (let i = 0; i < trapAmount; i++) {
-            const roomIndex = getRandomInt(0, dungeon.rooms.length);
-
-            const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-            const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
-
-            dungeon.cells[x][y].type = 'trap';
-        }
-    }
-
-    if (dungeon.rooms.length > 0) {
         const x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
         const y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
 
-        dungeon.cells[x][y].type = 'stairsUp';
+        dungeon.cells[x][y].type = CellType.StairsUp;
     }
 
     if (dungeon.rooms.length > 0) {
         const x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
         const y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
 
-        dungeon.cells[x][y].type = 'stairsDown';
+        dungeon.cells[x][y].type = CellType.StairsDown;
     }
 
     if (dungeon.rooms.length > 1) {
@@ -264,12 +267,15 @@ function createDungeon(width: number,
             const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
             const monster: Entity = {
-                id: game.id++,
+                id: game.currentId++,
                 x: x,
                 y: y,
-                name: '',
                 char: '',
+                color: '#ffffff',
+                alpha: 1,
+                name: '',
                 level: game.dungeons.length,
+                class: Class.Warrior,
                 stats: {
                     level: 1,
 
@@ -293,7 +299,8 @@ function createDungeon(width: number,
                 inventory: [],
                 factions: [],
                 hostileFactions: [],
-                hostileEntities: []
+                hostileEntities: [],
+                disposition: Disposition.Aggressive
             };
 
             const roll = Math.random();
@@ -307,6 +314,7 @@ function createDungeon(width: number,
                 monster.hostileFactions = [
                     'player'
                 ];
+                monster.disposition = Disposition.Cowardly;
             } else if (roll < 0.50) {
                 monster.name = 'slime';
                 monster.char = 's';
@@ -317,6 +325,7 @@ function createDungeon(width: number,
                 monster.hostileFactions = [
                     'player'
                 ];
+                monster.disposition = Disposition.Passive;
             } else if (roll < 0.75) {
                 monster.name = 'orc';
                 monster.char = 'o';
@@ -328,6 +337,12 @@ function createDungeon(width: number,
                     'player',
                     'bugbear'
                 ];
+                const roll = Math.random();
+                if (roll < 0.5) {
+                    monster.color = '#ffff00';
+                    monster.name += ' shaman';
+                    monster.class = Class.Shaman;
+                }
             } else {
                 monster.name = 'bugbear';
                 monster.char = 'b';
@@ -339,6 +354,12 @@ function createDungeon(width: number,
                     'player',
                     'orc'
                 ];
+                const roll = Math.random();
+                if (roll < 0.5) {
+                    monster.color = '#ffff00';
+                    monster.name += ' shaman';
+                    monster.class = Class.Shaman;
+                }
             }
 
             dungeon.entities.push(monster);
@@ -356,14 +377,18 @@ function createDungeon(width: number,
                 x: x,
                 y: y,
                 char: '~',
+                color: '#ffffff',
+                alpha: 1,
                 loot: (() => {
                     const roll = Math.random();
                     if (roll < 0.5) {
                         const item: Item = {
                             x: -1,
                             y: -1,
-                            name: '',
                             char: '',
+                            color: '#ffffff',
+                            alpha: 1,
+                            name: '',
                             index: '',
                             equipped: false
                         }

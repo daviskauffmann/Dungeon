@@ -1,13 +1,30 @@
 interface Cell {
-    type: string;
+    type: CellType;
     discovered: boolean;
 }
 
-interface Chest {
-    x: number;
-    y: number;
-    char: string;
+enum CellType {
+    Empty,
+    Floor,
+    Grass,
+    Wall,
+    DoorClosed,
+    DoorOpen,
+    StairsDown,
+    StairsUp
+}
+
+interface Chest extends Coord, Glyph {
     loot: Item;
+}
+
+enum Class {
+    Warrior,
+    Shaman
+}
+
+enum Color {
+    Default
 }
 
 interface Coord {
@@ -15,32 +32,45 @@ interface Coord {
     y: number;
 }
 
-interface Dungeon {
+interface Corpse extends Entity, Item {
+    originalChar: string;
+}
+
+interface Size {
     width: number;
     height: number;
+}
+
+interface Dungeon extends Size {
     cells: Array<Array<Cell>>;
     rooms: Array<Rect>;
+    litRooms: boolean;
     entities: Array<Entity>;
     chests: Array<Chest>;
     items: Array<Item>;
 }
 
-interface Entity {
+enum Disposition {
+    Passive,
+    Aggressive,
+    Cowardly
+}
+
+interface Entity extends Coord, Glyph {
     id: number;
-    x: number;
-    y: number;
     name: string;
-    char: string;
     level: number;
+    class: Class;
     stats: Stats;
     inventory: Array<Item>;
     factions: Array<string>;
     hostileFactions: Array<string>;
     hostileEntities: Array<number>;
+    disposition: Disposition;
 }
 
 interface Game {
-    id: number;
+    currentId: number;
     dungeons: Array<Dungeon>;
     turn: number;
     messages: Array<string>;
@@ -49,34 +79,24 @@ interface Game {
     ignoreFov: boolean;
 }
 
-interface Graphics {
-    characterSize: number;
-    color: {
-        default: string;
-    };
-    cellType: {
-        [key: string]: {
-            color?: string;
-            char: string;
-        };
-    };
+interface Glyph {
+    char: string;
+    color: string;
+    alpha: number;
 }
 
-interface Item {
-    x: number;
-    y: number;
+interface Graphics {
+    fontSize: number;
+    cellTypes: Array<Glyph>;
+}
+
+interface Item extends Coord, Glyph {
     name: string;
-    char: string;
     index: string;
     equipped: boolean;
 }
 
-interface Rect {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
+interface Rect extends Coord, Size { }
 
 interface Stats {
     level: number;
