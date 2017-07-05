@@ -6,14 +6,14 @@ const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
 const sourcemaps = require('gulp-sourcemaps');
-const typescript = require('gulp-typescript').createProject('tsconfig.json');
+const typescript = require('gulp-typescript');
 
-gulp.task('watch', [ 'build' ], () => {
-    gulp.watch('./src/**/*', [ 'build' ]);
+gulp.task('watch', ['build'], () => {
+    gulp.watch('./src/**/*', ['build']);
 })
 
 gulp.task('build', callback => {
-    sequence('clean' , 'typescript', 'sass', 'inject')(callback);
+    sequence('clean', 'typescript', 'sass', 'inject')(callback);
 });
 
 gulp.task('clean', () => {
@@ -24,7 +24,7 @@ gulp.task('clean', () => {
 gulp.task('typescript', () => {
     return gulp.src('./src/ts/**/*.ts')
         .pipe(sourcemaps.init())
-        .pipe(typescript())
+        .pipe(typescript({ noImplicitAny: true, target: 'es6' }))
         .pipe(concat('main.js'))
         .pipe(babili())
         .pipe(sourcemaps.write())
@@ -42,6 +42,6 @@ gulp.task('inject', () => {
         .pipe(inject(gulp.src([
             './www/js/**/*.js',
             './www/css/**/*.css'
-        ], { read: false }), { relative:true, ignorePath: '../www/' }))
+        ], { read: false }), { relative: true, ignorePath: '../www/' }))
         .pipe(gulp.dest('./www'));
 });
