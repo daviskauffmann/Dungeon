@@ -119,14 +119,13 @@ function move(entity: Entity, x: number, y: number) {
         case CellType.Wall:
             return;
         case CellType.DoorClosed:
-            const roll = Math.random();
-            if (roll < 0.5) {
-                addMessage(entity.name + ' opens the door');
-
-                dungeon.cells[x][y].type = CellType.DoorOpen;
-            } else {
-                addMessage(entity.name + ' can\'t open the door');
+            if (Math.random() < 0.5) {
+                return addMessage(entity.name + ' can\'t open the door');
             }
+
+            addMessage(entity.name + ' opens the door');
+
+            dungeon.cells[x][y].type = CellType.DoorOpen;
 
             return;
         case CellType.StairsUp:
@@ -135,9 +134,11 @@ function move(entity: Entity, x: number, y: number) {
             changeLevel(entity, entity.level - 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
                     for (let y = 0; y < newDungeon.height; y++) {
-                        if (newDungeon.cells[x][y].type === CellType.StairsDown) {
-                            return { x, y };
+                        if (newDungeon.cells[x][y].type !== CellType.StairsDown) {
+                            continue;
                         }
+
+                        return { x, y };
                     }
                 }
             });
@@ -149,9 +150,11 @@ function move(entity: Entity, x: number, y: number) {
             changeLevel(entity, entity.level + 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
                     for (let y = 0; y < newDungeon.height; y++) {
-                        if (newDungeon.cells[x][y].type === CellType.StairsUp) {
-                            return { x, y };
+                        if (newDungeon.cells[x][y].type !== CellType.StairsUp) {
+                            continue;
                         }
+
+                        return { x, y };
                     }
                 }
             });
@@ -195,7 +198,7 @@ function move(entity: Entity, x: number, y: number) {
                 target.inventory.splice(index, 1);
             });
 
-            const corpse: Corpse = {
+            dungeon.items.push(<Corpse>{
                 x: x,
                 y: y,
                 char: '%',
@@ -214,8 +217,7 @@ function move(entity: Entity, x: number, y: number) {
                 index: '',
                 equipped: false,
                 originalChar: target.char
-            };
-            dungeon.items.push(corpse);
+            });
 
             dungeon.entities.splice(index, 1);
         }

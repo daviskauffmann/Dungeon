@@ -31,7 +31,7 @@ function createTown() {
     const y = Math.round(town.height / 2);
     town.cells[x][y].type = CellType.StairsDown;
 
-    const player: Entity = {
+    town.entities.push({
         x: x,
         y: y,
         char: '@',
@@ -70,8 +70,7 @@ function createTown() {
         ],
         hostileEntityIds: [],
         disposition: Disposition.Aggressive
-    };
-    town.entities.push(player);
+    });
 
     return town;
 }
@@ -108,7 +107,7 @@ function createDungeon(width: number,
         }
     }
 
-    for (let i = 0; i < roomAttempts; i++) {
+    for (let i = 0; i < roomAttempts && dungeon.rooms.length > 1; i++) {
         const roomX = getRandomInt(0, dungeon.width);
         const roomY = getRandomInt(0, dungeon.height);
         const roomWidth = getRandomInt(minRoomSize, maxRoomSize);
@@ -186,228 +185,225 @@ function createDungeon(width: number,
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            if (dungeon.cells[x][y].type === CellType.Floor) {
-                if (dungeon.cells[x][y - 1].type === CellType.Empty) {
-                    dungeon.cells[x][y - 1].type = CellType.Wall;
-                }
-                if (dungeon.cells[x + 1][y - 1].type === CellType.Empty) {
-                    dungeon.cells[x + 1][y - 1].type = CellType.Wall;
-                }
-                if (dungeon.cells[x + 1][y].type === CellType.Empty) {
-                    dungeon.cells[x + 1][y].type = CellType.Wall;
-                }
-                if (dungeon.cells[x + 1][y + 1].type === CellType.Empty) {
-                    dungeon.cells[x + 1][y + 1].type = CellType.Wall;
-                }
-                if (dungeon.cells[x][y + 1].type === CellType.Empty) {
-                    dungeon.cells[x][y + 1].type = CellType.Wall;
-                }
-                if (dungeon.cells[x - 1][y - 1].type === CellType.Empty) {
-                    dungeon.cells[x - 1][y - 1].type = CellType.Wall;
-                }
-                if (dungeon.cells[x - 1][y].type === CellType.Empty) {
-                    dungeon.cells[x - 1][y].type = CellType.Wall;
-                }
-                if (dungeon.cells[x - 1][y + 1].type === CellType.Empty) {
-                    dungeon.cells[x - 1][y + 1].type = CellType.Wall;
-                }
+            if (dungeon.cells[x][y].type !== CellType.Floor) {
+                continue;
+            }
+
+            if (dungeon.cells[x][y - 1].type === CellType.Empty) {
+                dungeon.cells[x][y - 1].type = CellType.Wall;
+            }
+            if (dungeon.cells[x + 1][y - 1].type === CellType.Empty) {
+                dungeon.cells[x + 1][y - 1].type = CellType.Wall;
+            }
+            if (dungeon.cells[x + 1][y].type === CellType.Empty) {
+                dungeon.cells[x + 1][y].type = CellType.Wall;
+            }
+            if (dungeon.cells[x + 1][y + 1].type === CellType.Empty) {
+                dungeon.cells[x + 1][y + 1].type = CellType.Wall;
+            }
+            if (dungeon.cells[x][y + 1].type === CellType.Empty) {
+                dungeon.cells[x][y + 1].type = CellType.Wall;
+            }
+            if (dungeon.cells[x - 1][y - 1].type === CellType.Empty) {
+                dungeon.cells[x - 1][y - 1].type = CellType.Wall;
+            }
+            if (dungeon.cells[x - 1][y].type === CellType.Empty) {
+                dungeon.cells[x - 1][y].type = CellType.Wall;
+            }
+            if (dungeon.cells[x - 1][y + 1].type === CellType.Empty) {
+                dungeon.cells[x - 1][y + 1].type = CellType.Wall;
             }
         }
     }
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            const roll = Math.random();
-            if (roll < doorChance) {
-                if (dungeon.cells[x][y].type === CellType.Floor) {
-                    if (dungeon.cells[x][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
-                        if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
-                            dungeon.cells[x][y].type = CellType.DoorClosed;
-                        }
-                    }
-                    if (dungeon.cells[x + 1][y].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
-                        if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
-                            dungeon.cells[x][y].type = CellType.DoorClosed;
-                        }
-                    }
-                    if (dungeon.cells[x][y + 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                        if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
-                            dungeon.cells[x][y].type = CellType.DoorClosed;
-                        }
-                    }
-                    if (dungeon.cells[x - 1][y].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                        if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
-                            dungeon.cells[x][y].type = CellType.DoorClosed;
-                        }
-                    }
+            if (Math.random() < doorChance) {
+                continue;
+            }
+
+            if (dungeon.cells[x][y].type !== CellType.Floor) {
+                continue;
+            }
+
+            if (dungeon.cells[x][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
+                if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                }
+            }
+            if (dungeon.cells[x + 1][y].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
+                if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                }
+            }
+            if (dungeon.cells[x][y + 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                }
+            }
+            if (dungeon.cells[x - 1][y].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                    dungeon.cells[x][y].type = CellType.DoorClosed;
                 }
             }
         }
     }
 
-    if (dungeon.rooms.length > 0) {
+    {
         const x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
         const y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
-
         dungeon.cells[x][y].type = CellType.StairsUp;
     }
 
-    if (dungeon.rooms.length > 0) {
+    {
         const x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
         const y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
-
         dungeon.cells[x][y].type = CellType.StairsDown;
     }
 
-    if (dungeon.rooms.length > 1) {
-        for (let i = 0; i < monsterAmount; i++) {
-            const roomIndex = getRandomInt(1, dungeon.rooms.length);
+    for (let i = 0; i < monsterAmount; i++) {
+        const roomIndex = getRandomInt(1, dungeon.rooms.length);
 
-            const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-            const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+        const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+        const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
-            const monster: Entity = {
-                x: x,
-                y: y,
-                char: '',
-                color: '#ffffff',
-                alpha: 1,
-                id: game.currentId++,
-                name: '',
-                level: game.dungeons.length,
-                class: Class.Warrior,
-                stats: {
-                    level: 1,
+        const monster: Entity = {
+            x: x,
+            y: y,
+            char: '',
+            color: '#ffffff',
+            alpha: 1,
+            id: game.currentId++,
+            name: '',
+            level: game.dungeons.length,
+            class: Class.Warrior,
+            stats: {
+                level: 1,
 
-                    health: 100,
-                    energy: 100,
-                    mana: 100,
+                health: 100,
+                energy: 100,
+                mana: 100,
 
-                    stamina: 0,
-                    endurance: 0,
-                    attunement: 0,
-                    resistance: 0,
-                    strength: 0,
-                    intellect: 0,
-                    avoidance: 0,
-                    precision: 0,
-                    charisma: 0,
-                    luck: 0,
+                stamina: 0,
+                endurance: 0,
+                attunement: 0,
+                resistance: 0,
+                strength: 0,
+                intellect: 0,
+                avoidance: 0,
+                precision: 0,
+                charisma: 0,
+                luck: 0,
 
-                    sight: 10
-                },
-                inventory: [],
-                factions: [],
-                hostileFactions: [],
-                hostileEntityIds: [],
-                disposition: Disposition.Aggressive
-            };
+                sight: 10
+            },
+            inventory: [],
+            factions: [],
+            hostileFactions: [],
+            hostileEntityIds: [],
+            disposition: Disposition.Aggressive
+        };
 
-            const roll = Math.random();
-            if (roll < 0.25) {
-                monster.name = 'rat';
-                monster.char = 'r';
-                monster.factions = [
-                    Faction.Monster
-                ];
-                monster.hostileFactions = [];
-                monster.disposition = Disposition.Cowardly;
-            } else if (roll < 0.50) {
-                monster.name = 'slime';
-                monster.char = 's';
-                monster.factions = [
-                    Faction.Monster
-                ];
-                monster.disposition = Disposition.Passive;
-            } else if (roll < 0.75) {
-                monster.name = 'orc';
-                monster.char = 'o';
-                monster.factions = [
-                    Faction.Monster,
-                    Faction.Orc
-                ];
-                monster.hostileFactions = [
-                    Faction.Player,
-                    Faction.Bugbear
-                ];
-                const roll = Math.random();
-                if (roll < 0.5) {
-                    monster.color = '#ffff00';
-                    monster.name += ' shaman';
-                    monster.class = Class.Shaman;
-                }
-            } else {
-                monster.name = 'bugbear';
-                monster.char = 'b';
-                monster.factions = [
-                    Faction.Monster,
-                    Faction.Bugbear
-                ];
-                monster.hostileFactions = [
-                    Faction.Player,
-                    Faction.Orc
-                ];
-                const roll = Math.random();
-                if (roll < 0.5) {
-                    monster.color = '#ffff00';
-                    monster.name += ' shaman';
-                    monster.class = Class.Shaman;
-                }
+        const roll = Math.random();
+        if (roll < 0.25) {
+            monster.name = 'rat';
+            monster.char = 'r';
+            monster.factions = [
+                Faction.Monster
+            ];
+            monster.hostileFactions = [];
+            monster.disposition = Disposition.Cowardly;
+        } else if (roll < 0.50) {
+            monster.name = 'slime';
+            monster.char = 's';
+            monster.factions = [
+                Faction.Monster
+            ];
+            monster.disposition = Disposition.Passive;
+        } else if (roll < 0.75) {
+            monster.name = 'orc';
+            monster.char = 'o';
+            monster.factions = [
+                Faction.Monster,
+                Faction.Orc
+            ];
+            monster.hostileFactions = [
+                Faction.Player,
+                Faction.Bugbear
+            ];
+            if (Math.random() < 0.5) {
+                monster.color = '#ffff00';
+                monster.name += ' shaman';
+                monster.class = Class.Shaman;
             }
-
-            dungeon.entities.push(monster);
+        } else {
+            monster.name = 'bugbear';
+            monster.char = 'b';
+            monster.factions = [
+                Faction.Monster,
+                Faction.Bugbear
+            ];
+            monster.hostileFactions = [
+                Faction.Player,
+                Faction.Orc
+            ];
+            if (Math.random() < 0.5) {
+                monster.color = '#ffff00';
+                monster.name += ' shaman';
+                monster.class = Class.Shaman;
+            }
         }
+
+        dungeon.entities.push(monster);
     }
 
-    if (dungeon.rooms.length > 0) {
-        for (let i = 0; i < chestAmount; i++) {
-            const roomIndex = getRandomInt(0, dungeon.rooms.length);
+    for (let i = 0; i < chestAmount; i++) {
+        const roomIndex = getRandomInt(0, dungeon.rooms.length);
 
-            const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-            const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+        const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+        const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
-            const chest: Chest = {
-                x: x,
-                y: y,
-                char: '~',
-                color: '#ffffff',
-                alpha: 1,
-                loot: (() => {
-                    const roll = Math.random();
-                    if (roll < 0.5) {
-                        const item: Item = {
-                            x: -1,
-                            y: -1,
-                            char: '',
-                            color: '#ffffff',
-                            alpha: 1,
-                            name: '',
-                            index: '',
-                            equipped: false
-                        }
-                        const roll = Math.random();
-                        if (roll < 0.25) {
-                            item.name = 'sword';
-                            item.char = '|';
-                        } else if (roll < 0.50) {
-                            item.name = 'spear';
-                            item.char = '/';
-                        } else if (roll < 0.75) {
-                            item.name = 'shield';
-                            item.char = ')';
-                        } else {
-                            item.name = 'bow';
-                            item.char = '}';
-                        }
-                        return item;
-                    } else {
-                        return undefined;
+        const chest: Chest = {
+            x: x,
+            y: y,
+            char: '~',
+            color: '#ffffff',
+            alpha: 1,
+            loot: (() => {
+                const roll = Math.random();
+                if (roll < 0.5) {
+                    const item: Item = {
+                        x: -1,
+                        y: -1,
+                        char: '',
+                        color: '#ffffff',
+                        alpha: 1,
+                        name: '',
+                        index: '',
+                        equipped: false
                     }
-                })()
-            };
+                    const roll = Math.random();
+                    if (roll < 0.25) {
+                        item.name = 'sword';
+                        item.char = '|';
+                    } else if (roll < 0.50) {
+                        item.name = 'spear';
+                        item.char = '/';
+                    } else if (roll < 0.75) {
+                        item.name = 'shield';
+                        item.char = ')';
+                    } else {
+                        item.name = 'bow';
+                        item.char = '}';
+                    }
+                    return item;
+                } else {
+                    return undefined;
+                }
+            })()
+        };
 
-            dungeon.chests.push(chest);
-        }
+        dungeon.chests.push(chest);
     }
 
     return dungeon;

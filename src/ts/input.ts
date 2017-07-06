@@ -123,14 +123,18 @@
 								}
 
 								const corpse = (<Corpse>item);
-								const newEntity: Entity = {
+								corpse.name = corpse.name.replace(' corpse', '');
+
+								addMessage(entity.name + ' ressurects ' + corpse.name);
+
+								dungeon.entities.push({
 									x: corpse.x,
 									y: corpse.y,
 									char: corpse.originalChar,
 									color: corpse.color,
 									alpha: corpse.alpha,
 									id: corpse.id,
-									name: corpse.name.replace(' corpse', ''),
+									name: corpse.name,
 									level: entity.level,
 									class: corpse.class,
 									stats: corpse.stats,
@@ -139,11 +143,7 @@
 									hostileFactions: corpse.hostileFactions,
 									hostileEntityIds: corpse.hostileEntityIds,
 									disposition: corpse.disposition
-								}
-
-								addMessage(entity.name + ' ressurects ' + newEntity.name);
-
-								dungeon.entities.push(newEntity);
+								});
 
 								dungeon.items.splice(index, 1);
 							});
@@ -215,17 +215,19 @@
 			break;
 		case 'inventory_drop':
 			entity.inventory.forEach(item => {
-				if (item.index === ev.key) {
-					addMessage(entity.name + ' drops a ' + item.name);
-
-					item.x = entity.x;
-					item.y = entity.y;
-
-					game.dungeons[entity.level].items.push(item);
-					entity.inventory.splice(entity.inventory.indexOf(item), 1);
-
-					ui.mode = '';
+				if (item.index !== ev.key) {
+					return;
 				}
+
+				addMessage(entity.name + ' drops a ' + item.name);
+
+				item.x = entity.x;
+				item.y = entity.y;
+
+				game.dungeons[entity.level].items.push(item);
+				entity.inventory.splice(entity.inventory.indexOf(item), 1);
+
+				ui.mode = '';
 			});
 
 			switch (ev.key) {
@@ -238,13 +240,15 @@
 			break;
 		case 'inventory_equip':
 			entity.inventory.forEach(item => {
-				if (item.index === ev.key) {
-					addMessage(entity.name + ' equips a ' + item.name);
-
-					item.equipped = true;
-
-					ui.mode = '';
+				if (item.index !== ev.key) {
+					return;
 				}
+
+				addMessage(entity.name + ' equips a ' + item.name);
+
+				item.equipped = true;
+
+				ui.mode = '';
 			});
 
 			switch (ev.key) {
@@ -257,13 +261,15 @@
 			break;
 		case 'inventory_unequip':
 			entity.inventory.forEach(item => {
-				if (item.index === ev.key) {
-					addMessage(entity.name + ' unequips a ' + item.name);
-
-					item.equipped = false;
-
-					ui.mode = '';
+				if (item.index !== ev.key) {
+					return;
 				}
+
+				addMessage(entity.name + ' unequips a ' + item.name);
+
+				item.equipped = false;
+
+				ui.mode = '';
 			});
 
 			switch (ev.key) {
@@ -276,14 +282,16 @@
 			break;
 		case 'inventory_swapFirst':
 			entity.inventory.forEach(item => {
-				if (item.index === ev.key) {
-					ui.inventorySwapFirst = entity.inventory.indexOf(item);
-
-					addMessage('select second item to swap');
-					addMessage('press space to cancel');
-
-					ui.mode = 'inventory_swapSecond';
+				if (item.index !== ev.key) {
+					return;
 				}
+
+				ui.inventorySwapFirst = entity.inventory.indexOf(item);
+
+				addMessage('select second item to swap');
+				addMessage('press space to cancel');
+
+				ui.mode = 'inventory_swapSecond';
 			});
 
 			switch (ev.key) {
@@ -296,17 +304,19 @@
 			break;
 		case 'inventory_swapSecond':
 			entity.inventory.forEach(item => {
-				if (item.index === ev.key) {
-					ui.inventorySwapSecond = entity.inventory.indexOf(item);
-
-					addMessage(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
-
-					const t = entity.inventory[ui.inventorySwapFirst];
-					entity.inventory[ui.inventorySwapFirst] = entity.inventory[ui.inventorySwapSecond];
-					entity.inventory[ui.inventorySwapSecond] = t;
-
-					ui.mode = '';
+				if (item.index !== ev.key) {
+					return;
 				}
+
+				ui.inventorySwapSecond = entity.inventory.indexOf(item);
+
+				addMessage(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
+
+				const t = entity.inventory[ui.inventorySwapFirst];
+				entity.inventory[ui.inventorySwapFirst] = entity.inventory[ui.inventorySwapSecond];
+				entity.inventory[ui.inventorySwapSecond] = t;
+
+				ui.mode = '';
 			});
 
 			switch (ev.key) {

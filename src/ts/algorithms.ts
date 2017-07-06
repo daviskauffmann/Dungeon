@@ -45,12 +45,17 @@ function spherecast(dungeon: Dungeon,
                     blockedBy: Array<CellType>,
                     action: (x: number, y: number) => boolean | void) {
     const cells: Array<Cell> = [];
+
     for (let dir = 0; dir < 360; dir += accuracy) {
         const cell = raycast(dungeon, origin, r, dir, blockedBy, action);
-        if (cell && cells.indexOf(cell) === -1) {
-            cells.push(cell);
+
+        if (!cell || cells.indexOf(cell) > -1) {
+            continue;
         }
+
+        cells.push(cell);
     }
+
     return cells;
 }
 
@@ -69,7 +74,7 @@ function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
     }
 
     const closedSet: Array<Coord> = [];
-    const openSet = [ coords[start.x][start.y] ];
+    const openSet = [coords[start.x][start.y]];
 
     const cameFrom = new Map<Coord, Coord>();
     const gScore = new Map<Coord, number>();
@@ -90,20 +95,23 @@ function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
 
         for (let i = 0; i < openSet.length; i++) {
             const value = fScore.get(openSet[i]);
-            if (value < lowestFScore) {
-                current = openSet[i];
-                lowestFScore = value;
+
+            if (value >= lowestFScore) {
+                continue;
             }
+
+            current = openSet[i];
+            lowestFScore = value;
         }
 
         if (current === coords[goal.x][goal.y] || passes > Infinity) {
-            const path = [
-                current
-            ];
+            const path = [current];
+
             while (cameFrom.get(current)) {
                 current = cameFrom.get(current);
                 path.push(current);
             }
+            
             return path;
         }
 
