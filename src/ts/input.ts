@@ -36,25 +36,25 @@
 
 					break;
 				case 'ArrowUp':
-					moveEntity(entity, entity.x, entity.y - 1);
+					move(entity, entity.x, entity.y - 1);
 
 					tick();
 
 					break;
 				case 'ArrowRight':
-					moveEntity(entity, entity.x + 1, entity.y);
+					move(entity, entity.x + 1, entity.y);
 
 					tick();
 
 					break;
 				case 'ArrowDown':
-					moveEntity(entity, entity.x, entity.y + 1);
+					move(entity, entity.x, entity.y + 1);
 
 					tick();
 
 					break;
 				case 'ArrowLeft':
-					moveEntity(entity, entity.x - 1, entity.y);
+					move(entity, entity.x - 1, entity.y);
 
 					tick();
 

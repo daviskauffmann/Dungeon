@@ -13,82 +13,97 @@ function getPlayer() {
 }
 
 function tick() {
-    if (!game.stopTime) {
-        game.dungeons.forEach(dungeon => {
-            dungeon.entities.forEach(entity => {
-                if (entity === getPlayer()) {
-                    return;
-                }
-
-                let targets: Array<Entity> = [];
-                switch (entity.disposition) {
-                    case Disposition.Passive:
-                        wander(entity);
-
-                        break;
-                    case Disposition.Aggressive:
-                        for (let dir = 0; dir < 360; dir += 10) {
-                            raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
-                                CellType.Wall,
-                                CellType.DoorClosed
-                            ], (x, y) => {
-                                if (dungeon.entities.some(target => {
-                                    if (target === entity) {
-                                        return false;
-                                    }
-
-                                    if (target.x !== x || target.y !== y) {
-                                        return false;
-                                    }
-
-                                    if (!target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
-                                        return false;
-                                    }
-
-                                    if (targets.indexOf(target) > -1) {
-                                        return false;
-                                    }
-
-                                    targets.push(target);
-
-                                    return true;
-                                })) {
-                                    return true;
-                                }
-                            });
-                        }
-
-                        if (targets.length > 0) {
-                            const target = targets[0];
-
-                            addMessage(`${entity.name} spots a ${target.name}`);
-
-                            const path = pathfind(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
-                            if (path && path.length > 0) {
-                                const next = path.pop();
-
-                                moveEntity(entity, next.x, next.y);
-
-                                return;
-                            }
-                        }
-
-                        wander(entity);
-
-                        break;
-                    case Disposition.Cowardly:
-                        wander(entity);
-
-                        break;
-                }
-            });
-        });
+    if (game.stopTime) {
+        return;
     }
+
+    game.dungeons.forEach(dungeon => {
+        dungeon.entities.forEach(entity => {
+            if (entity === getPlayer()) {
+                return;
+            }
+
+            let targets: Array<Entity> = [];
+            switch (entity.disposition) {
+                case Disposition.Passive:
+                    wander(entity);
+
+                    break;
+                case Disposition.Aggressive:
+                    for (let dir = 0; dir < 360; dir += 10) {
+                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+                            CellType.Wall,
+                            CellType.DoorClosed
+                        ], (x, y) => {
+                            if (dungeon.entities.some(target => {
+                                if (target === entity) {
+                                    return false;
+                                }
+
+                                if (target.x !== x || target.y !== y) {
+                                    return false;
+                                }
+
+                                if (!target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
+                                    return false;
+                                }
+
+                                if (targets.indexOf(target) > -1) {
+                                    return false;
+                                }
+
+                                targets.push(target);
+
+                                return true;
+                            })) {
+                                return true;
+                            }
+                        });
+                    }
+
+                    if (targets.length > 0) {
+                        const target = targets[0];
+
+                        addMessage(`${entity.name} spots a ${target.name}`);
+
+                        const path = pathfind(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+                        if (path && path.length > 0) {
+                            const next = path.pop();
+
+                            move(entity, next.x, next.y);
+
+                            return;
+                        }
+                    }
+
+                    wander(entity);
+
+                    break;
+                case Disposition.Cowardly:
+                    wander(entity);
+
+                    break;
+            }
+        });
+    });
 
     game.turn++;
 }
 
-function moveEntity(entity: Entity, x: number, y: number) {
+function wander(entity: Entity) {
+    const roll = Math.random();
+    if (roll < 0.25) {
+        move(entity, entity.x, entity.y - 1);
+    } else if (roll < 0.5) {
+        move(entity, entity.x + 1, entity.y);
+    } else if (roll < 0.75) {
+        move(entity, entity.x, entity.y + 1);
+    } else {
+        move(entity, entity.x - 1, entity.y);
+    }
+}
+
+function move(entity: Entity, x: number, y: number) {
     const dungeon = game.dungeons[entity.level];
 
     if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
@@ -238,19 +253,6 @@ function moveEntity(entity: Entity, x: number, y: number) {
 
     entity.x = x;
     entity.y = y;
-}
-
-function wander(entity: Entity) {
-    const roll = Math.random();
-    if (roll < 0.25) {
-        moveEntity(entity, entity.x, entity.y - 1);
-    } else if (roll < 0.5) {
-        moveEntity(entity, entity.x + 1, entity.y);
-    } else if (roll < 0.75) {
-        moveEntity(entity, entity.x, entity.y + 1);
-    } else {
-        moveEntity(entity, entity.x - 1, entity.y);
-    }
 }
 
 function changeLevel(entity: Entity, level: number, calcSpawn: (newDungeon: Dungeon) => Coord) {
