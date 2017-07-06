@@ -31,9 +31,15 @@ function draw(ev: UIEvent, entity: Entity) {
     if (game.ignoreFov) {
         for (let x = view.x; x < view.x + view.width; x++) {
             for (let y = view.y; y < view.y + view.height; y++) {
-                if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
-                    cellVisibility.push(dungeon.cells[x][y]);
+                if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
+                    continue;
                 }
+
+                if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+                    continue;
+                }
+
+                cellVisibility.push(dungeon.cells[x][y]);
             }
         }
     }
@@ -42,11 +48,13 @@ function draw(ev: UIEvent, entity: Entity) {
             CellType.Wall,
             CellType.DoorClosed
         ], (x, y) => {
-            dungeon.cells[x][y].discovered = true;
-
-            if (cellVisibility.indexOf(dungeon.cells[x][y]) === -1) {
-                cellVisibility.push(dungeon.cells[x][y]);
+            if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+                return;
             }
+
+            cellVisibility.push(dungeon.cells[x][y]);
+
+            dungeon.cells[x][y].discovered = true;
         });
     }
     if (dungeon.litRooms) {
@@ -61,11 +69,13 @@ function draw(ev: UIEvent, entity: Entity) {
                         continue;
                     }
 
-                    dungeon.cells[x][y].discovered = true;
-
-                    if (cellVisibility.indexOf(dungeon.cells[x][y]) === -1) {
-                        cellVisibility.push(dungeon.cells[x][y]);
+                    if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+                        continue;
                     }
+
+                    cellVisibility.push(dungeon.cells[x][y]);
+
+                    dungeon.cells[x][y].discovered = true;
                 }
             }
         });
@@ -152,7 +162,7 @@ function draw(ev: UIEvent, entity: Entity) {
     }
 
     for (let i = 0; i < game.messages.length; i++) {
-        ctx.fillStyle = '#fffff';
+        ctx.fillStyle = '#ffffff';
         ctx.globalAlpha = 1;
         ctx.fillText(game.messages[i], 0, graphics.fontSize * (i + 1));
     }
