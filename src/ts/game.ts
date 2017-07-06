@@ -3,9 +3,11 @@ function getPlayer() {
 
     for (let i = 0; i < game.dungeons.length; i++) {
         for (let j = 0; j < game.dungeons[i].entities.length; j++) {
-            if (game.dungeons[i].entities[j].id === 0) {
-                return game.dungeons[i].entities[j];
+            if (game.dungeons[i].entities[j].id !== 0) {
+                continue;
             }
+
+            return game.dungeons[i].entities[j];
         }
     }
 
@@ -67,13 +69,16 @@ function tick() {
                         addMessage(`${entity.name} spots a ${target.name}`);
 
                         const path = pathfind(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
-                        if (path && path.length > 0) {
-                            const next = path.pop();
 
-                            move(entity, next.x, next.y);
-
-                            return;
+                        if (!path || !path.length) {
+                            break;
                         }
+
+                        const next = path.pop();
+
+                        move(entity, next.x, next.y);
+
+                        break;
                     }
 
                     wander(entity);
@@ -115,7 +120,7 @@ function move(entity: Entity, x: number, y: number) {
             return;
         case CellType.DoorClosed:
             const roll = Math.random();
-            if (roll > 0.5) {
+            if (roll < 0.5) {
                 addMessage(entity.name + ' opens the door');
 
                 dungeon.cells[x][y].type = CellType.DoorOpen;
@@ -164,54 +169,55 @@ function move(entity: Entity, x: number, y: number) {
         }
 
         if (target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
-            const roll = Math.random();
-            if (roll < 0.5) {
+            if (Math.random() < 0.5) {
                 addMessage(entity.name + ' misses the ' + target.name);
-            } else {
-                if (target.id === 0 && game.godMode) {
-                    addMessage(entity.name + ' cannot kill the ' + target.name);
 
-                    return true;
-                }
+                return true;
+            }
 
-                addMessage(entity.name + ' kills the ' + target.name);
+            if (target.id === 0 && game.godMode) {
+                addMessage(entity.name + ' cannot kill the ' + target.name);
 
-                target.inventory.forEach((item, index) => {
-                    addMessage(target.name + ' drops a ' + item.name);
+                return true;
+            }
 
-                    dungeon.items.push({
-                        ...item,
-                        x: x,
-                        y: x
-                    });
+            addMessage(entity.name + ' kills the ' + target.name);
 
-                    target.inventory.splice(index, 1);
+            target.inventory.forEach((item, index) => {
+                addMessage(target.name + ' drops a ' + item.name);
+
+                dungeon.items.push({
+                    ...item,
+                    x: x,
+                    y: x
                 });
 
-                const corpse: Corpse = {
-                    x: x,
-                    y: y,
-                    char: '%',
-                    color: target.color,
-                    alpha: target.alpha,
-                    id: target.id,
-                    name: target.name + ' corpse',
-                    level: target.level,
-                    class: target.class,
-                    stats: target.stats,
-                    inventory: target.inventory,
-                    factions: target.factions,
-                    hostileFactions: target.hostileFactions,
-                    hostileEntityIds: target.hostileEntityIds,
-                    disposition: target.disposition,
-                    index: '',
-                    equipped: false,
-                    originalChar: target.char
-                };
-                dungeon.items.push(corpse);
+                target.inventory.splice(index, 1);
+            });
 
-                dungeon.entities.splice(index, 1);
-            }
+            const corpse: Corpse = {
+                x: x,
+                y: y,
+                char: '%',
+                color: target.color,
+                alpha: target.alpha,
+                id: target.id,
+                name: target.name + ' corpse',
+                level: target.level,
+                class: target.class,
+                stats: target.stats,
+                inventory: target.inventory,
+                factions: target.factions,
+                hostileFactions: target.hostileFactions,
+                hostileEntityIds: target.hostileEntityIds,
+                disposition: target.disposition,
+                index: '',
+                equipped: false,
+                originalChar: target.char
+            };
+            dungeon.items.push(corpse);
+
+            dungeon.entities.splice(index, 1);
         }
 
         return true;
@@ -220,26 +226,27 @@ function move(entity: Entity, x: number, y: number) {
             return false;
         }
 
-        const roll = Math.random();
-        if (roll > 0.5) {
-            addMessage(entity.name + ' opens the chest');
-
-            if (chest.loot) {
-                if (entity.inventory.length < 26) {
-                    addMessage(entity.name + ' loots a ' + chest.loot.name);
-
-                    entity.inventory.push(chest.loot);
-                } else {
-                    addMessage(entity.name + '\'s inventory is full');
-                }
-            } else {
-                addMessage(entity.name + ' sees nothing inside');
-            }
-
-            dungeon.chests.splice(index, 1);
-        } else {
+        if (Math.random() < 0.5) {
             addMessage(entity.name + ' can\'t open the chest');
+
+            return false;
         }
+
+        addMessage(entity.name + ' opens the chest');
+
+        if (chest.loot) {
+            if (entity.inventory.length < 26) {
+                addMessage(entity.name + ' loots a ' + chest.loot.name);
+
+                entity.inventory.push(chest.loot);
+            } else {
+                addMessage(entity.name + '\'s inventory is full');
+            }
+        } else {
+            addMessage(entity.name + ' sees nothing inside');
+        }
+
+        dungeon.chests.splice(index, 1);
 
         return true;
     })) {

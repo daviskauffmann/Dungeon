@@ -118,29 +118,34 @@
 									return;
 								}
 
-								if ('id' in item) {
-									const corpse = (<Corpse>item);
-									const newEntity: Entity = {
-										x: corpse.x,
-										y: corpse.y,
-										char: corpse.originalChar,
-										color: corpse.color,
-										alpha: corpse.alpha,
-										id: corpse.id,
-										name: corpse.name.replace(' corpse', ''),
-										level: entity.level,
-										class: corpse.class,
-										stats: corpse.stats,
-										inventory: corpse.inventory,
-										factions: corpse.factions,
-										hostileFactions: corpse.hostileFactions,
-										hostileEntityIds: corpse.hostileEntityIds,
-										disposition: corpse.disposition
-									}
-									dungeon.entities.push(newEntity);
-
-									dungeon.items.splice(index, 1);
+								if (!('originalChar' in item)) {
+									return;
 								}
+
+								const corpse = (<Corpse>item);
+								const newEntity: Entity = {
+									x: corpse.x,
+									y: corpse.y,
+									char: corpse.originalChar,
+									color: corpse.color,
+									alpha: corpse.alpha,
+									id: corpse.id,
+									name: corpse.name.replace(' corpse', ''),
+									level: entity.level,
+									class: corpse.class,
+									stats: corpse.stats,
+									inventory: corpse.inventory,
+									factions: corpse.factions,
+									hostileFactions: corpse.hostileFactions,
+									hostileEntityIds: corpse.hostileEntityIds,
+									disposition: corpse.disposition
+								}
+
+								addMessage(entity.name + ' ressurects ' + newEntity.name);
+
+								dungeon.entities.push(newEntity);
+
+								dungeon.items.splice(index, 1);
 							});
 						});
 					}

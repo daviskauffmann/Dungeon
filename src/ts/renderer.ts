@@ -121,11 +121,7 @@ function draw(ev: UIEvent, entity: Entity) {
                     ctx.fillText(entity.char, screenX, screenY);
 
                     return true;
-                })) {
-                    continue;
-                }
-
-                if (dungeon.chests.some(chest => {
+                }) || dungeon.chests.some(chest => {
                     if (chest.x !== x || chest.y !== y) {
                         return false;
                     }
@@ -135,11 +131,7 @@ function draw(ev: UIEvent, entity: Entity) {
                     ctx.fillText(chest.char, screenX, screenY);
 
                     return true;
-                })) {
-                    continue;
-                }
-
-                if (dungeon.items.some(item => {
+                }) || dungeon.items.some(item => {
                     if (item.x !== x || item.y !== y) {
                         return false;
                     }
