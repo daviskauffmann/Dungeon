@@ -95,7 +95,6 @@ interface Graphics {
 
 interface Item extends Coord, Glyph {
     name: string;
-    index: string;
     equipped: boolean;
 }
 

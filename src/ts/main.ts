@@ -39,7 +39,7 @@ const ui: UI = {
 
 game.dungeons.push(createTown());
 
-draw(undefined, getPlayer());
+draw(undefined, getEntity(0));
 
-window.addEventListener('resize', (ev) => draw(ev, getPlayer()));
-document.addEventListener('keydown', (ev) => input(ev, getPlayer()));
+window.addEventListener('resize', (ev) => draw(ev, getEntity(0)));
+document.addEventListener('keydown', (ev) => input(ev, getEntity(0)));

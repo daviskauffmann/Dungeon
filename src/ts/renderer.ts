@@ -1,5 +1,5 @@
 function draw(ev: UIEvent, entity: Entity) {
-    const dungeon = game.dungeons[entity.level];
+    const dungeon = getDungeon(entity);
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -164,14 +164,11 @@ function draw(ev: UIEvent, entity: Entity) {
     ctx.fillText('Level:' + (entity.level + 1) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
-        for (let i = 0; i < entity.inventory.length; i++) {
-            entity.inventory[i].index = String.fromCharCode(97 + i);
-        }
         ctx.fillStyle = '#000';
         ctx.fillRect(canvas.width - graphics.fontSize * 10, 0, graphics.fontSize * 10, entity.inventory.length * 26);
         ctx.fillStyle = '#fff';
         for (let i = 0; i < entity.inventory.length; i++) {
-            ctx.fillText(entity.inventory[i].index + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.fontSize * 10), (i + 1) * graphics.fontSize);
+            ctx.fillText(getInventoryIndex(entity, entity.inventory[i]) + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.fontSize * 10), (i + 1) * graphics.fontSize);
         }
     }
 

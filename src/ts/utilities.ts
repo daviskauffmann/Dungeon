@@ -19,3 +19,33 @@ function isInside(coord: Coord, rect: Rect) {
         Math.min(rect.y, rect.y + rect.height) <= coord.y &&
         coord.y < Math.max(rect.y, rect.y + rect.height);
 }
+
+function getDungeon(entity: Entity) {
+    return game.dungeons.find(dungeon => {
+        return dungeon.entities.some(current => {
+            return current === entity;
+        });
+    });
+}
+
+function getEntity(id: number) {
+    return game.dungeons.find(dungeon => {
+        return dungeon.entities.some(entity => {
+            return entity.id === id;
+        });
+    }).entities.find(entity => {
+        return entity.id === id;
+    });
+}
+
+function getInventoryIndex(entity: Entity, item: Item) {
+    return String.fromCharCode(97 + entity.inventory.indexOf(item));
+}
+
+function addMessage(message: string) {
+    game.messages.push(message);
+
+    if (game.messages.length > ui.maxMessages) {
+        game.messages.shift();
+    }
+}

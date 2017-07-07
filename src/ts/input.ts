@@ -1,5 +1,5 @@
 ﻿function input(ev: KeyboardEvent, entity: Entity) {
-	const dungeon = game.dungeons[entity.level];
+	const dungeon = getDungeon(entity);
 
 	switch (ui.mode) {
 		case 'target':
@@ -144,7 +144,6 @@
 									hostileEntityIds: corpse.hostileEntityIds,
 									disposition: corpse.disposition
 								});
-
 								dungeon.items.splice(index, 1);
 							});
 						});
@@ -215,7 +214,7 @@
 			break;
 		case 'inventory_drop':
 			entity.inventory.forEach(item => {
-				if (item.index !== ev.key) {
+				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 
@@ -240,7 +239,7 @@
 			break;
 		case 'inventory_equip':
 			entity.inventory.forEach(item => {
-				if (item.index !== ev.key) {
+				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 
@@ -261,7 +260,7 @@
 			break;
 		case 'inventory_unequip':
 			entity.inventory.forEach(item => {
-				if (item.index !== ev.key) {
+				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 
@@ -282,7 +281,7 @@
 			break;
 		case 'inventory_swapFirst':
 			entity.inventory.forEach(item => {
-				if (item.index !== ev.key) {
+				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 
@@ -304,7 +303,7 @@
 			break;
 		case 'inventory_swapSecond':
 			entity.inventory.forEach(item => {
-				if (item.index !== ev.key) {
+				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 

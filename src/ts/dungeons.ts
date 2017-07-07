@@ -107,7 +107,7 @@ function createDungeon(width: number,
         }
     }
 
-    for (let i = 0; i < roomAttempts && dungeon.rooms.length > 1; i++) {
+    for (let i = 0; i < roomAttempts; i++) {
         const roomX = getRandomInt(0, dungeon.width);
         const roomY = getRandomInt(0, dungeon.height);
         const roomWidth = getRandomInt(minRoomSize, maxRoomSize);
@@ -379,7 +379,6 @@ function createDungeon(width: number,
                         color: '#ffffff',
                         alpha: 1,
                         name: '',
-                        index: '',
                         equipped: false
                     }
                     const roll = Math.random();

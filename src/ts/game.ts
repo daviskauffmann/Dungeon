@@ -1,19 +1,3 @@
-function getPlayer() {
-    // return game.dungeons[game.dungeons.length - 1].entities[0];
-
-    for (let i = 0; i < game.dungeons.length; i++) {
-        for (let j = 0; j < game.dungeons[i].entities.length; j++) {
-            if (game.dungeons[i].entities[j].id !== 0) {
-                continue;
-            }
-
-            return game.dungeons[i].entities[j];
-        }
-    }
-
-    throw new Error('A player should always exist');
-}
-
 function tick() {
     if (game.stopTime) {
         return;
@@ -21,7 +5,7 @@ function tick() {
 
     game.dungeons.forEach(dungeon => {
         dungeon.entities.forEach(entity => {
-            if (entity === getPlayer()) {
+            if (entity.id === 0) {
                 return;
             }
 
@@ -109,7 +93,7 @@ function wander(entity: Entity) {
 }
 
 function move(entity: Entity, x: number, y: number) {
-    const dungeon = game.dungeons[entity.level];
+    const dungeon = getDungeon(entity);
 
     if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
         return;
@@ -186,39 +170,29 @@ function move(entity: Entity, x: number, y: number) {
 
             addMessage(entity.name + ' kills the ' + target.name);
 
-            target.inventory.forEach((item, index) => {
-                addMessage(target.name + ' drops a ' + item.name);
+            if (target.inventory.length) {
+                addMessage(target.name + ' drops a ' + target.inventory.map(item => item.name).join(', '));
 
-                dungeon.items.push({
-                    ...item,
-                    x: x,
-                    y: x
+                target.inventory.forEach((item, index) => {
+                    dungeon.items.push({
+                        ...item,
+                        x: target.x,
+                        y: target.y
+                    });
+                    target.inventory.splice(index, 1);
                 });
-
-                target.inventory.splice(index, 1);
-            });
+            }
 
             dungeon.items.push(<Corpse>{
+                ...target,
                 x: x,
                 y: y,
                 char: '%',
-                color: target.color,
-                alpha: target.alpha,
-                id: target.id,
                 name: target.name + ' corpse',
-                level: target.level,
-                class: target.class,
-                stats: target.stats,
-                inventory: target.inventory,
-                factions: target.factions,
-                hostileFactions: target.hostileFactions,
-                hostileEntityIds: target.hostileEntityIds,
-                disposition: target.disposition,
                 index: '',
                 equipped: false,
                 originalChar: target.char
             });
-
             dungeon.entities.splice(index, 1);
         }
 
@@ -231,33 +205,46 @@ function move(entity: Entity, x: number, y: number) {
         if (Math.random() < 0.5) {
             addMessage(entity.name + ' can\'t open the chest');
 
-            return false;
+            return true;
         }
 
         addMessage(entity.name + ' opens the chest');
 
-        if (chest.loot) {
-            if (entity.inventory.length < 26) {
-                addMessage(entity.name + ' loots a ' + chest.loot.name);
+        dungeon.chests.splice(index, 1);
 
-                entity.inventory.push(chest.loot);
-            } else {
-                addMessage(entity.name + '\'s inventory is full');
-            }
-        } else {
+        if (!chest.loot) {
             addMessage(entity.name + ' sees nothing inside');
+
+            return true;
         }
 
-        dungeon.chests.splice(index, 1);
+        if (entity.inventory.length >= 26) {
+            addMessage(entity.name + '\'s inventory is full');
+
+            return true;
+        }
+
+        addMessage(entity.name + ' loots a ' + chest.loot.name);
+
+        entity.inventory.push(chest.loot);
 
         return true;
     })) {
         return;
     }
 
-    const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
-    if (itemNames) {
-        addMessage(entity.name + ' sees a ' + itemNames);
+    const items = dungeon.items.filter(item => item.x === x && item.y === y);
+    if (items.length) {
+        if (entity.id === 0) {
+            addMessage(entity.name + ' sees a ' + items.map(item => item.name).join(', '));
+        } else {
+            addMessage(entity.name + ' picks up a ' + items.map(item => item.name).join(', '));
+
+            items.forEach((item, index) => {
+                entity.inventory.push(item);
+                dungeon.items.splice(index, 1);
+            });
+        }
     }
 
     entity.x = x;
@@ -281,12 +268,4 @@ function changeLevel(entity: Entity, level: number, calcSpawn: (newDungeon: Dung
     entity.y = spawn.y;
 
     addMessage(entity.name + ' has moved to level ' + entity.level);
-}
-
-function addMessage(message: string) {
-    game.messages.push(message);
-
-    if (game.messages.length > ui.maxMessages) {
-        game.messages.shift();
-    }
 }
