@@ -76,16 +76,16 @@ function createTown() {
 }
 
 function createDungeon(width: number,
-                       height: number,
-                       roomAttempts: number,
-                       minRoomSize: number,
-                       maxRoomSize: number,
-                       preventOverlap: boolean,
-                       litRooms: boolean,
-                       doorChance: number,
-                       trapAmount: number,
-                       monsterAmount: number,
-                       chestAmount: number) {
+    height: number,
+    roomAttempts: number,
+    minRoomSize: number,
+    maxRoomSize: number,
+    preventOverlap: boolean,
+    litRooms: boolean,
+    doorChance: number,
+    trapAmount: number,
+    monsterAmount: number,
+    chestAmount: number) {
     const dungeon: Dungeon = {
         width: width,
         height: height,
@@ -370,35 +370,35 @@ function createDungeon(width: number,
             color: '#ffffff',
             alpha: 1,
             loot: (() => {
-                const roll = Math.random();
-                if (roll < 0.5) {
-                    const item: Item = {
-                        x: -1,
-                        y: -1,
-                        char: '',
-                        color: '#ffffff',
-                        alpha: 1,
-                        name: '',
-                        equipped: false
-                    }
-                    const roll = Math.random();
-                    if (roll < 0.25) {
-                        item.name = 'sword';
-                        item.char = '|';
-                    } else if (roll < 0.50) {
-                        item.name = 'spear';
-                        item.char = '/';
-                    } else if (roll < 0.75) {
-                        item.name = 'shield';
-                        item.char = ')';
-                    } else {
-                        item.name = 'bow';
-                        item.char = '}';
-                    }
-                    return item;
-                } else {
+                if (Math.random() < 0.5) {
                     return undefined;
                 }
+
+                const item: Item = {
+                    x: -1,
+                    y: -1,
+                    char: '',
+                    color: '#ffffff',
+                    alpha: 1,
+                    name: '',
+                    equipped: false
+                }
+                const roll = Math.random();
+                if (roll < 0.25) {
+                    item.name = 'sword';
+                    item.char = '|';
+                } else if (roll < 0.50) {
+                    item.name = 'spear';
+                    item.char = '/';
+                } else if (roll < 0.75) {
+                    item.name = 'shield';
+                    item.char = ')';
+                } else {
+                    item.name = 'bow';
+                    item.char = '}';
+                }
+                
+                return item;
             })()
         };
 
