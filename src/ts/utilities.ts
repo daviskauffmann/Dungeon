@@ -22,10 +22,12 @@ function isInside(coord: Coord, rect: Rect) {
 
 function getDungeon(entity: Entity) {
     return game.dungeons.find(dungeon => {
-        return dungeon.entities.some(current => {
-            return current === entity;
-        });
+        return dungeon.entities.indexOf(entity) > -1;
     });
+}
+
+function getLevel(entity: Entity) {
+    return game.dungeons.indexOf(getDungeon(entity));
 }
 
 function getEntity(id: number) {

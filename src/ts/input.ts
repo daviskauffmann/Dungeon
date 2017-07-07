@@ -122,10 +122,9 @@
 									return;
 								}
 
-								const corpse = (<Corpse>item);
-								corpse.name = corpse.name.replace(' corpse', '');
+								const corpse = <Corpse>item;
 
-								addMessage(entity.name + ' ressurects ' + corpse.name);
+								addMessage(entity.name + ' ressurects ' + corpse.name.replace(' corpse', ''));
 
 								dungeon.entities.push({
 									x: corpse.x,
@@ -134,8 +133,7 @@
 									color: corpse.color,
 									alpha: corpse.alpha,
 									id: corpse.id,
-									name: corpse.name,
-									level: entity.level,
+									name: corpse.name.replace(' corpse', ''),
 									class: corpse.class,
 									stats: corpse.stats,
 									inventory: corpse.inventory,
@@ -213,7 +211,7 @@
 
 			break;
 		case 'inventory_drop':
-			entity.inventory.forEach(item => {
+			entity.inventory.forEach((item, index) => {
 				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
@@ -223,8 +221,8 @@
 				item.x = entity.x;
 				item.y = entity.y;
 
-				game.dungeons[entity.level].items.push(item);
-				entity.inventory.splice(entity.inventory.indexOf(item), 1);
+				dungeon.items.push(item);
+				entity.inventory.splice(index, 1);
 
 				ui.mode = '';
 			});
@@ -280,12 +278,12 @@
 
 			break;
 		case 'inventory_swapFirst':
-			entity.inventory.forEach(item => {
+			entity.inventory.forEach((item, index) => {
 				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 
-				ui.inventorySwapFirst = entity.inventory.indexOf(item);
+				ui.inventorySwapFirst = index;
 
 				addMessage('select second item to swap');
 				addMessage('press space to cancel');
@@ -302,12 +300,12 @@
 
 			break;
 		case 'inventory_swapSecond':
-			entity.inventory.forEach(item => {
+			entity.inventory.forEach((item, index) => {
 				if (getInventoryIndex(entity, item) !== ev.key) {
 					return;
 				}
 
-				ui.inventorySwapSecond = entity.inventory.indexOf(item);
+				ui.inventorySwapSecond = index;
 
 				addMessage(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
 

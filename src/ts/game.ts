@@ -9,19 +9,84 @@ function tick() {
                 return;
             }
 
-            let targets: Array<Entity> = [];
+            switch (entity.class) {
+                case Class.Warrior:
+                    break;
+                case Class.Shaman:
+                    if (Math.random() < 0.5) {
+                        break;
+                    }
+
+                    const corpses: Array<Corpse> = [];
+
+                    for (let dir = 0; dir < 360; dir++) {
+                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+                            CellType.Wall,
+                            CellType.DoorClosed
+                        ], (x, y) => {
+                            dungeon.items.forEach((item, index) => {
+                                if (item.x !== x || item.y !== y) {
+                                    return;
+                                }
+
+                                if (!('originalChar' in item)) {
+                                    return;
+                                }
+
+                                const corpse = <Corpse>item;
+
+                                if (corpse.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
+                                    return;
+                                }
+
+                                if (corpses.indexOf(corpse) > -1) {
+                                    return;
+                                }
+
+                                corpses.push(corpse);
+                            });
+                        });
+                    }
+
+                    if (corpses.length) {
+                        const corpse = corpses[0];
+
+                        addMessage(entity.name + ' ressurects ' + corpse.name.replace(' corpse', ''));
+
+                        dungeon.entities.push({
+                            x: corpse.x,
+                            y: corpse.y,
+                            char: corpse.originalChar,
+                            color: corpse.color,
+                            alpha: corpse.alpha,
+                            id: corpse.id,
+                            name: corpse.name.replace(' corpse', ''),
+                            class: corpse.class,
+                            stats: corpse.stats,
+                            inventory: corpse.inventory,
+                            factions: corpse.factions,
+                            hostileFactions: corpse.hostileFactions,
+                            hostileEntityIds: corpse.hostileEntityIds,
+                            disposition: corpse.disposition
+                        });
+                        dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
+
+                        return;
+                    }
+            }
+
             switch (entity.disposition) {
                 case Disposition.Passive:
-                    wander(entity);
-
                     break;
                 case Disposition.Aggressive:
+                    const targets: Array<Entity> = [];
+
                     for (let dir = 0; dir < 360; dir += 10) {
                         raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
                             CellType.Wall,
                             CellType.DoorClosed
                         ], (x, y) => {
-                            if (dungeon.entities.some(target => {
+                            dungeon.entities.forEach(target => {
                                 if (target === entity) {
                                     return false;
                                 }
@@ -30,7 +95,7 @@ function tick() {
                                     return false;
                                 }
 
-                                if (!target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
+                                if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
                                     return false;
                                 }
 
@@ -39,15 +104,11 @@ function tick() {
                                 }
 
                                 targets.push(target);
-
-                                return true;
-                            })) {
-                                return true;
-                            }
+                            });
                         });
                     }
 
-                    if (targets.length > 0) {
+                    if (targets.length) {
                         const target = targets[0];
 
                         addMessage(`${entity.name} spots a ${target.name}`);
@@ -62,34 +123,28 @@ function tick() {
 
                         move(entity, next.x, next.y);
 
-                        break;
+                        return;
                     }
-
-                    wander(entity);
 
                     break;
                 case Disposition.Cowardly:
-                    wander(entity);
-
                     break;
+            }
+
+            const roll = Math.random();
+            if (roll < 0.25) {
+                move(entity, entity.x, entity.y - 1);
+            } else if (roll < 0.5) {
+                move(entity, entity.x + 1, entity.y);
+            } else if (roll < 0.75) {
+                move(entity, entity.x, entity.y + 1);
+            } else {
+                move(entity, entity.x - 1, entity.y);
             }
         });
     });
 
     game.turn++;
-}
-
-function wander(entity: Entity) {
-    const roll = Math.random();
-    if (roll < 0.25) {
-        move(entity, entity.x, entity.y - 1);
-    } else if (roll < 0.5) {
-        move(entity, entity.x + 1, entity.y);
-    } else if (roll < 0.75) {
-        move(entity, entity.x, entity.y + 1);
-    } else {
-        move(entity, entity.x - 1, entity.y);
-    }
 }
 
 function move(entity: Entity, x: number, y: number) {
@@ -115,7 +170,7 @@ function move(entity: Entity, x: number, y: number) {
         case CellType.StairsUp:
             addMessage(entity.name + ' ascends');
 
-            changeLevel(entity, entity.level - 1, (newDungeon) => {
+            changeLevel(entity, getLevel(entity) - 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
                     for (let y = 0; y < newDungeon.height; y++) {
                         if (newDungeon.cells[x][y].type !== CellType.StairsDown) {
@@ -131,7 +186,7 @@ function move(entity: Entity, x: number, y: number) {
         case CellType.StairsDown:
             addMessage(entity.name + ' descends');
 
-            changeLevel(entity, entity.level + 1, (newDungeon) => {
+            changeLevel(entity, getLevel(entity) + 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
                     for (let y = 0; y < newDungeon.height; y++) {
                         if (newDungeon.cells[x][y].type !== CellType.StairsUp) {
@@ -155,45 +210,47 @@ function move(entity: Entity, x: number, y: number) {
             return false;
         }
 
-        if (target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
-            if (Math.random() < 0.5) {
-                addMessage(entity.name + ' misses the ' + target.name);
+        if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
+            return true;
+        }
+        
+        if (Math.random() < 0.5) {
+            addMessage(entity.name + ' misses the ' + target.name);
 
-                return true;
-            }
+            return true;
+        }
 
-            if (target.id === 0 && game.godMode) {
-                addMessage(entity.name + ' cannot kill the ' + target.name);
+        if (target.id === 0 && game.godMode) {
+            addMessage(entity.name + ' cannot kill the ' + target.name);
 
-                return true;
-            }
+            return true;
+        }
 
-            addMessage(entity.name + ' kills the ' + target.name);
+        addMessage(entity.name + ' kills the ' + target.name);
 
-            if (target.inventory.length) {
-                addMessage(target.name + ' drops a ' + target.inventory.map(item => item.name).join(', '));
+        dungeon.items.push(<Corpse>{
+            ...target,
+            x: x,
+            y: y,
+            char: '%',
+            name: target.name + ' corpse',
+            equipped: false,
+            originalChar: target.char
+        });
+        dungeon.entities.splice(index, 1);
 
-                target.inventory.forEach((item, index) => {
-                    dungeon.items.push({
-                        ...item,
-                        x: target.x,
-                        y: target.y
-                    });
-                    target.inventory.splice(index, 1);
+        if (target.inventory.length) {
+            addMessage(target.name + ' drops a ' + target.inventory.map(item => item.name).join(', '));
+
+            target.inventory.forEach((item, index) => {
+                dungeon.items.push({
+                    ...item,
+                    x: target.x,
+                    y: target.y,
+                    equipped: false
                 });
-            }
-
-            dungeon.items.push(<Corpse>{
-                ...target,
-                x: x,
-                y: y,
-                char: '%',
-                name: target.name + ' corpse',
-                index: '',
-                equipped: false,
-                originalChar: target.char
+                target.inventory.splice(index, 1);
             });
-            dungeon.entities.splice(index, 1);
         }
 
         return true;
@@ -256,16 +313,15 @@ function changeLevel(entity: Entity, level: number, calcSpawn: (newDungeon: Dung
         game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
     }
 
-    const dungeon = game.dungeons[entity.level];
+    const dungeon = getDungeon(entity);
     const newDungeon = game.dungeons[level];
 
-    dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
-    entity.level = level;
     newDungeon.entities.push(entity);
+    dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
 
     const spawn = calcSpawn(newDungeon);
     entity.x = spawn.x;
     entity.y = spawn.y;
 
-    addMessage(entity.name + ' has moved to level ' + entity.level);
+    addMessage(entity.name + ' has moved to level ' + getLevel(entity));
 }

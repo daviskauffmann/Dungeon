@@ -161,7 +161,7 @@ function draw(ev: UIEvent, entity: Entity) {
 
     ctx.fillStyle = '#ffffff';
 
-    ctx.fillText('Level:' + (entity.level + 1) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
+    ctx.fillText('Level:' + getLevel(entity) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
         ctx.fillStyle = '#000';

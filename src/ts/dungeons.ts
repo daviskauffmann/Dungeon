@@ -39,7 +39,6 @@ function createTown() {
         alpha: 1,
         id: game.currentId++,
         name: 'player',
-        level: 0,
         class: Class.Warrior,
         stats: {
             level: 1,
@@ -275,7 +274,6 @@ function createDungeon(width: number,
             alpha: 1,
             id: game.currentId++,
             name: '',
-            level: game.dungeons.length,
             class: Class.Warrior,
             stats: {
                 level: 1,

@@ -55,7 +55,6 @@ enum Disposition {
 interface Entity extends Coord, Glyph {
     id: number;
     name: string;
-    level: number;
     class: Class;
     stats: Stats;
     inventory: Array<Item>;
