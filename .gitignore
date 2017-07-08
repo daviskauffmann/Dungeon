@@ -5,15 +5,8 @@
 npm-debug.log
 /node_modules
 
-# Cordova
-/platforms
-/plugins
-
-# res
-resources/signing
-
 # Bower
 /bower_components
 
 # Build
-/www
+/dist
