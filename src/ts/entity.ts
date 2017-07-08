@@ -63,12 +63,6 @@ function think(entity: Entity) {
             if (corpses.length) {
                 const corpse = corpses[0];
 
-                if (Math.random() < 0.5) {
-                    log(entity.name + ' fails to ressurect ' + corpse.name.replace(' corpse', ''));
-
-                    return;
-                }
-
                 const newEntity: Entity = {
                     x: corpse.x,
                     y: corpse.y,
@@ -86,7 +80,13 @@ function think(entity: Entity) {
                     disposition: corpse.disposition
                 };
 
-                log(entity.name + ' ressurects ' + newEntity.name);
+                if (Math.random() < 0.5) {
+                    log(`${entity.name} fails to ressurect ${newEntity.name}`);
+
+                    return;
+                }
+
+                log(`${entity.name} ressurects ${newEntity.name}`);
 
                 dungeon.entities.push(newEntity);
                 dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
@@ -177,18 +177,18 @@ function move(entity: Entity, x: number, y: number) {
             return;
         case CellType.DoorClosed:
             if (Math.random() < 0.5) {
-                log(entity.name + ' can\'t open the door');
+                log(`${entity.name} can't open the door`);
 
                 return;
             }
 
-            log(entity.name + ' opens the door');
+            log(`${entity.name} opens the door`);
 
             dungeon.cells[x][y].type = CellType.DoorOpen;
 
             return;
         case CellType.StairsUp:
-            log(entity.name + ' ascends');
+            log(`${entity.name} ascends`);
 
             changeLevel(entity, getLevel(entity) - 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
@@ -204,7 +204,7 @@ function move(entity: Entity, x: number, y: number) {
 
             return;
         case CellType.StairsDown:
-            log(entity.name + ' descends');
+            log(`${entity.name} descends`);
 
             changeLevel(entity, getLevel(entity) + 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
@@ -235,21 +235,21 @@ function move(entity: Entity, x: number, y: number) {
         }
 
         if (Math.random() < 0.5) {
-            log(entity.name + ' misses the ' + target.name);
+            log(`${entity.name} misses the ${target.name}`);
 
             return true;
         }
 
         if (target.id === 0 && game.godMode) {
-            log(entity.name + ' cannot kill the ' + target.name);
+            log(`${entity.name} cannot kill the ${target.name}`);
 
             return true;
         }
 
-        log(entity.name + ' kills the ' + target.name);
+        log(`${entity.name} kills the ${target.name}`);
 
         if (target.inventory.length) {
-            log(target.name + ' drops a ' + target.inventory.map(item => item.name).join(', '));
+            log(`${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
 
             target.inventory.forEach((item, index) => {
                 item.x = target.x;
@@ -290,28 +290,28 @@ function move(entity: Entity, x: number, y: number) {
         }
 
         if (Math.random() < 0.5) {
-            log(entity.name + ' can\'t open the chest');
+            log(`${entity.name} can't open the chest`);
 
             return true;
         }
 
-        log(entity.name + ' opens the chest');
+        log(`${entity.name} opens the chest`);
 
         dungeon.chests.splice(index, 1);
 
         if (!chest.loot) {
-            log(entity.name + ' sees nothing inside');
+            log(`${entity.name} sees nothing inside`);
 
             return true;
         }
 
         if (entity.inventory.length >= 26) {
-            log(entity.name + '\'s inventory is full');
+            log(`${entity.name}'s inventory is full`);
 
             return true;
         }
 
-        log(entity.name + ' loots a ' + chest.loot.name);
+        log(`${entity.name} loots a ${chest.loot.name}`);
 
         entity.inventory.push(chest.loot);
 
@@ -362,5 +362,5 @@ function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon:
     entity.x = spawn.x;
     entity.y = spawn.y;
 
-    log(entity.name + ' has moved to level ' + getLevel(entity));
+    log(`${entity.name} has moved to level ${getLevel(entity)}`);
 }

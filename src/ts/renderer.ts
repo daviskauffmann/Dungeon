@@ -131,7 +131,9 @@ function draw(ev: UIEvent, entity: Entity) {
                     ctx.fillText(chest.char, screenX, screenY);
 
                     return true;
-                }) || dungeon.items.some(item => {
+                }) || dungeon.items.sort((a, b) => {
+                    return 0;
+                }).some(item => {
                     if (item.x !== x || item.y !== y) {
                         return false;
                     }

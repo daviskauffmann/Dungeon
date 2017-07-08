@@ -69,7 +69,7 @@
 							return;
 						}
 
-						log(entity.name + ' picks up a ' + item.name);
+						log(`${entity.name} picks up a ${item.name}`);
 
 						entity.inventory.push(item);
 						dungeon.items.splice(index, 1);
@@ -101,9 +101,9 @@
 						});
 					}
 					if (targets.length > 0) {
-						log(entity.name + ' spots a ' + targets.map(target => target.name).join(', '));
+						log(`${entity.name} spots a ${targets.map(target => target.name).join(', ')}`);
 					} else {
-						log(entity.name + ' doesn\'t see anything');
+						log(`${entity.name} doesn't see anything`);
 					}
 
 					break;
@@ -141,7 +141,7 @@
 									disposition: corpse.disposition
 								};
 
-								log(entity.name + ' ressurects ' + newEntity.name);
+								log(`${entity.name} ressurects ${newEntity.name}`);
 
 								dungeon.entities.push(newEntity);
 								dungeon.items.splice(index, 1);
@@ -152,7 +152,7 @@
 					break;
 				case 'c':
 					if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
-						log(entity.name + ' closes the door');
+						log(`${entity.name} closes the door'`);
 
 						dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
 					}
@@ -218,7 +218,7 @@
 					return;
 				}
 
-				log(entity.name + ' drops a ' + item.name);
+				log(`${entity.name} drops a ${item.name}`);
 
 				item.x = entity.x;
 				item.y = entity.y;
@@ -243,7 +243,7 @@
 					return;
 				}
 
-				log(entity.name + ' equips a ' + item.name);
+				log(`${entity.name} equips a ${item.name}`);
 
 				item.equipped = true;
 
@@ -264,7 +264,7 @@
 					return;
 				}
 
-				log(entity.name + ' unequips a ' + item.name);
+				log(`${entity.name} unequips a ${item.name}`);
 
 				item.equipped = false;
 
@@ -309,7 +309,7 @@
 
 				ui.inventorySwapSecond = index;
 
-				log(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
+				log(`${entity.name} swaps the ${entity.inventory[ui.inventorySwapFirst].name} with the ${entity.inventory[ui.inventorySwapSecond].name}`);
 
 				const t = entity.inventory[ui.inventorySwapFirst];
 				entity.inventory[ui.inventorySwapFirst] = entity.inventory[ui.inventorySwapSecond];
