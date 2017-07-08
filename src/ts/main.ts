@@ -37,7 +37,7 @@ const graphics: Graphics = {
 
 game.dungeons.push(createTown());
 
-draw(undefined, getEntity(0));
-
 window.addEventListener('resize', (ev) => draw(ev, getEntity(0)));
 document.addEventListener('keydown', (ev) => input(ev, getEntity(0)));
+
+draw(undefined, getEntity(0));
