@@ -49,7 +49,11 @@ function spherecast(dungeon: Dungeon,
     for (let dir = 0; dir < 360; dir += accuracy) {
         const cell = raycast(dungeon, origin, r, dir, blockedBy, action);
 
-        if (!cell || cells.indexOf(cell) > -1) {
+        if (!cell) {
+            continue;
+        }
+
+        if (cells.indexOf(cell) > -1) {
             continue;
         }
 

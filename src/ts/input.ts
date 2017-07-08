@@ -75,6 +75,8 @@
 						dungeon.items.splice(index, 1);
 					});
 
+					tick();
+
 					break;
 				case 's':
 					const targets: Array<Entity> = [];
@@ -105,6 +107,8 @@
 					} else {
 						log(`${entity.name} doesn't see anything`);
 					}
+
+					tick();
 
 					break;
 				case 'r':
@@ -149,6 +153,8 @@
 						});
 					}
 
+					tick();
+
 					break;
 				case 'c':
 					if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
@@ -156,6 +162,8 @@
 
 						dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
 					}
+
+					tick();
 
 					break;
 				case 'i':

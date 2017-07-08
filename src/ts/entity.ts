@@ -25,10 +25,39 @@ function getInventoryChar(entity: Entity, item: Item) {
 function think(entity: Entity) {
     const dungeon = getDungeon(entity);
 
+    const itemNames: Array<string> = [];
+    dungeon.items.forEach((item, index) => {
+        if (item.x !== entity.x || item.y !== entity.y) {
+            return;
+        }
+
+        if (Math.random() < 0.5) {
+            return;
+        }
+
+        itemNames.push(item.name);
+
+        if (entity.id === 0) {
+            return;
+        }
+
+        entity.inventory.push(item);
+        dungeon.items.splice(index, 1);
+    });
+    if (itemNames.length) {
+        log(`${entity.name} picks up ${itemNames.join(', ')}`);
+
+        return;
+    }
+
     switch (entity.class) {
         case Class.Warrior:
             break;
         case Class.Shaman:
+            if (Math.random() < 0.5) {
+                break;
+            }
+
             const corpses: Array<Corpse> = [];
 
             for (let dir = 0; dir < 360; dir++) {
@@ -129,7 +158,7 @@ function think(entity: Entity) {
                     });
                 });
             }
-
+            
             if (targets.length) {
                 const target = targets[0];
 
@@ -151,6 +180,25 @@ function think(entity: Entity) {
             break;
         case Disposition.Cowardly:
             break;
+    }
+
+    if (entity.inventory.some((item, index) => {
+        if (!item.name.includes('corpse')) {
+            return false;
+        }
+
+        if (Math.random() < 0.5) {
+            return false;
+        }
+
+        log(`${entity.name} drops a ${item.name}`);
+
+        dungeon.items.push(item);
+        entity.inventory.splice(index, 1);
+
+        return true;
+    })) {
+        return;
     }
 
     const roll = Math.random();
@@ -320,27 +368,9 @@ function move(entity: Entity, x: number, y: number) {
         return;
     }
 
-    const itemNames: Array<string> = [];
-    dungeon.items.forEach((item, index) => {
-        if (item.x !== x || item.y !== y) {
-            return;
-        }
-
-        itemNames.push(item.name);
-
-        if (entity.id === 0) {
-            return;
-        }
-
-        entity.inventory.push(item);
-        dungeon.items.splice(index, 1);
-    });
-    if (itemNames.length) {
-        if (entity.id === 0) {
-            log(`${entity.name} sees ${itemNames.join(', ')}`);
-        } else {
-            log(`${entity.name} picks up ${itemNames.join(', ')}`);
-        }
+    const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
+    if (itemNames) {
+        log(`${entity.name} sees ${itemNames}`);
     }
 
     entity.x = x;

@@ -75,16 +75,16 @@ function createTown() {
 }
 
 function createDungeon(width: number,
-    height: number,
-    roomAttempts: number,
-    minRoomSize: number,
-    maxRoomSize: number,
-    preventOverlap: boolean,
-    litRooms: boolean,
-    doorChance: number,
-    trapAmount: number,
-    monsterAmount: number,
-    chestAmount: number) {
+                       height: number,
+                       roomAttempts: number,
+                       minRoomSize: number,
+                       maxRoomSize: number,
+                       preventOverlap: boolean,
+                       litRooms: boolean,
+                       doorChance: number,
+                       trapAmount: number,
+                       monsterAmount: number,
+                       chestAmount: number) {
     const dungeon: Dungeon = {
         width: width,
         height: height,

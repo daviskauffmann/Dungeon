@@ -48,13 +48,13 @@ function draw(ev: UIEvent, entity: Entity) {
             CellType.Wall,
             CellType.DoorClosed
         ], (x, y) => {
+            dungeon.cells[x][y].discovered = true;
+            
             if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
                 return;
             }
 
             cellVisibility.push(dungeon.cells[x][y]);
-
-            dungeon.cells[x][y].discovered = true;
         });
     }
     if (dungeon.litRooms) {
