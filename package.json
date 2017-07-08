@@ -2,14 +2,12 @@
   "name": "dungeon",
   "version": "1.0.0",
   "description": "",
-  "main": "gulpfile.js",
-  "dependencies": {
-    "cordova-browser": "^4.1.0",
-    "cordova-plugin-whitelist": "1"
-  },
+  "main": "",
+  "dependencies": {},
   "devDependencies": {
-    "gulp": "^3.9.1",
+    "cordova-browser": "^4.1.0",
     "gulp-babili": "^0.1.4",
+    "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
     "gulp-concat": "^2.6.1",
     "gulp-inject": "^4.2.0",
@@ -25,20 +23,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/daviskauffmann/Dungeon.git"
+    "url": "git+https://github.com/daviskauffmann/dungeon.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/daviskauffmann/Dungeon/issues"
+    "url": "https://github.com/daviskauffmann/dungeon/issues"
   },
-  "homepage": "https://github.com/daviskauffmann/Dungeon#readme",
-  "cordova": {
-    "plugins": {
-      "cordova-plugin-whitelist": {}
-    },
-    "platforms": [
-      "browser"
-    ]
-  }
+  "homepage": "https://github.com/daviskauffmann/dungeon#readme"
 }

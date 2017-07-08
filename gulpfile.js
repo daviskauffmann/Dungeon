@@ -18,7 +18,7 @@ gulp.task('build', callback => {
 });
 
 gulp.task('clean', () => {
-    return gulp.src('./www')
+    return gulp.src('./dist')
         .pipe(clean());
 });
 
@@ -35,20 +35,20 @@ gulp.task('typescript', () => {
         .pipe(concat('main.js'))
         .pipe(babili())
         .pipe(sourcemaps.write())
-        .pipe(gulp.dest('./www/js'));
+        .pipe(gulp.dest('./dist/js'));
 });
 
 gulp.task('sass', () => {
     return gulp.src('./src/sass/**/*.scss')
         .pipe(sass())
-        .pipe(gulp.dest('./www/css'));
+        .pipe(gulp.dest('./dist/css'));
 });
 
 gulp.task('inject', () => {
     return gulp.src('./src/index.html')
         .pipe(inject(gulp.src([
-            './www/js/**/*.js',
-            './www/css/**/*.css'
-        ]), { relative: true, ignorePath: '../www/' }))
-        .pipe(gulp.dest('./www'));
+            './dist/js/**/*.js',
+            './dist/css/**/*.css'
+        ]), { ignorePath: '/dist' }))
+        .pipe(gulp.dest('./dist'));
 });
