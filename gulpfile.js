@@ -22,11 +22,11 @@ gulp.task('clean', () => {
         .pipe(clean());
 });
 
-// gulp.task('tslint', () => {
-//     return gulp.src('./src/ts/**/*.ts')
-//         .pipe(tslint())
-//         .pipe(tslint.report());
-// });
+gulp.task('tslint', () => {
+    return gulp.src('./src/ts/**/*.ts')
+        //.pipe(tslint())
+        //.pipe(tslint.report());
+});
 
 gulp.task('typescript', () => {
     return gulp.src('./src/ts/**/*.ts')

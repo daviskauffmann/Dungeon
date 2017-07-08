@@ -59,7 +59,6 @@ function think(entity: Entity) {
             }
 
             const corpses: Array<Corpse> = [];
-
             for (let dir = 0; dir < 360; dir++) {
                 raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
                     CellType.Wall,
@@ -88,7 +87,6 @@ function think(entity: Entity) {
                     });
                 });
             }
-
             if (corpses.length) {
                 const corpse = corpses[0];
 
@@ -131,7 +129,6 @@ function think(entity: Entity) {
             break;
         case Disposition.Aggressive:
             const targets: Array<Entity> = [];
-
             for (let dir = 0; dir < 360; dir += 10) {
                 raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
                     CellType.Wall,
@@ -158,7 +155,6 @@ function think(entity: Entity) {
                     });
                 });
             }
-            
             if (targets.length) {
                 const target = targets[0];
 
@@ -300,35 +296,25 @@ function move(entity: Entity, x: number, y: number) {
             log(`${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
 
             target.inventory.forEach((item, index) => {
-                item.x = target.x;
-                item.y = target.y;
-                item.equipped = false;
-
-                dungeon.items.push(item);
+                dungeon.items.push({
+                    ...item,
+                    x: target.x,
+                    y: target.y,
+                    equipped: false
+                });
                 target.inventory.splice(index, 1);
             });
         }
 
-        const corpse: Corpse = {
+        dungeon.items.push(<Corpse>{
+            ...target,
             x: x,
             y: y,
             char: '%',
-            color: target.color,
-            alpha: target.alpha,
-            id: target.id,
             name: target.name + ' corpse',
-            class: target.class,
-            stats: target.stats,
-            inventory: target.inventory,
-            factions: target.factions,
-            hostileFactions: target.hostileFactions,
-            hostileEntityIds: target.hostileEntityIds,
-            disposition: target.disposition,
             equipped: false,
             originalChar: target.char
-        };
-
-        dungeon.items.push(corpse);
+        });
         dungeon.entities.splice(index, 1);
 
         return true;

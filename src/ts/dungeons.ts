@@ -360,8 +360,8 @@ function createDungeon(width: number,
 
         const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
         const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
-
-        const chest: Chest = {
+        
+        dungeon.chests.push({
             x: x,
             y: y,
             char: '~',
@@ -398,9 +398,7 @@ function createDungeon(width: number,
                 
                 return item;
             })()
-        };
-
-        dungeon.chests.push(chest);
+        });
     }
 
     return dungeon;
