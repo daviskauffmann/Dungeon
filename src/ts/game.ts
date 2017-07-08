@@ -17,9 +17,9 @@ function tick() {
 }
 
 function log(message: string) {
-    game.messages.push(message);
+    ui.messages.push(message);
 
-    if (game.messages.length > ui.maxMessages) {
-        game.messages.shift();
+    if (ui.messages.length > ui.maxMessages) {
+        ui.messages.shift();
     }
 }

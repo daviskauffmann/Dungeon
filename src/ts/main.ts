@@ -2,7 +2,6 @@ let game: Game = {
     currentId: 0,
     dungeons: [],
     turn: 0,
-    messages: [],
     godMode: true,
     stopTime: false,
     ignoreFov: false
@@ -28,6 +27,7 @@ const graphics: Graphics = {
 
 const ui: UI = {
     mode: '',
+    messages: [],
     maxMessages: 10,
     inventorySwapFirst: -1,
     inventorySwapSecond: -1,

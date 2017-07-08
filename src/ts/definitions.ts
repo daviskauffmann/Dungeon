@@ -75,7 +75,6 @@ interface Game {
     currentId: number;
     dungeons: Array<Dungeon>;
     turn: number;
-    messages: Array<string>;
     godMode: boolean;
     stopTime: boolean;
     ignoreFov: boolean;
@@ -122,6 +121,7 @@ interface Stats {
 
 interface UI {
     mode: string;
+    messages: Array<string>;
     maxMessages: number;
     inventorySwapFirst: number;
     inventorySwapSecond: number;

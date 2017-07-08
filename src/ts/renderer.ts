@@ -155,10 +155,10 @@ function draw(ev: UIEvent, entity: Entity) {
         }
     }
 
-    for (let i = 0; i < game.messages.length; i++) {
+    for (let i = 0; i < ui.messages.length; i++) {
         ctx.fillStyle = '#ffffff';
         ctx.globalAlpha = 1;
-        ctx.fillText(game.messages[i], 0, graphics.fontSize * (i + 1));
+        ctx.fillText(ui.messages[i], 0, graphics.fontSize * (i + 1));
     }
 
     ctx.fillStyle = '#ffffff';
