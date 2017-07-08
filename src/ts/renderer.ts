@@ -168,7 +168,7 @@ function draw(ev: UIEvent, entity: Entity) {
         ctx.fillRect(canvas.width - graphics.fontSize * 10, 0, graphics.fontSize * 10, entity.inventory.length * 26);
         ctx.fillStyle = '#fff';
         for (let i = 0; i < entity.inventory.length; i++) {
-            ctx.fillText(getInventoryIndex(entity, entity.inventory[i]) + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.fontSize * 10), (i + 1) * graphics.fontSize);
+            ctx.fillText(getInventoryChar(entity, entity.inventory[i]) + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.fontSize * 10), (i + 1) * graphics.fontSize);
         }
     }
 

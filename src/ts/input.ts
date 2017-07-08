@@ -69,7 +69,7 @@
 							return;
 						}
 
-						addMessage(entity.name + ' picks up a ' + item.name);
+						log(entity.name + ' picks up a ' + item.name);
 
 						entity.inventory.push(item);
 						dungeon.items.splice(index, 1);
@@ -101,9 +101,9 @@
 						});
 					}
 					if (targets.length > 0) {
-						addMessage(entity.name + ' spots a ' + targets.map(target => target.name).join(', '));
+						log(entity.name + ' spots a ' + targets.map(target => target.name).join(', '));
 					} else {
-						addMessage(entity.name + ' doesn\'t see anything');
+						log(entity.name + ' doesn\'t see anything');
 					}
 
 					break;
@@ -124,9 +124,7 @@
 
 								const corpse = <Corpse>item;
 
-								addMessage(entity.name + ' ressurects ' + corpse.name.replace(' corpse', ''));
-
-								dungeon.entities.push({
+								const newEntity: Entity = {
 									x: corpse.x,
 									y: corpse.y,
 									char: corpse.originalChar,
@@ -141,7 +139,11 @@
 									hostileFactions: corpse.hostileFactions,
 									hostileEntityIds: corpse.hostileEntityIds,
 									disposition: corpse.disposition
-								});
+								};
+
+								log(entity.name + ' ressurects ' + newEntity.name);
+
+								dungeon.entities.push(newEntity);
 								dungeon.items.splice(index, 1);
 							});
 						});
@@ -150,7 +152,7 @@
 					break;
 				case 'c':
 					if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
-						addMessage(entity.name + ' closes the door');
+						log(entity.name + ' closes the door');
 
 						dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
 					}
@@ -180,29 +182,29 @@
 
 					break;
 				case 'd':
-					addMessage('select item to drop');
-					addMessage('press space to cancel');
+					log('select item to drop');
+					log('press space to cancel');
 
 					ui.mode = 'inventory_drop';
 
 					break;
 				case 'e':
-					addMessage('select item to equip');
-					addMessage('press space to cancel');
+					log('select item to equip');
+					log('press space to cancel');
 
 					ui.mode = 'inventory_equip';
 
 					break;
 				case 'u':
-					addMessage('select item to unequip');
-					addMessage('press space to cancel');
+					log('select item to unequip');
+					log('press space to cancel');
 
 					ui.mode = 'inventory_unequip';
 
 					break;
 				case 's':
-					addMessage('select first item to swap');
-					addMessage('press space to cancel');
+					log('select first item to swap');
+					log('press space to cancel');
 
 					ui.mode = 'inventory_swapFirst';
 
@@ -212,11 +214,11 @@
 			break;
 		case 'inventory_drop':
 			entity.inventory.forEach((item, index) => {
-				if (getInventoryIndex(entity, item) !== ev.key) {
+				if (getInventoryChar(entity, item) !== ev.key) {
 					return;
 				}
 
-				addMessage(entity.name + ' drops a ' + item.name);
+				log(entity.name + ' drops a ' + item.name);
 
 				item.x = entity.x;
 				item.y = entity.y;
@@ -237,11 +239,11 @@
 			break;
 		case 'inventory_equip':
 			entity.inventory.forEach(item => {
-				if (getInventoryIndex(entity, item) !== ev.key) {
+				if (getInventoryChar(entity, item) !== ev.key) {
 					return;
 				}
 
-				addMessage(entity.name + ' equips a ' + item.name);
+				log(entity.name + ' equips a ' + item.name);
 
 				item.equipped = true;
 
@@ -258,11 +260,11 @@
 			break;
 		case 'inventory_unequip':
 			entity.inventory.forEach(item => {
-				if (getInventoryIndex(entity, item) !== ev.key) {
+				if (getInventoryChar(entity, item) !== ev.key) {
 					return;
 				}
 
-				addMessage(entity.name + ' unequips a ' + item.name);
+				log(entity.name + ' unequips a ' + item.name);
 
 				item.equipped = false;
 
@@ -279,14 +281,14 @@
 			break;
 		case 'inventory_swapFirst':
 			entity.inventory.forEach((item, index) => {
-				if (getInventoryIndex(entity, item) !== ev.key) {
+				if (getInventoryChar(entity, item) !== ev.key) {
 					return;
 				}
 
 				ui.inventorySwapFirst = index;
 
-				addMessage('select second item to swap');
-				addMessage('press space to cancel');
+				log('select second item to swap');
+				log('press space to cancel');
 
 				ui.mode = 'inventory_swapSecond';
 			});
@@ -301,13 +303,13 @@
 			break;
 		case 'inventory_swapSecond':
 			entity.inventory.forEach((item, index) => {
-				if (getInventoryIndex(entity, item) !== ev.key) {
+				if (getInventoryChar(entity, item) !== ev.key) {
 					return;
 				}
 
 				ui.inventorySwapSecond = index;
 
-				addMessage(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
+				log(entity.name + ' swaps the ' + entity.inventory[ui.inventorySwapFirst].name + ' with the ' + entity.inventory[ui.inventorySwapSecond].name);
 
 				const t = entity.inventory[ui.inventorySwapFirst];
 				entity.inventory[ui.inventorySwapFirst] = entity.inventory[ui.inventorySwapSecond];
@@ -337,14 +339,14 @@
 
 	switch (ev.key) {
 		case '[':
-			addMessage('game saved');
+			log('game saved');
 
 			localStorage.setItem('game', JSON.stringify(game));
 			console.log(JSON.stringify(game));
 
 			break;
 		case ']':
-			addMessage('game loaded');
+			log('game loaded');
 
 			game = JSON.parse(localStorage.getItem('game'));
 			console.log(game);
