@@ -1,7 +1,7 @@
 module.exports = {
   entry: './src/ts/main.ts',
   output: {
-    filename: './www/js/main.js'
+    filename: 'main.js'
   },
   resolve: {
     extensions: ['.ts']
