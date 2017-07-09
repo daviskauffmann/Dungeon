@@ -49,7 +49,7 @@ function draw(ev: UIEvent, entity: Entity) {
             CellType.DoorClosed
         ], (x, y) => {
             dungeon.cells[x][y].discovered = true;
-            
+
             if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
                 return;
             }
@@ -163,22 +163,18 @@ function draw(ev: UIEvent, entity: Entity) {
 
     ctx.fillStyle = '#ffffff';
 
-    ctx.fillText('Level:' + getLevel(entity) + ' ' + 'Turn:' + game.turn, 0, canvas.height);
+    ctx.fillText(`Level: ${getLevel(entity)} Turn: ${game.turn}`, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(canvas.width - graphics.fontSize * 10, 0, graphics.fontSize * 10, entity.inventory.length * 26);
-        ctx.fillStyle = '#fff';
-        for (let i = 0; i < entity.inventory.length; i++) {
-            ctx.fillText(getInventoryChar(entity, entity.inventory[i]) + ') ' + entity.inventory[i].name + (entity.inventory[i].equipped ? ' (equipped)' : ''), canvas.width - (graphics.fontSize * 10), (i + 1) * graphics.fontSize);
-        }
+        ctx.fillStyle = '#ffffff';
+        entity.inventory.forEach((item, index) => {
+            ctx.fillText(`${getInventoryChar(entity, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (graphics.fontSize * 10), (index + 1) * graphics.fontSize);
+        });
     }
 
     if (ui.mode === 'character') {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(canvas.width - graphics.fontSize * 10, 0, graphics.fontSize * 10, graphics.fontSize * 10);
-        ctx.fillStyle = '#fff';
-        ctx.fillText('Health: ' + entity.stats.health, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
-        ctx.fillText('Mana: ' + entity.stats.mana, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`Health: ${entity.stats.health}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
+        ctx.fillText(`Mana: ${entity.stats.mana}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
     }
 }

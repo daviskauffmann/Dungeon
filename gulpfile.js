@@ -6,7 +6,7 @@ const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
 const sourcemaps = require('gulp-sourcemaps');
-// const tslint = require('gulp-tslint');
+const tslint = require('gulp-tslint');
 const typescript = require('gulp-typescript').createProject('tsconfig.json');
 
 gulp.task('watch', ['build'], () => {

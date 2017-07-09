@@ -19,7 +19,7 @@ const ui: UI = {
     }
 }
 
-const canvas: any = document.getElementById('game');
+const canvas = <HTMLCanvasElement>document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const graphics: Graphics = {
     fontSize: 24,
