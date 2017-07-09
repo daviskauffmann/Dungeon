@@ -1,4 +1,44 @@
-function createTown() {
+import { Size } from './utils';
+
+export interface Dungeon extends Size {
+    cells: Array<Array<Cell>>;
+    rooms: Array<Rect>;
+    litRooms: boolean;
+    entities: Array<Entity>;
+    chests: Array<Chest>;
+    items: Array<Item>;
+}
+
+export interface Cell {
+    type: CellType;
+    discovered: boolean;
+}
+
+export enum CellType {
+    Empty,
+    Floor,
+    Grass,
+    Wall,
+    DoorOpen,
+    DoorClosed,
+    StairsUp,
+    StairsDown
+}
+
+export interface Chest extends Coord, Glyph {
+    loot: Item;
+}
+
+export interface Item extends Coord, Glyph {
+    name: string;
+    equipped: boolean;
+}
+
+export interface Corpse extends Entity, Item {
+    originalChar: string;
+}
+
+export function createTown() {
     const town: Dungeon = {
         width: 25,
         height: 25,
@@ -74,7 +114,7 @@ function createTown() {
     return town;
 }
 
-function createDungeon(width: number,
+export function createDungeon(width: number,
                        height: number,
                        roomAttempts: number,
                        minRoomSize: number,

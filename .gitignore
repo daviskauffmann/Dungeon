@@ -9,4 +9,4 @@ npm-debug.log
 /bower_components
 
 # Build
-/dist
+/js

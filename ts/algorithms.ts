@@ -1,9 +1,12 @@
-﻿// sends out a ray in a certain direction, calling the action on every cell it comes across
+﻿import { Dungeon, Cell, CellType } from './dungeon';
+import { Coord } from './utils';
+
+// sends out a ray in a certain direction, calling the action on every cell it comes across
 // blockedBy is an array of cell types that block the ray
 // action() is a function that will stop the ray if it returns true
 // raycast() will then return the cell where action() stopped, returning nothing otherwise
 // with this implementation, some cells will be visited multiple times
-function raycast(dungeon: Dungeon,
+export function raycast(dungeon: Dungeon,
                  origin: Coord,
                  r: number,
                  dir: number,
@@ -65,7 +68,7 @@ function spherecast(dungeon: Dungeon,
 
 // uses A* to find a path between two coordinates
 // returns an array of coordinates leading from the start position to the end position, or undefined if no path was found
-function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
+export function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
     const coords: Array<Array<Coord>> = [];
     for (let x = 0; x < dungeon.width; x++) {
         coords[x] = [];

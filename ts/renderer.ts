@@ -1,4 +1,31 @@
-function draw(ev: UIEvent, entity: Entity) {
+export interface Glyph {
+    char: string;
+    color: string;
+    alpha: number;
+}
+
+export interface Graphics {
+    fontSize: number;
+    cellTypes: Array<Glyph>;
+}
+
+const canvas = <HTMLCanvasElement>document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const graphics: Graphics = {
+    fontSize: 24,
+    cellTypes: [
+        { char: ' ', color: '#ffffff', alpha: 1 },
+        { char: '.', color: '#ffffff', alpha: 1 },
+        { char: '^', color: '#50ff50', alpha: 1 },
+        { char: '#', color: '#ffffff', alpha: 1 },
+        { char: '-', color: '#ffffff', alpha: 1 },
+        { char: '+', color: '#ffffff', alpha: 1 },
+        { char: '<', color: '#ffffff', alpha: 1 },
+        { char: '>', color: '#ffffff', alpha: 1 }
+    ]
+}
+
+export function draw(ev: UIEvent, entity: Entity) {
     const dungeon = getDungeon(entity);
 
     canvas.width = window.innerWidth;

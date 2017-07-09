@@ -1,4 +1,57 @@
-function getEntity(id: number) {
+export enum Class {
+    Warrior,
+    Shaman
+}
+
+export interface Entity extends Coord, Glyph {
+    id: number;
+    name: string;
+    class: Class;
+    stats: Stats;
+    inventory: Array<Item>;
+    factions: Array<Faction>;
+    hostileFactions: Array<Faction>;
+    hostileEntityIds: Array<number>;
+    disposition: Disposition;
+}
+
+export interface Stats {
+    level: number;
+
+    health: number;
+    energy: number;
+    mana: number;
+
+    stamina: number;
+    endurance: number;
+    attunement: number;
+    resistance: number;
+    strength: number;
+    intellect: number;
+    avoidance: number;
+    precision: number;
+    charisma: number;
+    luck: number;
+
+    sight: number;
+}
+
+export enum Disposition {
+    Passive,
+    Aggressive,
+    Cowardly
+}
+
+
+export enum Faction {
+    Player,
+    Monster,
+    Bugbear,
+    Orc
+}
+
+
+export function getEntity(id: number) {
     return game.dungeons.find(dungeon => {
         return dungeon.entities.some(entity => {
             return entity.id === id;
@@ -8,21 +61,21 @@ function getEntity(id: number) {
     });
 }
 
-function getDungeon(entity: Entity) {
+export function getDungeon(entity: Entity) {
     return game.dungeons.find(dungeon => {
         return dungeon.entities.indexOf(entity) > -1;
     });
 }
 
-function getLevel(entity: Entity) {
+export function getLevel(entity: Entity) {
     return game.dungeons.indexOf(getDungeon(entity));
 }
 
-function getInventoryChar(entity: Entity, item: Item) {
+export function getInventoryChar(entity: Entity, item: Item) {
     return String.fromCharCode(97 + entity.inventory.indexOf(item));
 }
 
-function think(entity: Entity) {
+export function think(entity: Entity) {
     const dungeon = getDungeon(entity);
 
     const itemNames: Array<string> = [];
@@ -209,7 +262,7 @@ function think(entity: Entity) {
     }
 }
 
-function move(entity: Entity, x: number, y: number) {
+export function move(entity: Entity, x: number, y: number) {
     const dungeon = getDungeon(entity);
 
     if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
@@ -363,7 +416,7 @@ function move(entity: Entity, x: number, y: number) {
     entity.y = y;
 }
 
-function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
+export function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
     while (level >= game.dungeons.length) {
         game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
     }

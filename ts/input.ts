@@ -1,4 +1,4 @@
-﻿function input(ev: KeyboardEvent, entity: Entity) {
+﻿export function input(ev: KeyboardEvent, entity: Entity) {
 	const dungeon = getDungeon(entity);
 
 	switch (ui.mode) {
