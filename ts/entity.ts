@@ -1,7 +1,9 @@
-export enum Class {
-    Warrior,
-    Shaman
-}
+import { pathfind, raycast } from './algorithms';
+import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
+import { game } from './game';
+import { Glyph } from './renderer';
+import { log } from './ui';
+import { Coord } from './utils';
 
 export interface Entity extends Coord, Glyph {
     id: number;
@@ -13,6 +15,11 @@ export interface Entity extends Coord, Glyph {
     hostileFactions: Array<Faction>;
     hostileEntityIds: Array<number>;
     disposition: Disposition;
+}
+
+export enum Class {
+    Warrior,
+    Shaman
 }
 
 export interface Stats {

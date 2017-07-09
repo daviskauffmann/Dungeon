@@ -1,4 +1,7 @@
-import { Size } from './utils';
+import { Class, Disposition, Entity, Faction } from './entity';
+import { game } from './game';
+import { Glyph } from './renderer';
+import { Coord, getRandomInt, Rect, Size } from './utils';
 
 export interface Dungeon extends Size {
     cells: Array<Array<Cell>>;

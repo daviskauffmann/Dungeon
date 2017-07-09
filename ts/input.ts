@@ -1,4 +1,11 @@
-﻿export function input(ev: KeyboardEvent, entity: Entity) {
+﻿import { raycast } from './algorithms';
+import { CellType, Corpse } from './dungeon';
+import { Entity, getDungeon, getInventoryChar, move } from './entity';
+import { game, load, save, tick } from './game';
+import { draw, graphics } from './renderer';
+import { log, ui } from './ui';
+
+export function input(ev: KeyboardEvent, entity: Entity) {
 	const dungeon = getDungeon(entity);
 
 	switch (ui.mode) {
@@ -349,15 +356,13 @@
 		case '[':
 			log('game saved');
 
-			localStorage.setItem('game', JSON.stringify(game));
-			console.log(JSON.stringify(game));
+			save();
 
 			break;
 		case ']':
 			log('game loaded');
 
-			game = JSON.parse(localStorage.getItem('game'));
-			console.log(game);
+			load();
 
 			break;
 		case '\\':

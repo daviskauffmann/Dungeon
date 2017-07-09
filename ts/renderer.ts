@@ -1,3 +1,10 @@
+import { raycast } from './algorithms';
+import { Cell, CellType } from './dungeon';
+import { Entity, getDungeon, getInventoryChar, getLevel } from './entity';
+import { game } from './game';
+import { ui } from './ui';
+import { isInside, Rect } from './utils';
+
 export interface Glyph {
     char: string;
     color: string;
@@ -11,7 +18,7 @@ export interface Graphics {
 
 const canvas = <HTMLCanvasElement>document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const graphics: Graphics = {
+export const graphics: Graphics = {
     fontSize: 24,
     cellTypes: [
         { char: ' ', color: '#ffffff', alpha: 1 },

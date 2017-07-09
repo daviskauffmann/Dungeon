@@ -1,3 +1,5 @@
+import { Coord } from './utils';
+
 export interface UI {
     mode: string;
     messages: Array<string>;
@@ -16,5 +18,13 @@ export const ui: UI = {
     target: {
         x: 0,
         y: 0
+    }
+}
+
+export function log(message: string) {
+    ui.messages.push(message);
+
+    if (ui.messages.length > ui.maxMessages) {
+        ui.messages.shift();
     }
 }

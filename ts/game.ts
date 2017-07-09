@@ -1,3 +1,6 @@
+import { Dungeon } from './dungeon';
+import { think } from './entity';
+
 export interface Game {
     currentId: number;
     dungeons: Array<Dungeon>;
@@ -34,10 +37,12 @@ export function tick() {
     game.turn++;
 }
 
-export function log(message: string) {
-    ui.messages.push(message);
+export function save() {
+    localStorage.setItem('game', JSON.stringify(game));
+    console.log(JSON.stringify(game));
+}
 
-    if (ui.messages.length > ui.maxMessages) {
-        ui.messages.shift();
-    }
+export function load() {
+    game = JSON.parse(localStorage.getItem('game'));
+    console.log(game);
 }
