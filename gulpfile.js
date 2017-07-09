@@ -49,6 +49,6 @@ gulp.task('inject', () => {
         .pipe(inject(gulp.src([
             './dist/js/**/*.js',
             './dist/css/**/*.css'
-        ]), { relative: true, ignorePath: '../dist/' }))
+        ]), { relative: true, ignorePath: '../dist' }))
         .pipe(gulp.dest('./dist'));
 });
