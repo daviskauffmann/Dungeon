@@ -1,13 +1,13 @@
 module.exports = {
-  entry: './ts/main.ts',
+  entry: './src/ts/main.ts',
   output: {
-    filename: './js/main.js'
+    filename: './www/js/main.js'
   },
   resolve: {
     extensions: ['.ts']
   },
   module: {
-    loaders: [
+    rules: [
       { test: /\.ts$/, loader: 'ts-loader' }
     ]
   },
