@@ -8,6 +8,7 @@ import { Coord } from './utils';
 export interface Entity extends Coord, Glyph {
     id: number;
     name: string;
+    level: number;
     class: Class;
     stats: Stats;
     inventory: Array<Item>;
@@ -23,8 +24,6 @@ export enum Class {
 }
 
 export interface Stats {
-    level: number;
-
     health: number;
     energy: number;
     mana: number;
@@ -57,6 +56,42 @@ export enum Faction {
     Orc
 }
 
+export function createEntity(
+    x: number,
+    y: number,
+    name: string,
+    char: string,
+    color: string,
+    alpha: number,
+    possibleClasses: Array<Class>,
+    minLevel: number,
+    maxLevel: number,
+    inventory: Array<Item>,
+    factions: Array<Faction>,
+    hostileFactions: Array<Faction>,
+    hostileEntityIds: Array<number>,
+    disposition: Disposition) {
+
+    const entity: Entity = {
+        x: x,
+        y: y,
+        char: char,
+        color: color,
+        alpha: alpha,
+        id: game.currentId++,
+        name: name,
+        level: 0,
+        class: undefined,
+        stats: undefined,
+        inventory: inventory,
+        factions: factions,
+        hostileFactions: hostileFactions,
+        hostileEntityIds: hostileEntityIds,
+        disposition: disposition
+    };
+
+    return entity;
+}
 
 export function getEntity(id: number) {
     return game.dungeons.find(dungeon => {
@@ -80,6 +115,10 @@ export function getLevel(entity: Entity) {
 
 export function getInventoryChar(entity: Entity, item: Item) {
     return String.fromCharCode(97 + entity.inventory.indexOf(item));
+}
+
+export function calcStats(entity: Entity) {
+    return entity.stats;
 }
 
 export function think(entity: Entity) {
@@ -158,6 +197,7 @@ export function think(entity: Entity) {
                     alpha: corpse.alpha,
                     id: corpse.id,
                     name: corpse.name.replace(' corpse', ''),
+                    level: corpse.level,
                     class: corpse.class,
                     stats: corpse.stats,
                     inventory: corpse.inventory,

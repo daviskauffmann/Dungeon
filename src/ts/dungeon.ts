@@ -82,10 +82,9 @@ export function createTown() {
         alpha: 1,
         id: game.currentId++,
         name: 'player',
+        level: 1,
         class: Class.Warrior,
         stats: {
-            level: 1,
-
             health: 100,
             energy: 100,
             mana: 100,
@@ -118,16 +117,17 @@ export function createTown() {
 }
 
 export function createDungeon(width: number,
-                       height: number,
-                       roomAttempts: number,
-                       minRoomSize: number,
-                       maxRoomSize: number,
-                       preventOverlap: boolean,
-                       litRooms: boolean,
-                       doorChance: number,
-                       trapAmount: number,
-                       monsterAmount: number,
-                       chestAmount: number) {
+    height: number,
+    roomAttempts: number,
+    minRoomSize: number,
+    maxRoomSize: number,
+    preventOverlap: boolean,
+    litRooms: boolean,
+    doorChance: number,
+    trapAmount: number,
+    monsterAmount: number,
+    chestAmount: number) {
+
     const dungeon: Dungeon = {
         width: width,
         height: height,
@@ -317,10 +317,9 @@ export function createDungeon(width: number,
             alpha: 1,
             id: game.currentId++,
             name: '',
+            level: 1,
             class: Class.Warrior,
             stats: {
-                level: 1,
-
                 health: 100,
                 energy: 100,
                 mana: 100,
@@ -403,7 +402,7 @@ export function createDungeon(width: number,
 
         const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
         const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
-        
+
         dungeon.chests.push({
             x: x,
             y: y,
@@ -438,7 +437,7 @@ export function createDungeon(width: number,
                     item.name = 'bow';
                     item.char = '}';
                 }
-                
+
                 return item;
             })()
         });

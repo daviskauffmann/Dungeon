@@ -7,11 +7,12 @@ import { Coord, distanceBetweenSquared } from './utils';
 // raycast() will then return the cell where action() stopped, returning nothing otherwise
 // with this implementation, some cells will be visited multiple times
 export function raycast(dungeon: Dungeon,
-                 origin: Coord,
-                 r: number,
-                 dir: number,
-                 blockedBy: Array<CellType>,
-                 action: (x: number, y: number) => boolean | void) {
+    origin: Coord,
+    r: number,
+    dir: number,
+    blockedBy: Array<CellType>,
+    action: (x: number, y: number) => boolean | void) {
+
     const dx = Math.cos(dir * (Math.PI / 180));
     const dy = Math.sin(dir * (Math.PI / 180));
 
@@ -42,11 +43,12 @@ export function raycast(dungeon: Dungeon,
 // sends out rays in a circle
 // returns an array of cells that were affected by action()
 function spherecast(dungeon: Dungeon,
-                    origin: Coord,
-                    r: number,
-                    accuracy: number,
-                    blockedBy: Array<CellType>,
-                    action: (x: number, y: number) => boolean | void) {
+    origin: Coord,
+    r: number,
+    accuracy: number,
+    blockedBy: Array<CellType>,
+    action: (x: number, y: number) => boolean | void) {
+
     const cells: Array<Cell> = [];
 
     for (let dir = 0; dir < 360; dir += accuracy) {
@@ -118,7 +120,7 @@ export function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
                 current = cameFrom.get(current);
                 path.push(current);
             }
-            
+
             return path;
         }
 

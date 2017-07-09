@@ -143,6 +143,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 									alpha: corpse.alpha,
 									id: corpse.id,
 									name: corpse.name.replace(' corpse', ''),
+									level: corpse.level,
 									class: corpse.class,
 									stats: corpse.stats,
 									inventory: corpse.inventory,
@@ -165,7 +166,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 					break;
 				case 'c':
 					if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
-						log(`${entity.name} closes the door'`);
+						log(`${entity.name} closes the door`);
 
 						dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
 					}

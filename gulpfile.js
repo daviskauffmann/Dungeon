@@ -4,7 +4,9 @@ const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
 const tslint = require('gulp-tslint');
-const webpack = require('webpack-stream');
+const webpack = require('webpack');
+const webpackStream = require('webpack-stream');
+const webpackConfig = require('./webpack.config');
 
 gulp.task('watch', ['build'], () => {
     gulp.watch('./src/**/*', ['build']);
@@ -26,8 +28,8 @@ gulp.task('tslint', () => {
 });
 
 gulp.task('webpack', () => {
-    return gulp.src('./src/ts/**/*.ts')
-        .pipe(webpack(require('./webpack.config.js'), require('webpack')))
+    return gulp.src(webpackConfig.entry)
+        .pipe(webpack(webpackConfig, webpack))
         .pipe(gulp.dest('./dist/js'));
 });
 
