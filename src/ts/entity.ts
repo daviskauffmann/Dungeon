@@ -23,17 +23,17 @@ export enum Class {
     Shaman
 }
 
-export enum Disposition {
-    Passive,
-    Aggressive,
-    Cowardly
-}
-
 export enum Faction {
     Player,
     Monster,
     Bugbear,
     Orc
+}
+
+export enum Disposition {
+    Passive,
+    Aggressive,
+    Cowardly
 }
 
 export interface Stats {

@@ -19,7 +19,7 @@ export const ui: UI = {
         x: 0,
         y: 0
     }
-}
+};
 
 export function log(message: string) {
     ui.messages.push(message);

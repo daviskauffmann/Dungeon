@@ -17,7 +17,7 @@ export let game: Game = {
     godMode: true,
     stopTime: false,
     ignoreFov: false
-}
+};
 
 export function tick() {
     if (game.stopTime) {

@@ -30,7 +30,7 @@ export const graphics: Graphics = {
         { char: '<', color: '#ffffff', alpha: 1 },
         { char: '>', color: '#ffffff', alpha: 1 }
     ]
-}
+};
 
 export function draw(ev: UIEvent, entity: Entity) {
     const dungeon = getDungeon(entity);
@@ -104,7 +104,7 @@ export function draw(ev: UIEvent, entity: Entity) {
                     }
 
                     dungeon.cells[x][y].discovered = true;
-                    
+
                     if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
                         continue;
                     }
@@ -124,21 +124,23 @@ export function draw(ev: UIEvent, entity: Entity) {
                 continue;
             }
 
-            const screenX = (x - view.x) * graphics.fontSize;
-            const screenY = (y - view.y + 1) * graphics.fontSize;
+            const screen = {
+                x: (x - view.x) * graphics.fontSize,
+                y: (y - view.y + 1) * graphics.fontSize
+            }
 
             if (ui.mode === 'target') {
                 if (ui.target.x + 1 === x && ui.target.y === y) {
                     ctx.fillStyle = '#ffffff';
                     ctx.globalAlpha = 1;
-                    ctx.fillText(']', screenX, screenY);
+                    ctx.fillText(']', screen.x, screen.y);
 
                     continue;
                 }
                 if (ui.target.x - 1 === x && ui.target.y === y) {
                     ctx.fillStyle = '#ffffff';
                     ctx.globalAlpha = 1;
-                    ctx.fillText('[', screenX, screenY);
+                    ctx.fillText('[', screen.x, screen.y);
 
                     continue;
                 }
@@ -152,7 +154,7 @@ export function draw(ev: UIEvent, entity: Entity) {
 
                     ctx.fillStyle = entity.color;
                     ctx.globalAlpha = entity.alpha;
-                    ctx.fillText(entity.char, screenX, screenY);
+                    ctx.fillText(entity.char, screen.x, screen.y);
 
                     return true;
                 }) || dungeon.chests.some(chest => {
@@ -162,7 +164,7 @@ export function draw(ev: UIEvent, entity: Entity) {
 
                     ctx.fillStyle = chest.color;
                     ctx.globalAlpha = chest.alpha;
-                    ctx.fillText(chest.char, screenX, screenY);
+                    ctx.fillText(chest.char, screen.x, screen.y);
 
                     return true;
                 }) || dungeon.items.sort((a, b) => {
@@ -174,7 +176,7 @@ export function draw(ev: UIEvent, entity: Entity) {
 
                     ctx.fillStyle = item.color;
                     ctx.globalAlpha = item.alpha;
-                    ctx.fillText(item.char, screenX, screenY);
+                    ctx.fillText(item.char, screen.x, screen.y);
 
                     return true;
                 })) {
@@ -185,7 +187,7 @@ export function draw(ev: UIEvent, entity: Entity) {
             let cellType = graphics.cellTypes[dungeon.cells[x][y].type];
             ctx.fillStyle = cellType.color;
             ctx.globalAlpha = cellVisibility.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
-            ctx.fillText(cellType.char, screenX, screenY);
+            ctx.fillText(cellType.char, screen.x, screen.y);
         }
     }
 
