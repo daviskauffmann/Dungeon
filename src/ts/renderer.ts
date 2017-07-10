@@ -103,13 +103,13 @@ export function draw(ev: UIEvent, entity: Entity) {
                         continue;
                     }
 
+                    dungeon.cells[x][y].discovered = true;
+                    
                     if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
                         continue;
                     }
 
                     cellVisibility.push(dungeon.cells[x][y]);
-
-                    dungeon.cells[x][y].discovered = true;
                 }
             }
         });

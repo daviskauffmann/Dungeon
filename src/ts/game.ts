@@ -1,5 +1,5 @@
 import { Dungeon } from './dungeon';
-import { think } from './entity';
+import { tick as entity_tick } from './entity';
 
 export interface Game {
     currentId: number;
@@ -30,7 +30,7 @@ export function tick() {
                 return;
             }
 
-            think(entity);
+            entity_tick(entity);
         });
     });
 

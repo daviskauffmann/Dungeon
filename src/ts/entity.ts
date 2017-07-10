@@ -3,7 +3,7 @@ import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
 import { game } from './game';
 import { Glyph } from './renderer';
 import { log } from './ui';
-import { Coord } from './utils';
+import { Coord, getRandomInt } from './utils';
 
 export interface Entity extends Coord, Glyph {
     id: number;
@@ -48,7 +48,6 @@ export enum Disposition {
     Cowardly
 }
 
-
 export enum Faction {
     Player,
     Monster,
@@ -80,9 +79,13 @@ export function createEntity(
         alpha: alpha,
         id: game.currentId++,
         name: name,
-        level: 0,
-        class: undefined,
-        stats: undefined,
+        level: getRandomInt(minLevel, maxLevel),
+        class: (() => {
+            return Class.Warrior;
+        })(),
+        stats: (() => {
+            return <Stats>undefined;
+        })(),
         inventory: inventory,
         factions: factions,
         hostileFactions: hostileFactions,
@@ -121,7 +124,7 @@ export function calcStats(entity: Entity) {
     return entity.stats;
 }
 
-export function think(entity: Entity) {
+export function tick(entity: Entity) {
     const dungeon = getDungeon(entity);
 
     const itemNames: Array<string> = [];
@@ -461,22 +464,22 @@ export function move(entity: Entity, x: number, y: number) {
 
     entity.x = x;
     entity.y = y;
-}
 
-export function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
-    while (level >= game.dungeons.length) {
-        game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
+    function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
+        while (level >= game.dungeons.length) {
+            game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
+        }
+
+        const dungeon = getDungeon(entity);
+        const newDungeon = game.dungeons[level];
+
+        newDungeon.entities.push(entity);
+        dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
+
+        const spawn = calcSpawnCoord(newDungeon);
+        entity.x = spawn.x;
+        entity.y = spawn.y;
+
+        log(`${entity.name} has moved to level ${getLevel(entity)}`);
     }
-
-    const dungeon = getDungeon(entity);
-    const newDungeon = game.dungeons[level];
-
-    newDungeon.entities.push(entity);
-    dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
-
-    const spawn = calcSpawnCoord(newDungeon);
-    entity.x = spawn.x;
-    entity.y = spawn.y;
-
-    log(`${entity.name} has moved to level ${getLevel(entity)}`);
 }

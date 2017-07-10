@@ -116,7 +116,8 @@ export function createTown() {
     return town;
 }
 
-export function createDungeon(width: number,
+export function createDungeon(
+    width: number,
     height: number,
     roomAttempts: number,
     minRoomSize: number,
