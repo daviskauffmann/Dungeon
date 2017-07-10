@@ -6,7 +6,8 @@ import { Coord, distanceBetweenSquared } from './utils';
 // action() is a function that will stop the ray if it returns true
 // raycast() will then return the cell where action() stopped, returning nothing otherwise
 // with this implementation, some cells will be visited multiple times
-export function raycast(dungeon: Dungeon,
+export function raycast(
+    dungeon: Dungeon,
     origin: Coord,
     r: number,
     dir: number,
@@ -42,7 +43,8 @@ export function raycast(dungeon: Dungeon,
 
 // sends out rays in a circle
 // returns an array of cells that were affected by action()
-export function spherecast(dungeon: Dungeon,
+export function spherecast(
+    dungeon: Dungeon,
     origin: Coord,
     r: number,
     accuracy: number,
@@ -70,7 +72,7 @@ export function spherecast(dungeon: Dungeon,
 
 // uses A* to find a path between two coordinates
 // returns an array of coordinates leading from the start position to the end position, or undefined if no path was found
-export function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {
+export function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {   
     const coords: Array<Array<Coord>> = [];
     for (let x = 0; x < dungeon.width; x++) {
         coords[x] = [];

@@ -3,9 +3,8 @@ const clean = require('gulp-clean');
 const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
+const gutil = require('gulp-util');
 const webpack = require('webpack');
-const webpackStream = require('webpack-stream');
-const webpackConfig = require('./webpack.config');
 
 const srcDir = './src';
 const outDir = './www';
@@ -23,10 +22,29 @@ gulp.task('clean', () => {
         .pipe(clean());
 });
 
-gulp.task('webpack', () => {
-    return gulp.src(`${srcDir}/ts/main.ts`)
-        .pipe(webpackStream(webpackConfig, webpack))
-        .pipe(gulp.dest(`${outDir}/js`));
+gulp.task('webpack', callback => {
+    webpack({
+        entry: `${srcDir}/ts/main.ts`,
+        output: {
+            filename: `${outDir}/js/main.js`
+        },
+        resolve: {
+            extensions: ['.ts']
+        },
+        module: {
+            rules: [
+                { test: /\.ts$/, loader: 'ts-loader' }
+            ]
+        },
+        plugins: [],
+        devtool: 'source-map'
+    }).run((err, stats) => {
+        if (err) throw new gutil.PluginError("webpack:build", err);
+        gutil.log("[webpack:build]", stats.toString({
+            colors: true
+        }));
+        callback();
+    });
 });
 
 gulp.task('sass', () => {

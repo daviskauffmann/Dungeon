@@ -10,7 +10,7 @@ export interface Entity extends Coord, Glyph {
     name: string;
     level: number;
     class: Class;
-    stats: Stats;
+    sight: number;
     inventory: Array<Item>;
     factions: Array<Faction>;
     hostileFactions: Array<Faction>;
@@ -21,6 +21,19 @@ export interface Entity extends Coord, Glyph {
 export enum Class {
     Warrior,
     Shaman
+}
+
+export enum Disposition {
+    Passive,
+    Aggressive,
+    Cowardly
+}
+
+export enum Faction {
+    Player,
+    Monster,
+    Bugbear,
+    Orc
 }
 
 export interface Stats {
@@ -38,21 +51,6 @@ export interface Stats {
     precision: number;
     charisma: number;
     luck: number;
-
-    sight: number;
-}
-
-export enum Disposition {
-    Passive,
-    Aggressive,
-    Cowardly
-}
-
-export enum Faction {
-    Player,
-    Monster,
-    Bugbear,
-    Orc
 }
 
 export function createEntity(
@@ -83,9 +81,7 @@ export function createEntity(
         class: (() => {
             return Class.Warrior;
         })(),
-        stats: (() => {
-            return <Stats>undefined;
-        })(),
+        sight: 5,
         inventory: inventory,
         factions: factions,
         hostileFactions: hostileFactions,
@@ -121,7 +117,24 @@ export function getInventoryChar(entity: Entity, item: Item) {
 }
 
 export function calcStats(entity: Entity) {
-    return entity.stats;
+    const stats: Stats = {
+        health: entity.level * 100,
+        energy: entity.level * 100,
+        mana: entity.level * 100,
+
+        stamina: entity.level,
+        endurance: entity.level,
+        attunement: entity.level,
+        resistance: entity.level,
+        strength: entity.level,
+        intellect: entity.level,
+        avoidance: entity.level,
+        precision: entity.level,
+        charisma: entity.level,
+        luck: entity.level
+    }
+
+    return stats;
 }
 
 export function tick(entity: Entity) {
@@ -162,7 +175,7 @@ export function tick(entity: Entity) {
 
             const corpses: Array<Corpse> = [];
             for (let dir = 0; dir < 360; dir++) {
-                raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+                raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
                     CellType.Wall,
                     CellType.DoorClosed
                 ], (x, y) => {
@@ -202,7 +215,7 @@ export function tick(entity: Entity) {
                     name: corpse.name.replace(' corpse', ''),
                     level: corpse.level,
                     class: corpse.class,
-                    stats: corpse.stats,
+                    sight: corpse.sight,
                     inventory: corpse.inventory,
                     factions: corpse.factions,
                     hostileFactions: corpse.hostileFactions,
@@ -233,7 +246,7 @@ export function tick(entity: Entity) {
         case Disposition.Aggressive:
             const targets: Array<Entity> = [];
             for (let dir = 0; dir < 360; dir += 10) {
-                raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+                raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
                     CellType.Wall,
                     CellType.DoorClosed
                 ], (x, y) => {

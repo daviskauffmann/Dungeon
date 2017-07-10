@@ -84,24 +84,7 @@ export function createTown() {
         name: 'player',
         level: 1,
         class: Class.Warrior,
-        stats: {
-            health: 100,
-            energy: 100,
-            mana: 100,
-
-            stamina: 0,
-            endurance: 0,
-            attunement: 0,
-            resistance: 0,
-            strength: 0,
-            intellect: 0,
-            avoidance: 0,
-            precision: 0,
-            charisma: 0,
-            luck: 0,
-
-            sight: 5
-        },
+        sight: 5,
         inventory: [],
         factions: [
             Faction.Player
@@ -320,24 +303,7 @@ export function createDungeon(
             name: '',
             level: 1,
             class: Class.Warrior,
-            stats: {
-                health: 100,
-                energy: 100,
-                mana: 100,
-
-                stamina: 0,
-                endurance: 0,
-                attunement: 0,
-                resistance: 0,
-                strength: 0,
-                intellect: 0,
-                avoidance: 0,
-                precision: 0,
-                charisma: 0,
-                luck: 0,
-
-                sight: 10
-            },
+            sight: 10,
             inventory: [],
             factions: [],
             hostileFactions: [],

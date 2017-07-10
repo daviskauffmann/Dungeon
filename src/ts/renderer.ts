@@ -1,6 +1,6 @@
 import { raycast } from './algorithms';
 import { Cell, CellType } from './dungeon';
-import { Entity, getDungeon, getInventoryChar, getLevel } from './entity';
+import { calcStats, Entity, getDungeon, getInventoryChar, getLevel } from './entity';
 import { game } from './game';
 import { ui } from './ui';
 import { isInside, Rect } from './utils';
@@ -78,7 +78,7 @@ export function draw(ev: UIEvent, entity: Entity) {
         }
     }
     for (let dir = 0; dir < 360; dir += 0.5) {
-        raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+        raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
             CellType.Wall,
             CellType.DoorClosed
         ], (x, y) => {
@@ -208,7 +208,7 @@ export function draw(ev: UIEvent, entity: Entity) {
 
     if (ui.mode === 'character') {
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`Health: ${entity.stats.health}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
-        ctx.fillText(`Mana: ${entity.stats.mana}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
+        ctx.fillText(`Health: ${calcStats(entity).health}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
+        ctx.fillText(`Mana: ${calcStats(entity).mana}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
     }
 }

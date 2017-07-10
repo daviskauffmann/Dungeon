@@ -88,7 +88,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                 case 's':
                     const targets: Array<Entity> = [];
                     for (let dir = 0; dir < 360; dir++) {
-                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
                             CellType.Wall,
                             CellType.DoorClosed
                         ], (x, y) => {
@@ -120,7 +120,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                     break;
                 case 'r':
                     for (let dir = 0; dir < 360; dir++) {
-                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.stats.sight, dir, [
+                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
                             CellType.Wall,
                             CellType.DoorClosed
                         ], (x, y) => {
@@ -145,7 +145,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                                     name: corpse.name.replace(' corpse', ''),
                                     level: corpse.level,
                                     class: corpse.class,
-                                    stats: corpse.stats,
+                                    sight: corpse.sight,
                                     inventory: corpse.inventory,
                                     factions: corpse.factions,
                                     hostileFactions: corpse.hostileFactions,
