@@ -42,7 +42,7 @@ export function raycast(dungeon: Dungeon,
 
 // sends out rays in a circle
 // returns an array of cells that were affected by action()
-function spherecast(dungeon: Dungeon,
+export function spherecast(dungeon: Dungeon,
     origin: Coord,
     r: number,
     accuracy: number,

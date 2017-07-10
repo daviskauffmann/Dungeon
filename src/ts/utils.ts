@@ -17,7 +17,7 @@ export function getRandomInt(min: number, max: number) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
-export function distanceBetweenSquared(coord1: Coord, coord2: Coord): number {
+export function distanceBetweenSquared(coord1: Coord, coord2: Coord) {
     return Math.pow(coord2.x - coord1.x, 2) + Math.pow(coord2.y - coord1.y, 2);
 }
 

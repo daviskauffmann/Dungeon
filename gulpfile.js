@@ -3,47 +3,43 @@ const clean = require('gulp-clean');
 const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
-const tslint = require('gulp-tslint');
 const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
 const webpackConfig = require('./webpack.config');
 
+const srcDir = './src';
+const outDir = './www';
+
 gulp.task('watch', ['build'], () => {
-    gulp.watch('./src/**/*', ['build']);
+    gulp.watch(`${srcDir}/*/**`, ['build']);
 });
 
 gulp.task('build', callback => {
-    sequence('clean', 'tslint', 'webpack', 'sass', 'inject')(callback);
+    sequence('clean', 'webpack', 'sass', 'inject')(callback);
 });
 
 gulp.task('clean', () => {
-    return gulp.src('./dist')
+    return gulp.src(outDir)
         .pipe(clean());
 });
 
-gulp.task('tslint', () => {
-    return gulp.src('./src/ts/**/*.ts')
-        //.pipe(tslint())
-        //.pipe(tslint.report());
-});
-
 gulp.task('webpack', () => {
-    return gulp.src('./src/ts/main.ts')
+    return gulp.src(`${srcDir}/ts/main.ts`)
         .pipe(webpackStream(webpackConfig, webpack))
-        .pipe(gulp.dest('./dist/js'));
+        .pipe(gulp.dest(`${outDir}/js`));
 });
 
 gulp.task('sass', () => {
-    return gulp.src('./src/sass/**/*.scss')
+    return gulp.src(`${srcDir}/sass/**/*.scss`)
         .pipe(sass())
-        .pipe(gulp.dest('./dist/css'));
+        .pipe(gulp.dest(`${outDir}/css`));
 });
 
 gulp.task('inject', () => {
-    return gulp.src('./src/index.html')
+    return gulp.src(`${srcDir}/index.html`)
         .pipe(inject(gulp.src([
-            './dist/js/**/*.js',
-            './dist/css/**/*.css'
-        ]), { relative: true, ignorePath: '../dist' }))
-        .pipe(gulp.dest('./dist'));
+            `${outDir}/js/**/*.js`,
+            `${outDir}/css/**/*.css`
+        ]), { relative: true, ignorePath: `.${outDir}` }))
+        .pipe(gulp.dest(outDir));
 });
