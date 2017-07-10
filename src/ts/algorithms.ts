@@ -1,4 +1,4 @@
-﻿import { Dungeon, Cell, CellType } from './dungeon';
+import { Dungeon, Cell, CellType } from './dungeon';
 import { Coord, distanceBetweenSquared } from './utils';
 
 // sends out a ray in a certain direction, calling the action on every cell it comes across

@@ -1,5 +1,3 @@
-const webpack = require('webpack');
-
 module.exports = {
     entry: './src/ts/main.ts',
     output: {

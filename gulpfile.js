@@ -28,8 +28,8 @@ gulp.task('tslint', () => {
 });
 
 gulp.task('webpack', () => {
-    return gulp.src(webpackConfig.entry)
-        .pipe(webpack(webpackConfig, webpack))
+    return gulp.src('./src/ts/main.ts')
+        .pipe(webpackStream(webpackConfig, webpack))
         .pipe(gulp.dest('./dist/js'));
 });
 
