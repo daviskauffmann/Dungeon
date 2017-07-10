@@ -2,8 +2,8 @@ import { raycast } from './algorithms';
 import { Cell, CellType } from './dungeon';
 import { calcStats, Entity, getDungeon, getInventoryChar, getLevel } from './entity';
 import { game } from './game';
+import { isInside, Rect } from './math';
 import { ui } from './ui';
-import { isInside, Rect } from './utils';
 
 export interface Glyph {
     char: string;

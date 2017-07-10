@@ -3,6 +3,7 @@ const clean = require('gulp-clean');
 const inject = require('gulp-inject');
 const sass = require('gulp-sass');
 const sequence = require('gulp-sequence');
+const tslint = require('gulp-tslint');
 const gutil = require('gulp-util');
 const webpack = require('webpack');
 
@@ -14,7 +15,17 @@ gulp.task('watch', ['build'], () => {
 });
 
 gulp.task('build', callback => {
-    sequence('clean', 'webpack', 'sass', 'inject')(callback);
+    sequence('tslint', 'clean', 'webpack', 'sass', 'inject')(callback);
+});
+
+gulp.task('tslint', () => {
+    return gulp.src("src/**/*.ts")
+        .pipe(tslint({
+            formatter: 'stylish'
+        }))
+        .pipe(tslint.report({
+            emitError: false
+        }));
 });
 
 gulp.task('clean', () => {

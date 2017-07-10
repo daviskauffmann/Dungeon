@@ -1,4 +1,4 @@
-import { Coord } from './utils';
+import { Coord } from './math';
 
 export interface UI {
     mode: string;

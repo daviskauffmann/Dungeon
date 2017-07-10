@@ -1,9 +1,9 @@
 import { pathfind, raycast } from './algorithms';
 import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
 import { game } from './game';
+import { Coord, randomFloat, randomInt } from './math';
 import { Glyph } from './renderer';
 import { log } from './ui';
-import { Coord, getRandomInt } from './utils';
 
 export interface Entity extends Coord, Glyph {
     id: number;
@@ -63,6 +63,7 @@ export function createEntity(
     possibleClasses: Array<Class>,
     minLevel: number,
     maxLevel: number,
+    sight: number,
     inventory: Array<Item>,
     factions: Array<Faction>,
     hostileFactions: Array<Faction>,
@@ -77,11 +78,9 @@ export function createEntity(
         alpha: alpha,
         id: game.currentId++,
         name: name,
-        level: getRandomInt(minLevel, maxLevel),
-        class: (() => {
-            return Class.Warrior;
-        })(),
-        sight: 5,
+        level: randomInt(minLevel, maxLevel),
+        class: possibleClasses[randomInt(0, possibleClasses.length)],
+        sight: sight,
         inventory: inventory,
         factions: factions,
         hostileFactions: hostileFactions,
@@ -146,7 +145,7 @@ export function tick(entity: Entity) {
             return;
         }
 
-        if (Math.random() < 0.5) {
+        if (randomFloat(0, 1) < 0.5) {
             return;
         }
 
@@ -169,7 +168,7 @@ export function tick(entity: Entity) {
         case Class.Warrior:
             break;
         case Class.Shaman:
-            if (Math.random() < 0.5) {
+            if (randomFloat(0, 1) < 0.5) {
                 break;
             }
 
@@ -223,7 +222,7 @@ export function tick(entity: Entity) {
                     disposition: corpse.disposition
                 };
 
-                if (Math.random() < 0.5) {
+                if (randomFloat(0, 1) < 0.5) {
                     log(`${entity.name} fails to ressurect ${newEntity.name}`);
 
                     return;
@@ -299,7 +298,7 @@ export function tick(entity: Entity) {
             return false;
         }
 
-        if (Math.random() < 0.5) {
+        if (randomFloat(0, 1) < 0.5) {
             return false;
         }
 
@@ -313,7 +312,7 @@ export function tick(entity: Entity) {
         return;
     }
 
-    const roll = Math.random();
+    const roll = randomFloat(0, 1);
     if (roll < 0.25) {
         move(entity, entity.x, entity.y - 1);
     } else if (roll < 0.5) {
@@ -336,7 +335,7 @@ export function move(entity: Entity, x: number, y: number) {
         case CellType.Wall:
             return;
         case CellType.DoorClosed:
-            if (Math.random() < 0.5) {
+            if (randomFloat(0, 1) < 0.5) {
                 log(`${entity.name} can't open the door`);
 
                 return;
@@ -394,7 +393,7 @@ export function move(entity: Entity, x: number, y: number) {
             return true;
         }
 
-        if (Math.random() < 0.5) {
+        if (randomFloat(0, 1) < 0.5) {
             log(`${entity.name} misses the ${target.name}`);
 
             return true;
@@ -439,7 +438,7 @@ export function move(entity: Entity, x: number, y: number) {
             return false;
         }
 
-        if (Math.random() < 0.5) {
+        if (randomFloat(0, 1) < 0.5) {
             log(`${entity.name} can't open the chest`);
 
             return true;

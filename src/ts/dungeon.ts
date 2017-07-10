@@ -1,7 +1,7 @@
 import { Class, Disposition, Entity, Faction } from './entity';
 import { game } from './game';
+import { Coord, randomFloat, randomInt, Rect, Size } from './math';
 import { Glyph } from './renderer';
-import { Coord, getRandomInt, Rect, Size } from './utils';
 
 export interface Dungeon extends Size {
     cells: Array<Array<Cell>>;
@@ -133,19 +133,21 @@ export function createDungeon(
         }
     }
 
-    for (let i = 0; i < roomAttempts; i++) {
-        const roomX = getRandomInt(0, dungeon.width);
-        const roomY = getRandomInt(0, dungeon.height);
-        const roomWidth = getRandomInt(minRoomSize, maxRoomSize);
-        const roomHeight = getRandomInt(minRoomSize, maxRoomSize);
+    for (let i = 0; i < roomAttempts || dungeon.rooms.length < 2; i++) {
+        const room: Rect = {
+            x: randomInt(0, dungeon.width),
+            y: randomInt(0, dungeon.height),
+            width: randomInt(minRoomSize, maxRoomSize),
+            height: randomInt(minRoomSize, maxRoomSize)
+        }
 
-        if (roomX < 1 || roomX + roomWidth > dungeon.width - 1 || roomY < 1 || roomY + roomHeight > dungeon.height - 1) {
+        if (room.x < 1 || room.x + room.width > dungeon.width - 1 || room.y < 1 || room.y + room.height > dungeon.height - 1) {
             continue;
         }
 
         if (preventOverlap && (() => {
-            for (let x = roomX; x < roomX + roomWidth; x++) {
-                for (let y = roomY; y < roomY + roomHeight; y++) {
+            for (let x = room.x; x < room.x + room.width; x++) {
+                for (let y = room.y; y < room.y + room.height; y++) {
                     if (dungeon.cells[x][y].type === CellType.Floor) {
                         return true;
                     }
@@ -167,13 +169,6 @@ export function createDungeon(
             continue;
         }
 
-        const room: Rect = {
-            x: roomX,
-            y: roomY,
-            width: roomWidth,
-            height: roomHeight
-        }
-
         for (let x = room.x; x < room.x + room.width; x++) {
             for (let y = room.y; y < room.y + room.height; y++) {
                 dungeon.cells[x][y].type = CellType.Floor;
@@ -184,10 +179,10 @@ export function createDungeon(
     }
 
     for (let i = 0; i < dungeon.rooms.length - 1; i++) {
-        let x1 = getRandomInt(dungeon.rooms[i].x, dungeon.rooms[i].x + dungeon.rooms[i].width);
-        let y1 = getRandomInt(dungeon.rooms[i].y, dungeon.rooms[i].y + dungeon.rooms[i].height);
-        let x2 = getRandomInt(dungeon.rooms[i + 1].x, dungeon.rooms[i + 1].x + dungeon.rooms[i + 1].width);
-        let y2 = getRandomInt(dungeon.rooms[i + 1].y, dungeon.rooms[i + 1].y + dungeon.rooms[i + 1].height);
+        let x1 = randomInt(dungeon.rooms[i].x, dungeon.rooms[i].x + dungeon.rooms[i].width);
+        let y1 = randomInt(dungeon.rooms[i].y, dungeon.rooms[i].y + dungeon.rooms[i].height);
+        let x2 = randomInt(dungeon.rooms[i + 1].x, dungeon.rooms[i + 1].x + dungeon.rooms[i + 1].width);
+        let y2 = randomInt(dungeon.rooms[i + 1].y, dungeon.rooms[i + 1].y + dungeon.rooms[i + 1].height);
 
         if (x1 > x2) {
             const t = x1;
@@ -244,7 +239,7 @@ export function createDungeon(
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            if (Math.random() < doorChance) {
+            if (randomFloat(0, 1) < doorChance) {
                 continue;
             }
 
@@ -276,22 +271,22 @@ export function createDungeon(
     }
 
     {
-        const x = getRandomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
-        const y = getRandomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
+        const x = randomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
+        const y = randomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
         dungeon.cells[x][y].type = CellType.StairsUp;
     }
 
     {
-        const x = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
-        const y = getRandomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
+        const x = randomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
+        const y = randomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
         dungeon.cells[x][y].type = CellType.StairsDown;
     }
 
     for (let i = 0; i < monsterAmount; i++) {
-        const roomIndex = getRandomInt(1, dungeon.rooms.length);
+        const roomIndex = randomInt(1, dungeon.rooms.length);
 
-        const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-        const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+        const x = randomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+        const y = randomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
         const monster: Entity = {
             x: x,
@@ -311,7 +306,7 @@ export function createDungeon(
             disposition: Disposition.Aggressive
         };
 
-        const roll = Math.random();
+        const roll = randomFloat(0, 1);
         if (roll < 0.25) {
             monster.name = 'rat';
             monster.char = 'r';
@@ -338,7 +333,7 @@ export function createDungeon(
                 Faction.Player,
                 Faction.Bugbear
             ];
-            if (Math.random() < 0.5) {
+            if (randomFloat(0, 1) < 0.5) {
                 monster.color = '#ffff00';
                 monster.name += ' shaman';
                 monster.class = Class.Shaman;
@@ -354,7 +349,7 @@ export function createDungeon(
                 Faction.Player,
                 Faction.Orc
             ];
-            if (Math.random() < 0.5) {
+            if (randomFloat(0, 1) < 0.5) {
                 monster.color = '#ffff00';
                 monster.name += ' shaman';
                 monster.class = Class.Shaman;
@@ -365,10 +360,10 @@ export function createDungeon(
     }
 
     for (let i = 0; i < chestAmount; i++) {
-        const roomIndex = getRandomInt(0, dungeon.rooms.length);
+        const roomIndex = randomInt(0, dungeon.rooms.length);
 
-        const x = getRandomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-        const y = getRandomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+        const x = randomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
+        const y = randomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
 
         dungeon.chests.push({
             x: x,
@@ -377,7 +372,7 @@ export function createDungeon(
             color: '#ffffff',
             alpha: 1,
             loot: (() => {
-                if (Math.random() < 0.5) {
+                if (randomFloat(0, 1) < 0.5) {
                     return undefined;
                 }
 
@@ -390,7 +385,7 @@ export function createDungeon(
                     name: '',
                     equipped: false
                 }
-                const roll = Math.random();
+                const roll = randomFloat(0, 1);
                 if (roll < 0.25) {
                     item.name = 'sword';
                     item.char = '|';

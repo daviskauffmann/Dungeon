@@ -1,5 +1,5 @@
 import { Dungeon, Cell, CellType } from './dungeon';
-import { Coord, distanceBetweenSquared } from './utils';
+import { Coord, distanceBetweenSquared } from './math';
 
 // sends out a ray in a certain direction, calling the action on every cell it comes across
 // blockedBy is an array of cell types that block the ray

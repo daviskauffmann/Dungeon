@@ -10,11 +10,12 @@ export interface Size {
 
 export interface Rect extends Coord, Size { }
 
-export function getRandomInt(min: number, max: number) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    //return 4;
-    return Math.floor(Math.random() * (max - min)) + min;
+export function randomFloat(min?: number, max?: number) {
+    return Math.random() * (max - min) + min
+}
+
+export function randomInt(min: number, max: number) {
+    return Math.floor(randomFloat(Math.ceil(min), Math.floor(max)));
 }
 
 export function distanceBetweenSquared(coord1: Coord, coord2: Coord) {
