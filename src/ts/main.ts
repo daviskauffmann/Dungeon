@@ -6,7 +6,7 @@ import { draw } from './renderer';
 
 game.dungeons.push(createTown());
 
-window.addEventListener('resize', (ev) => draw(ev, getEntity(0)));
-document.addEventListener('keydown', (ev) => input(ev, getEntity(0)));
+window.addEventListener('resize', draw);
+document.addEventListener('keydown', input);
 
-draw(undefined, getEntity(0));
+draw(undefined);

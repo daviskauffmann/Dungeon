@@ -1,12 +1,13 @@
 import { raycast } from './algorithms';
 import { CellType, Corpse } from './dungeon';
-import { Entity, getDungeon, getInventoryChar, move } from './entity';
+import { Entity, getDungeon, getEntity, getInventoryChar, move } from './entity';
 import { game, load, save, tick } from './game';
 import { draw, graphics } from './renderer';
 import { log, ui } from './ui';
 
-export function input(ev: KeyboardEvent, entity: Entity) {
-    const dungeon = getDungeon(entity);
+export function input(ev: KeyboardEvent) {
+    const player = getEntity(0);
+    const dungeon = getDungeon(player);
 
     switch (ui.mode) {
         case 'target':
@@ -38,30 +39,30 @@ export function input(ev: KeyboardEvent, entity: Entity) {
             switch (ev.key) {
                 case 't':
                     ui.mode = 'target';
-                    ui.target.x = entity.x;
-                    ui.target.y = entity.y;
+                    ui.target.x = player.x;
+                    ui.target.y = player.y;
 
                     break;
                 case 'ArrowUp':
-                    move(entity, entity.x, entity.y - 1);
+                    move(player, player.x, player.y - 1);
 
                     tick();
 
                     break;
                 case 'ArrowRight':
-                    move(entity, entity.x + 1, entity.y);
+                    move(player, player.x + 1, player.y);
 
                     tick();
 
                     break;
                 case 'ArrowDown':
-                    move(entity, entity.x, entity.y + 1);
+                    move(player, player.x, player.y + 1);
 
                     tick();
 
                     break;
                 case 'ArrowLeft':
-                    move(entity, entity.x - 1, entity.y);
+                    move(player, player.x - 1, player.y);
 
                     tick();
 
@@ -72,13 +73,13 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                     break;
                 case 'g':
                     dungeon.items.forEach((item, index) => {
-                        if (item.x !== entity.x || item.y !== entity.y) {
+                        if (item.x !== player.x || item.y !== player.y) {
                             return;
                         }
 
-                        log(`${entity.name} picks up a ${item.name}`);
+                        log(dungeon, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
 
-                        entity.inventory.push(item);
+                        player.inventory.push(item);
                         dungeon.items.splice(index, 1);
                     });
 
@@ -88,12 +89,12 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                 case 's':
                     const targets: Array<Entity> = [];
                     for (let dir = 0; dir < 360; dir++) {
-                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
+                        raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
                             CellType.Wall,
                             CellType.DoorClosed
                         ], (x, y) => {
                             dungeon.entities.forEach(target => {
-                                if (target === entity) {
+                                if (target === player) {
                                     return;
                                 }
 
@@ -110,9 +111,9 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                         });
                     }
                     if (targets.length > 0) {
-                        log(`${entity.name} spots a ${targets.map(target => target.name).join(', ')}`);
+                        log(dungeon, { x: player.x, y: player.y }, `${player.name} spots a ${targets.map(target => target.name).join(', ')}`);
                     } else {
-                        log(`${entity.name} doesn't see anything`);
+                        log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn't see anything`);
                     }
 
                     tick();
@@ -120,7 +121,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                     break;
                 case 'r':
                     for (let dir = 0; dir < 360; dir++) {
-                        raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
+                        raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
                             CellType.Wall,
                             CellType.DoorClosed
                         ], (x, y) => {
@@ -153,7 +154,7 @@ export function input(ev: KeyboardEvent, entity: Entity) {
                                     disposition: corpse.disposition
                                 };
 
-                                log(`${entity.name} ressurects ${newEntity.name}`);
+                                log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
 
                                 dungeon.entities.push(newEntity);
                                 dungeon.items.splice(index, 1);
@@ -165,17 +166,17 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
                     break;
                 case 'c':
-                    if (dungeon.cells[entity.x][entity.y].type === CellType.DoorOpen) {
-                        log(`${entity.name} closes the door`);
+                    if (dungeon.cells[player.x][player.y].type === CellType.DoorOpen) {
+                        log(dungeon, { x: player.x, y: player.y }, `${player.name} closes the door`);
 
-                        dungeon.cells[entity.x][entity.y].type = CellType.DoorClosed
+                        dungeon.cells[player.x][player.y].type = CellType.DoorClosed
                     }
 
                     tick();
 
                     break;
                 case 'i':
-                    if (entity.inventory.length > 0) {
+                    if (player.inventory.length > 0) {
                         ui.mode = 'inventory';
                     }
 
@@ -198,29 +199,29 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
                     break;
                 case 'd':
-                    log('select item to drop');
-                    log('press space to cancel');
+                    log(dungeon, { x: player.x, y: player.y }, 'select item to drop');
+                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
                     ui.mode = 'inventory_drop';
 
                     break;
                 case 'e':
-                    log('select item to equip');
-                    log('press space to cancel');
+                    log(dungeon, { x: player.x, y: player.y }, 'select item to equip');
+                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
                     ui.mode = 'inventory_equip';
 
                     break;
                 case 'u':
-                    log('select item to unequip');
-                    log('press space to cancel');
+                    log(dungeon, { x: player.x, y: player.y }, 'select item to unequip');
+                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
                     ui.mode = 'inventory_unequip';
 
                     break;
                 case 's':
-                    log('select first item to swap');
-                    log('press space to cancel');
+                    log(dungeon, { x: player.x, y: player.y }, 'select first item to swap');
+                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
                     ui.mode = 'inventory_swapFirst';
 
@@ -229,18 +230,18 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
             break;
         case 'inventory_drop':
-            entity.inventory.forEach((item, index) => {
-                if (getInventoryChar(entity, item) !== ev.key) {
+            player.inventory.forEach((item, index) => {
+                if (getInventoryChar(player, item) !== ev.key) {
                     return;
                 }
 
-                log(`${entity.name} drops a ${item.name}`);
+                log(dungeon, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
 
-                item.x = entity.x;
-                item.y = entity.y;
+                item.x = player.x;
+                item.y = player.y;
 
                 dungeon.items.push(item);
-                entity.inventory.splice(index, 1);
+                player.inventory.splice(index, 1);
 
                 ui.mode = '';
             });
@@ -254,12 +255,12 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
             break;
         case 'inventory_equip':
-            entity.inventory.forEach(item => {
-                if (getInventoryChar(entity, item) !== ev.key) {
+            player.inventory.forEach(item => {
+                if (getInventoryChar(player, item) !== ev.key) {
                     return;
                 }
 
-                log(`${entity.name} equips a ${item.name}`);
+                log(dungeon, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
 
                 item.equipped = true;
 
@@ -275,12 +276,12 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
             break;
         case 'inventory_unequip':
-            entity.inventory.forEach(item => {
-                if (getInventoryChar(entity, item) !== ev.key) {
+            player.inventory.forEach(item => {
+                if (getInventoryChar(player, item) !== ev.key) {
                     return;
                 }
 
-                log(`${entity.name} unequips a ${item.name}`);
+                log(dungeon, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
 
                 item.equipped = false;
 
@@ -296,15 +297,15 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
             break;
         case 'inventory_swapFirst':
-            entity.inventory.forEach((item, index) => {
-                if (getInventoryChar(entity, item) !== ev.key) {
+            player.inventory.forEach((item, index) => {
+                if (getInventoryChar(player, item) !== ev.key) {
                     return;
                 }
 
                 ui.inventorySwapFirst = index;
 
-                log('select second item to swap');
-                log('press space to cancel');
+                log(dungeon, { x: player.x, y: player.y }, 'select second item to swap');
+                log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
                 ui.mode = 'inventory_swapSecond';
             });
@@ -318,18 +319,18 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
             break;
         case 'inventory_swapSecond':
-            entity.inventory.forEach((item, index) => {
-                if (getInventoryChar(entity, item) !== ev.key) {
+            player.inventory.forEach((item, index) => {
+                if (getInventoryChar(player, item) !== ev.key) {
                     return;
                 }
 
                 ui.inventorySwapSecond = index;
 
-                log(`${entity.name} swaps the ${entity.inventory[ui.inventorySwapFirst].name} with the ${entity.inventory[ui.inventorySwapSecond].name}`);
+                log(dungeon, { x: player.x, y: player.y }, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
 
-                const t = entity.inventory[ui.inventorySwapFirst];
-                entity.inventory[ui.inventorySwapFirst] = entity.inventory[ui.inventorySwapSecond];
-                entity.inventory[ui.inventorySwapSecond] = t;
+                const t = player.inventory[ui.inventorySwapFirst];
+                player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
+                player.inventory[ui.inventorySwapSecond] = t;
 
                 ui.mode = '';
             });
@@ -355,13 +356,13 @@ export function input(ev: KeyboardEvent, entity: Entity) {
 
     switch (ev.key) {
         case '[':
-            log('game saved');
+            log(dungeon, { x: player.x, y: player.y }, 'game saved');
 
             save();
 
             break;
         case ']':
-            log('game loaded');
+            log(dungeon, { x: player.x, y: player.y }, 'game loaded');
 
             load();
 
@@ -392,5 +393,5 @@ export function input(ev: KeyboardEvent, entity: Entity) {
             break;
     }
 
-    draw(undefined, entity);
+    draw(undefined);
 }

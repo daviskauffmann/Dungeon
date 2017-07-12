@@ -1,6 +1,6 @@
 import { raycast } from './algorithms';
 import { Cell, CellType } from './dungeon';
-import { calcStats, Entity, getDungeon, getInventoryChar, getLevel } from './entity';
+import { calcStats, Entity, getDungeon, getEntity, getInventoryChar, getLevel } from './entity';
 import { game } from './game';
 import { isInside, Rect } from './math';
 import { ui } from './ui';
@@ -32,8 +32,9 @@ export const graphics: Graphics = {
     ]
 };
 
-export function draw(ev: UIEvent, entity: Entity) {
-    const dungeon = getDungeon(entity);
+export function draw(ev: UIEvent) {
+    const player = getEntity(0);
+    const dungeon = getDungeon(player);
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -46,8 +47,8 @@ export function draw(ev: UIEvent, entity: Entity) {
     };
     view.width = Math.round(canvas.width / graphics.fontSize);
     view.height = Math.round(canvas.height / graphics.fontSize);
-    view.x = entity.x - Math.round(view.width / 2);
-    view.y = entity.y - Math.round(view.height / 2);
+    view.x = player.x - Math.round(view.width / 2);
+    view.y = player.y - Math.round(view.height / 2);
     if (view.x < 0) {
         view.x = 0;
     }
@@ -78,7 +79,7 @@ export function draw(ev: UIEvent, entity: Entity) {
         }
     }
     for (let dir = 0; dir < 360; dir += 0.5) {
-        raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
+        raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
             CellType.Wall,
             CellType.DoorClosed
         ], (x, y) => {
@@ -93,7 +94,7 @@ export function draw(ev: UIEvent, entity: Entity) {
     }
     if (dungeon.litRooms) {
         dungeon.rooms.forEach(room => {
-            if (!isInside({ x: entity.x, y: entity.y }, room)) {
+            if (!isInside({ x: player.x, y: player.y }, room)) {
                 return;
             }
 
@@ -199,18 +200,18 @@ export function draw(ev: UIEvent, entity: Entity) {
 
     ctx.fillStyle = '#ffffff';
 
-    ctx.fillText(`Level: ${getLevel(entity)} Turn: ${game.turn}`, 0, canvas.height);
+    ctx.fillText(`Level: ${getLevel(player)} Turn: ${game.turn}`, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
         ctx.fillStyle = '#ffffff';
-        entity.inventory.forEach((item, index) => {
-            ctx.fillText(`${getInventoryChar(entity, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (graphics.fontSize * 10), (index + 1) * graphics.fontSize);
+        player.inventory.forEach((item, index) => {
+            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (graphics.fontSize * 10), (index + 1) * graphics.fontSize);
         });
     }
 
     if (ui.mode === 'character') {
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`Health: ${calcStats(entity).health}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
-        ctx.fillText(`Mana: ${calcStats(entity).mana}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
+        ctx.fillText(`Health: ${calcStats(player).health}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
+        ctx.fillText(`Mana: ${calcStats(player).mana}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
     }
 }

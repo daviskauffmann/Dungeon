@@ -53,44 +53,6 @@ export interface Stats {
     luck: number;
 }
 
-export function createEntity(
-    x: number,
-    y: number,
-    name: string,
-    char: string,
-    color: string,
-    alpha: number,
-    possibleClasses: Array<Class>,
-    minLevel: number,
-    maxLevel: number,
-    sight: number,
-    inventory: Array<Item>,
-    factions: Array<Faction>,
-    hostileFactions: Array<Faction>,
-    hostileEntityIds: Array<number>,
-    disposition: Disposition) {
-
-    const entity: Entity = {
-        x: x,
-        y: y,
-        char: char,
-        color: color,
-        alpha: alpha,
-        id: game.currentId++,
-        name: name,
-        level: randomInt(minLevel, maxLevel),
-        class: possibleClasses[randomInt(0, possibleClasses.length)],
-        sight: sight,
-        inventory: inventory,
-        factions: factions,
-        hostileFactions: hostileFactions,
-        hostileEntityIds: hostileEntityIds,
-        disposition: disposition
-    };
-
-    return entity;
-}
-
 export function getEntity(id: number) {
     return game.dungeons.find(dungeon => {
         return dungeon.entities.some(entity => {
@@ -159,7 +121,7 @@ export function tick(entity: Entity) {
         dungeon.items.splice(index, 1);
     });
     if (itemNames.length) {
-        log(`${entity.name} picks up ${itemNames.join(', ')}`);
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} picks up ${itemNames.join(', ')}`);
 
         return;
     }
@@ -223,12 +185,12 @@ export function tick(entity: Entity) {
                 };
 
                 if (randomFloat(0, 1) < 0.5) {
-                    log(`${entity.name} fails to ressurect ${newEntity.name}`);
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${newEntity.name}`);
 
                     return;
                 }
 
-                log(`${entity.name} ressurects ${newEntity.name}`);
+                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ressurects ${newEntity.name}`);
 
                 dungeon.entities.push(newEntity);
                 dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
@@ -273,7 +235,7 @@ export function tick(entity: Entity) {
             if (targets.length) {
                 const target = targets[0];
 
-                log(`${entity.name} spots a ${target.name}`);
+                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots a ${target.name}`);
 
                 const path = pathfind(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
 
@@ -302,7 +264,7 @@ export function tick(entity: Entity) {
             return false;
         }
 
-        log(`${entity.name} drops a ${item.name}`);
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
 
         dungeon.items.push(item);
         entity.inventory.splice(index, 1);
@@ -336,18 +298,18 @@ export function move(entity: Entity, x: number, y: number) {
             return;
         case CellType.DoorClosed:
             if (randomFloat(0, 1) < 0.5) {
-                log(`${entity.name} can't open the door`);
+                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
 
                 return;
             }
 
-            log(`${entity.name} opens the door`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the door`);
 
             dungeon.cells[x][y].type = CellType.DoorOpen;
 
             return;
         case CellType.StairsUp:
-            log(`${entity.name} ascends`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
 
             changeLevel(entity, getLevel(entity) - 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
@@ -363,7 +325,7 @@ export function move(entity: Entity, x: number, y: number) {
 
             return;
         case CellType.StairsDown:
-            log(`${entity.name} descends`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} descends`);
 
             changeLevel(entity, getLevel(entity) + 1, (newDungeon) => {
                 for (let x = 0; x < newDungeon.width; x++) {
@@ -394,21 +356,21 @@ export function move(entity: Entity, x: number, y: number) {
         }
 
         if (randomFloat(0, 1) < 0.5) {
-            log(`${entity.name} misses the ${target.name}`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);
 
             return true;
         }
 
         if (target.id === 0 && game.godMode) {
-            log(`${entity.name} cannot kill the ${target.name}`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
 
             return true;
         }
 
-        log(`${entity.name} kills the ${target.name}`);
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
 
         if (target.inventory.length) {
-            log(`${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
 
             target.inventory.forEach((item, index) => {
                 dungeon.items.push({
@@ -439,28 +401,28 @@ export function move(entity: Entity, x: number, y: number) {
         }
 
         if (randomFloat(0, 1) < 0.5) {
-            log(`${entity.name} can't open the chest`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the chest`);
 
             return true;
         }
 
-        log(`${entity.name} opens the chest`);
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the chest`);
 
         dungeon.chests.splice(index, 1);
 
         if (!chest.loot) {
-            log(`${entity.name} sees nothing inside`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees nothing inside`);
 
             return true;
         }
 
         if (entity.inventory.length >= 26) {
-            log(`${entity.name}'s inventory is full`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name}'s inventory is full`);
 
             return true;
         }
 
-        log(`${entity.name} loots a ${chest.loot.name}`);
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} loots a ${chest.loot.name}`);
 
         entity.inventory.push(chest.loot);
 
@@ -471,27 +433,28 @@ export function move(entity: Entity, x: number, y: number) {
 
     const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
     if (itemNames) {
-        log(`${entity.name} sees ${itemNames}`);
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
     }
 
     entity.x = x;
     entity.y = y;
 
     function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
+        const dungeon = getDungeon(entity);
+        
+        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${level}`);
+        
         while (level >= game.dungeons.length) {
             game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
         }
-
-        const dungeon = getDungeon(entity);
+        
         const newDungeon = game.dungeons[level];
 
         newDungeon.entities.push(entity);
         dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
-
+        
         const spawn = calcSpawnCoord(newDungeon);
         entity.x = spawn.x;
         entity.y = spawn.y;
-
-        log(`${entity.name} has moved to level ${getLevel(entity)}`);
     }
 }

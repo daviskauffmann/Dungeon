@@ -1,3 +1,6 @@
+import { raycast } from './algorithms';
+import { CellType, Dungeon } from './dungeon';
+import { getDungeon, getEntity } from './entity';
 import { Coord } from './math';
 
 export interface UI {
@@ -21,7 +24,34 @@ export const ui: UI = {
     }
 };
 
-export function log(message: string) {
+export function log(dungeon: Dungeon, location: Coord, message: string) {
+    const player = getEntity(0);
+    
+    if (dungeon !== getDungeon(player)) {
+        return;
+    }
+
+    if ((() => {
+        for (let dir = 0; dir < 360; dir++) {
+            if (raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
+                CellType.Wall,
+                CellType.DoorClosed
+            ], (x, y) => {
+                if (x !== location.x || y !== location.y) {
+                    return;
+                }
+
+                return true;
+            })) {
+                return false;
+            }
+        }
+
+        return true;
+    })()) {
+        return;
+    }
+
     ui.messages.push(message);
 
     if (ui.messages.length > ui.maxMessages) {
