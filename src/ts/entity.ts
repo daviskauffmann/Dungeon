@@ -1,4 +1,4 @@
-import { pathfind, raycast } from './algorithms';
+import { astar, fov } from './algorithms';
 import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
 import { game } from './game';
 import { Coord, randomFloat, randomInt } from './math';
@@ -134,35 +134,29 @@ export function tick(entity: Entity) {
                 break;
             }
 
-            const corpses: Array<Corpse> = [];
-            for (let dir = 0; dir < 360; dir++) {
-                raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
-                    CellType.Wall,
-                    CellType.DoorClosed
-                ], (x, y) => {
-                    dungeon.items.forEach((item, index) => {
-                        if (item.x !== x || item.y !== y) {
-                            return;
-                        }
+            const corpses = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, [
+                CellType.Wall,
+                CellType.DoorClosed
+            ], coord => {
+                return dungeon.items.find(item => {
+                    if (item.x !== coord.x || item.y !== coord.y) {
+                        return false;
+                    }
 
-                        if (!('originalChar' in item)) {
-                            return;
-                        }
+                    if (!('originalChar' in item)) {
+                        return false;
+                    }
 
-                        const corpse = <Corpse>item;
+                    const corpse = <Corpse>item;
 
-                        if (!corpse.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-                            return;
-                        }
+                    if (!corpse.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
+                        return false;
+                    }
 
-                        if (corpses.indexOf(corpse) > -1) {
-                            return;
-                        }
-
-                        corpses.push(corpse);
-                    });
+                    return true;
                 });
-            }
+            }).filter(hit => hit.data).map(hit => <Corpse>hit.data);
+
             if (corpses.length) {
                 const corpse = corpses[0];
 
@@ -205,39 +199,33 @@ export function tick(entity: Entity) {
         case Disposition.Passive:
             break;
         case Disposition.Aggressive:
-            const targets: Array<Entity> = [];
-            for (let dir = 0; dir < 360; dir += 10) {
-                raycast(dungeon, { x: entity.x, y: entity.y }, entity.sight, dir, [
-                    CellType.Wall,
-                    CellType.DoorClosed
-                ], (x, y) => {
-                    dungeon.entities.forEach(target => {
-                        if (target === entity) {
-                            return false;
-                        }
+            const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, [
+                CellType.Wall,
+                CellType.DoorClosed
+            ], coord => {
+                return dungeon.entities.find(target => {
+                    if (target === entity) {
+                        return false;
+                    }
 
-                        if (target.x !== x || target.y !== y) {
-                            return false;
-                        }
+                    if (target.x !== coord.x || target.y !== coord.y) {
+                        return false;
+                    }
 
-                        if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-                            return false;
-                        }
+                    if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
+                        return false;
+                    }
 
-                        if (targets.indexOf(target) > -1) {
-                            return false;
-                        }
-
-                        targets.push(target);
-                    });
+                    return true;
                 });
-            }
+            }).filter(hit => hit.data).map(hit => <Entity>hit.data);
+
             if (targets.length) {
                 const target = targets[0];
 
                 log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots a ${target.name}`);
 
-                const path = pathfind(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+                const path = astar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
 
                 if (!path || !path.length) {
                     break;
@@ -441,18 +429,18 @@ export function move(entity: Entity, x: number, y: number) {
 
     function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
         const dungeon = getDungeon(entity);
-        
+
         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${level}`);
-        
+
         while (level >= game.dungeons.length) {
             game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
         }
-        
+
         const newDungeon = game.dungeons[level];
 
         newDungeon.entities.push(entity);
         dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
-        
+
         const spawn = calcSpawnCoord(newDungeon);
         entity.x = spawn.x;
         entity.y = spawn.y;

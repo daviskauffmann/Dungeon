@@ -1,4 +1,4 @@
-import { raycast } from './algorithms';
+import { fov } from './algorithms';
 import { Cell, CellType } from './dungeon';
 import { calcStats, Entity, getDungeon, getEntity, getInventoryChar, getLevel } from './entity';
 import { game } from './game';
@@ -78,20 +78,18 @@ export function draw(ev: UIEvent) {
             }
         }
     }
-    for (let dir = 0; dir < 360; dir += 0.5) {
-        raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
-            CellType.Wall,
-            CellType.DoorClosed
-        ], (x, y) => {
-            dungeon.cells[x][y].discovered = true;
+    fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, [
+        CellType.Wall,
+        CellType.DoorClosed
+    ], coord => {
+        dungeon.cells[coord.x][coord.y].discovered = true;
 
-            if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
-                return;
-            }
+        if (cellVisibility.indexOf(dungeon.cells[coord.x][coord.y]) > -1) {
+            return;
+        }
 
-            cellVisibility.push(dungeon.cells[x][y]);
-        });
-    }
+        cellVisibility.push(dungeon.cells[coord.x][coord.y]);
+    });
     if (dungeon.litRooms) {
         dungeon.rooms.forEach(room => {
             if (!isInside({ x: player.x, y: player.y }, room)) {

@@ -1,78 +1,78 @@
 import { Dungeon, Cell, CellType } from './dungeon';
 import { Coord, distanceBetweenSquared } from './math';
 
-// sends out a ray in a certain direction, calling the action on every cell it comes across
-// blockedBy is an array of cell types that block the ray
-// action() is a function that will stop the ray if it returns true
-// raycast() will then return the cell where action() stopped, returning nothing otherwise
-// with this implementation, some cells will be visited multiple times
-export function raycast(
-    dungeon: Dungeon,
-    origin: Coord,
-    r: number,
-    dir: number,
-    blockedBy: Array<CellType>,
-    action: (x: number, y: number) => boolean | void) {
-
-    const dx = Math.cos(dir * (Math.PI / 180));
-    const dy = Math.sin(dir * (Math.PI / 180));
-
-    let cx = origin.x + 0.5;
-    let cy = origin.y + 0.5;
-
-    for (let i = 0; i < r; i++) {
-        const x = Math.trunc(cx);
-        const y = Math.trunc(cy);
-
-        if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-            return;
-        }
-
-        if (action(x, y)) {
-            return dungeon.cells[x][y];
-        }
-
-        if (blockedBy.indexOf(dungeon.cells[x][y].type) > -1) {
-            return;
-        }
-
-        cx += dx;
-        cy += dy;
-    }
+interface Hit {
+    coord: Coord;
+    cell: Cell;
+    data?: any;
 }
 
-// sends out rays in a circle
-// returns an array of cells that were affected by action()
-export function spherecast(
+export function fov(
     dungeon: Dungeon,
     origin: Coord,
     r: number,
     accuracy: number,
     blockedBy: Array<CellType>,
-    action: (x: number, y: number) => boolean | void) {
+    action: (coord: Coord) => any) {
 
-    const cells: Array<Cell> = [];
+    const hits: Array<Hit> = [];
 
     for (let dir = 0; dir < 360; dir += accuracy) {
-        const cell = raycast(dungeon, origin, r, dir, blockedBy, action);
+        const hit = (() => {
+            const dx = Math.cos(dir * (Math.PI / 180));
+            const dy = Math.sin(dir * (Math.PI / 180));
 
-        if (!cell) {
+            const current: Coord = {
+                x: origin.x + 0.5,
+                y: origin.y + 0.5
+            }
+
+            for (let i = 0; i < r; i++) {
+                const coord: Coord = {
+                    x: Math.trunc(current.x),
+                    y: Math.trunc(current.y)
+                }
+
+                if (coord.x < 0 || coord.x >= dungeon.width || coord.y < 0 || coord.y >= dungeon.height) {
+                    return;
+                }
+
+                const hit: Hit = {
+                    coord: coord,
+                    cell: dungeon.cells[coord.x][coord.y],
+                };
+
+                const data = action(coord);
+                if (data) {
+                    hit.data = data;
+
+                    return hit;
+                }
+
+                if (blockedBy.indexOf(dungeon.cells[coord.x][coord.y].type) > -1) {
+                    return hit;
+                }
+
+                current.x += dx;
+                current.y += dy;
+            }
+        })();
+
+        if (!hit) {
             continue;
         }
 
-        if (cells.indexOf(cell) > -1) {
+        if (hits.find(h => h.cell === hit.cell)) {
             continue;
         }
 
-        cells.push(cell);
+        hits.push(hit);
     }
 
-    return cells;
+    return hits;
 }
 
-// uses A* to find a path between two coordinates
-// returns an array of coordinates leading from the start position to the end position, or undefined if no path was found
-export function pathfind(dungeon: Dungeon, start: Coord, goal: Coord) {   
+export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
     const coords: Array<Array<Coord>> = [];
     for (let x = 0; x < dungeon.width; x++) {
         coords[x] = [];

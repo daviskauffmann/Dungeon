@@ -1,4 +1,4 @@
-import { raycast } from './algorithms';
+import { fov } from './algorithms';
 import { CellType, Corpse } from './dungeon';
 import { Entity, getDungeon, getEntity, getInventoryChar, move } from './entity';
 import { game, load, save, tick } from './game';
@@ -87,80 +87,70 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 's':
-                    const targets: Array<Entity> = [];
-                    for (let dir = 0; dir < 360; dir++) {
-                        raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
-                            CellType.Wall,
-                            CellType.DoorClosed
-                        ], (x, y) => {
-                            dungeon.entities.forEach(target => {
-                                if (target === player) {
-                                    return;
-                                }
+                    const targets = fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, [
+                        CellType.Wall,
+                        CellType.DoorClosed
+                    ], coord => {
+                        return dungeon.entities.find(target => {
+                            if (target === player) {
+                                return false;
+                            }
 
-                                if (targets.indexOf(target) > -1) {
-                                    return;
-                                }
+                            if (target.x !== coord.x || target.y !== coord.y) {
+                                return false;
+                            }
 
-                                if (target.x !== x || target.y !== y) {
-                                    return;
-                                }
-
-                                targets.push(target);
-                            });
+                            return true;
                         });
-                    }
-                    if (targets.length > 0) {
+                    }).filter(hit => hit.data).map(hit => <Entity>hit.data);
+
+                    if (targets.length) {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} spots a ${targets.map(target => target.name).join(', ')}`);
                     } else {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn't see anything`);
                     }
 
-                    tick();
-
                     break;
                 case 'r':
-                    for (let dir = 0; dir < 360; dir++) {
-                        raycast(dungeon, { x: player.x, y: player.y }, player.sight, dir, [
-                            CellType.Wall,
-                            CellType.DoorClosed
-                        ], (x, y) => {
-                            dungeon.items.forEach((item, index) => {
-                                if (item.x !== x || item.y !== y) {
-                                    return;
-                                }
+                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, [
+                        CellType.Wall,
+                        CellType.DoorClosed
+                    ], coord => {
+                        dungeon.items.forEach((item, index) => {
+                            if (item.x !== coord.x || item.y !== coord.y) {
+                                return;
+                            }
 
-                                if (!('originalChar' in item)) {
-                                    return;
-                                }
+                            if (!('originalChar' in item)) {
+                                return;
+                            }
 
-                                const corpse = <Corpse>item;
+                            const corpse = <Corpse>item;
 
-                                const newEntity: Entity = {
-                                    x: corpse.x,
-                                    y: corpse.y,
-                                    char: corpse.originalChar,
-                                    color: corpse.color,
-                                    alpha: corpse.alpha,
-                                    id: corpse.id,
-                                    name: corpse.name.replace(' corpse', ''),
-                                    level: corpse.level,
-                                    class: corpse.class,
-                                    sight: corpse.sight,
-                                    inventory: corpse.inventory,
-                                    factions: corpse.factions,
-                                    hostileFactions: corpse.hostileFactions,
-                                    hostileEntityIds: corpse.hostileEntityIds,
-                                    disposition: corpse.disposition
-                                };
+                            const newEntity: Entity = {
+                                x: corpse.x,
+                                y: corpse.y,
+                                char: corpse.originalChar,
+                                color: corpse.color,
+                                alpha: corpse.alpha,
+                                id: corpse.id,
+                                name: corpse.name.replace(' corpse', ''),
+                                level: corpse.level,
+                                class: corpse.class,
+                                sight: corpse.sight,
+                                inventory: corpse.inventory,
+                                factions: corpse.factions,
+                                hostileFactions: corpse.hostileFactions,
+                                hostileEntityIds: corpse.hostileEntityIds,
+                                disposition: corpse.disposition
+                            };
 
-                                log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
+                            log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
 
-                                dungeon.entities.push(newEntity);
-                                dungeon.items.splice(index, 1);
-                            });
+                            dungeon.entities.push(newEntity);
+                            dungeon.items.splice(index, 1);
                         });
-                    }
+                    });
 
                     tick();
 
