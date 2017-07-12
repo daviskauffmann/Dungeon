@@ -1,9 +1,7 @@
 import { Dungeon, Cell, CellType } from './dungeon';
 import { Coord, distanceBetweenSquared } from './math';
 
-interface Hit {
-    coord: Coord;
-    cell: Cell;
+interface Hit extends Coord {
     data?: any;
 }
 
@@ -38,8 +36,8 @@ export function fov(
                 }
 
                 const hit: Hit = {
-                    coord: coord,
-                    cell: dungeon.cells[coord.x][coord.y],
+                    x: coord.x,
+                    y: coord.y
                 };
 
                 const data = action(coord);
@@ -62,7 +60,7 @@ export function fov(
             continue;
         }
 
-        if (hits.find(h => h.cell === hit.cell)) {
+        if (hits.find(h => h.x === hit.x && h.y === hit.y)) {
             continue;
         }
 
