@@ -62,7 +62,7 @@ export function draw(ev: UIEvent) {
         view.y = dungeon.height - view.height;
     }
 
-    const cellVisibility: Array<Cell> = [];
+    const visibleCells: Array<Cell> = [];
     if (game.ignoreFov) {
         for (let x = view.x; x < view.x + view.width; x++) {
             for (let y = view.y; y < view.y + view.height; y++) {
@@ -70,25 +70,22 @@ export function draw(ev: UIEvent) {
                     continue;
                 }
 
-                if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+                if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
                     continue;
                 }
 
-                cellVisibility.push(dungeon.cells[x][y]);
+                visibleCells.push(dungeon.cells[x][y]);
             }
         }
     }
-    fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, [
-        CellType.Wall,
-        CellType.DoorClosed
-    ], coord => {
+    fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, coord => {
         dungeon.cells[coord.x][coord.y].discovered = true;
 
-        if (cellVisibility.indexOf(dungeon.cells[coord.x][coord.y]) > -1) {
+        if (visibleCells.indexOf(dungeon.cells[coord.x][coord.y]) > -1) {
             return;
         }
 
-        cellVisibility.push(dungeon.cells[coord.x][coord.y]);
+        visibleCells.push(dungeon.cells[coord.x][coord.y]);
     });
     if (dungeon.litRooms) {
         dungeon.rooms.forEach(room => {
@@ -104,11 +101,11 @@ export function draw(ev: UIEvent) {
 
                     dungeon.cells[x][y].discovered = true;
 
-                    if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+                    if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
                         continue;
                     }
 
-                    cellVisibility.push(dungeon.cells[x][y]);
+                    visibleCells.push(dungeon.cells[x][y]);
                 }
             }
         });
@@ -145,7 +142,7 @@ export function draw(ev: UIEvent) {
                 }
             }
 
-            if (cellVisibility.indexOf(dungeon.cells[x][y]) > -1) {
+            if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
                 if (dungeon.entities.some(entity => {
                     if (entity.x !== x || entity.y !== y) {
                         return false;
@@ -185,7 +182,7 @@ export function draw(ev: UIEvent) {
 
             let cellType = graphics.cellTypes[dungeon.cells[x][y].type];
             ctx.fillStyle = cellType.color;
-            ctx.globalAlpha = cellVisibility.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
+            ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
             ctx.fillText(cellType.char, screen.x, screen.y);
         }
     }

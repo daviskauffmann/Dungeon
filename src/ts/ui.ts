@@ -28,16 +28,15 @@ export function log(dungeon: Dungeon, location: Coord, message: string) {
         return;
     }
 
-    if (!fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, [
-        CellType.Wall,
-        CellType.DoorClosed
-    ], coord => {
+    let hidden = true;
+    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, coord => {
         if (coord.x !== location.x || coord.y !== location.y) {
             return;
         }
 
-        return true;
-    }).filter(hit => hit.data).length) {
+        hidden = false;
+    });
+    if (hidden) {
         return;
     }
 

@@ -134,29 +134,30 @@ export function tick(entity: Entity) {
                 break;
             }
 
-            const corpses = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, [
-                CellType.Wall,
-                CellType.DoorClosed
-            ], coord => {
-                return dungeon.items.find(item => {
+            const corpses: Array<Corpse> = [];
+            fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, coord => {
+                dungeon.items.forEach(item => {
                     if (item.x !== coord.x || item.y !== coord.y) {
-                        return false;
+                        return;
                     }
 
                     if (!('originalChar' in item)) {
-                        return false;
+                        return;
                     }
 
                     const corpse = <Corpse>item;
 
                     if (!corpse.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-                        return false;
+                        return;
                     }
 
-                    return true;
-                });
-            }).filter(hit => hit.data).map(hit => <Corpse>hit.data);
+                    if (corpses.indexOf(corpse) > -1) {
+                        return;
+                    }
 
+                    corpses.push(corpse);
+                });
+            });
             if (corpses.length) {
                 const corpse = corpses[0];
 
@@ -199,26 +200,29 @@ export function tick(entity: Entity) {
         case Disposition.Passive:
             break;
         case Disposition.Aggressive:
-            const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, [
-                CellType.Wall,
-                CellType.DoorClosed
-            ], coord => {
-                return dungeon.entities.find(target => {
+            const targets: Array<Entity> = [];
+            
+            fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, coord => {
+                return dungeon.entities.forEach(target => {
                     if (target === entity) {
-                        return false;
+                        return;
                     }
 
                     if (target.x !== coord.x || target.y !== coord.y) {
-                        return false;
+                        return;
                     }
 
                     if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-                        return false;
+                        return;
                     }
 
-                    return true;
+                    if (targets.indexOf(target) > -1) {
+                        return;
+                    }
+
+                    targets.push(target);
                 });
-            }).filter(hit => hit.data).map(hit => <Entity>hit.data);
+            });
 
             if (targets.length) {
                 const target = targets[0];

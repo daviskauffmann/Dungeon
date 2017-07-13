@@ -87,23 +87,24 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 's':
-                    const targets = fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, [
-                        CellType.Wall,
-                        CellType.DoorClosed
-                    ], coord => {
-                        return dungeon.entities.find(target => {
+                    const targets: Array<Entity> = [];
+                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, coord => {
+                        dungeon.entities.forEach(target => {
                             if (target === player) {
-                                return false;
+                                return;
                             }
 
                             if (target.x !== coord.x || target.y !== coord.y) {
-                                return false;
+                                return;
                             }
 
-                            return true;
-                        });
-                    }).filter(hit => hit.data).map(hit => <Entity>hit.data);
+                            if (targets.indexOf(target) > -1) {
+                                return;
+                            }
 
+                            targets.push(target);
+                        });
+                    });
                     if (targets.length) {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} spots a ${targets.map(target => target.name).join(', ')}`);
                     } else {
@@ -112,10 +113,7 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 'r':
-                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, [
-                        CellType.Wall,
-                        CellType.DoorClosed
-                    ], coord => {
+                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, coord => {
                         dungeon.items.forEach((item, index) => {
                             if (item.x !== coord.x || item.y !== coord.y) {
                                 return;

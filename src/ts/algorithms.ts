@@ -1,73 +1,52 @@
 import { Dungeon, Cell, CellType } from './dungeon';
 import { Coord, distanceBetweenSquared } from './math';
 
-interface Hit extends Coord {
-    data?: any;
+export function los(dungeon: Dungeon, from: Coord, to: Coord) {
+    return true;
 }
 
 export function fov(
     dungeon: Dungeon,
     origin: Coord,
-    r: number,
+    range: number,
     accuracy: number,
-    blockedBy: Array<CellType>,
-    action: (coord: Coord) => any) {
-
-    const hits: Array<Hit> = [];
+    action: (coord: Coord) => void) {
 
     for (let dir = 0; dir < 360; dir += accuracy) {
-        const hit = (() => {
-            const dx = Math.cos(dir * (Math.PI / 180));
-            const dy = Math.sin(dir * (Math.PI / 180));
+        const dx = Math.cos(dir * (Math.PI / 180));
+        const dy = Math.sin(dir * (Math.PI / 180));
 
-            const current: Coord = {
-                x: origin.x + 0.5,
-                y: origin.y + 0.5
-            }
-
-            for (let i = 0; i < r; i++) {
-                const coord: Coord = {
-                    x: Math.trunc(current.x),
-                    y: Math.trunc(current.y)
-                }
-
-                if (coord.x < 0 || coord.x >= dungeon.width || coord.y < 0 || coord.y >= dungeon.height) {
-                    return;
-                }
-
-                const hit: Hit = {
-                    x: coord.x,
-                    y: coord.y
-                };
-
-                const data = action(coord);
-                if (data) {
-                    hit.data = data;
-
-                    return hit;
-                }
-
-                if (blockedBy.indexOf(dungeon.cells[coord.x][coord.y].type) > -1) {
-                    return hit;
-                }
-
-                current.x += dx;
-                current.y += dy;
-            }
-        })();
-
-        if (!hit) {
-            continue;
+        const current: Coord = {
+            x: origin.x + 0.5,
+            y: origin.y + 0.5
         }
 
-        if (hits.find(h => h.x === hit.x && h.y === hit.y)) {
-            continue;
-        }
+        for (let i = 0; i < range; i++) {
+            const coord: Coord = {
+                x: Math.trunc(current.x),
+                y: Math.trunc(current.y)
+            }
 
-        hits.push(hit);
+            if (coord.x < 0 || coord.x >= dungeon.width || coord.y < 0 || coord.y >= dungeon.height) {
+                break;
+            }
+
+            action(coord);
+
+            if ((() => {
+                switch (dungeon.cells[coord.x][coord.y].type) {
+                    case CellType.Wall:
+                    case CellType.DoorClosed:
+                        return true;
+                }
+            })()) {
+                break;
+            }
+
+            current.x += dx;
+            current.y += dy;
+        }
     }
-
-    return hits;
 }
 
 export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
