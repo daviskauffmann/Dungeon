@@ -1,16 +1,14 @@
 import { Dungeon, Cell, CellType } from './dungeon';
 import { Coord, distanceBetweenSquared } from './math';
 
-export function los(dungeon: Dungeon, from: Coord, to: Coord) {
-    return true;
-}
-
 export function fov(
     dungeon: Dungeon,
     origin: Coord,
     range: number,
     accuracy: number,
-    action: (coord: Coord) => void) {
+    action?: (coord: Coord) => void) {
+
+    const coords: Array<Coord> = [];
 
     for (let dir = 0; dir < 360; dir += accuracy) {
         const dx = Math.cos(dir * (Math.PI / 180));
@@ -27,26 +25,28 @@ export function fov(
                 y: Math.trunc(current.y)
             }
 
-            if (coord.x < 0 || coord.x >= dungeon.width || coord.y < 0 || coord.y >= dungeon.height) {
-                break;
-            }
-
-            action(coord);
-
-            if ((() => {
-                switch (dungeon.cells[coord.x][coord.y].type) {
-                    case CellType.Wall:
-                    case CellType.DoorClosed:
-                        return true;
+            if (coord.x >= 0 && coord.x < dungeon.width && coord.y >= 0 && coord.y < dungeon.height) {
+                if (action) {
+                    action(coord);
                 }
-            })()) {
-                break;
-            }
 
-            current.x += dx;
-            current.y += dy;
+                if (!coords.find(c => c.x === coord.x && c.y === coord.y)) {
+                    coords.push(coord);
+                }
+
+                if (dungeon.cells[coord.x][coord.y].type === CellType.Wall ||
+                    dungeon.cells[coord.x][coord.y].type === CellType.DoorClosed) {
+
+                    break;
+                }
+
+                current.x += dx;
+                current.y += dy;
+            }
         }
     }
+
+    return coords;
 }
 
 export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
@@ -84,12 +84,10 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
         for (let i = 0; i < openSet.length; i++) {
             const value = fScore.get(openSet[i]);
 
-            if (value >= lowestFScore) {
-                continue;
+            if (value < lowestFScore) {
+                current = openSet[i];
+                lowestFScore = value;
             }
-
-            current = openSet[i];
-            lowestFScore = value;
         }
 
         if (current === coords[goal.x][goal.y] || passes > Infinity) {
@@ -121,55 +119,35 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
         }
 
         neighbors.filter(neighbor => {
-            switch (dungeon.cells[neighbor.x][neighbor.y].type) {
-                case CellType.Empty:
-                case CellType.Wall:
-                    return false;
-            }
-
-            if (dungeon.entities.some(entity => {
-                if (entity.x !== neighbor.x || entity.y !== neighbor.y) {
-                    return false;
-                }
-
-                if (entity.x === goal.x && entity.y === goal.y) {
-                    return false;
-                }
-
-                return true;
-            }) || dungeon.chests.some(chest => {
-                if (chest.x !== neighbor.x || chest.y !== neighbor.y) {
-                    return false;
-                }
-
-                if (chest.x === goal.x && chest.y === goal.y) {
-                    return false;
-                }
-
-                return true;
-            })) {
-                return false;
-            }
-
-            return true;
+            return dungeon.cells[neighbor.x][neighbor.y].type !== CellType.Wall &&
+                dungeon.cells[neighbor.x][neighbor.y].type !== CellType.DoorClosed &&
+                !dungeon.entities.some(entity => {
+                    return entity.x === neighbor.x && entity.y === neighbor.y &&
+                        entity.x !== goal.x && entity.y !== goal.y;
+                }) &&
+                !dungeon.chests.some(chest => {
+                    return chest.x === neighbor.x && chest.y === neighbor.y &&
+                        chest.x !== goal.x && chest.y !== goal.y;
+                });
         }).forEach(neighbor => {
             if (closedSet.indexOf(neighbor) > -1) {
                 return;
             }
 
-            const tentativeGScore = gScore.get(current) + distanceBetweenSquared(current, neighbor);
             if (openSet.indexOf(neighbor) === -1) {
                 openSet.push(neighbor);
-            } else if (tentativeGScore >= gScore.get(neighbor)) {
-                return;
             }
 
-            if (current.x !== start.x || current.y !== start.y) {
-                cameFrom.set(neighbor, current);
-            }
+            const tentativeGScore = gScore.get(current) + distanceBetweenSquared(current, neighbor);
 
-            gScore.set(neighbor, tentativeGScore);
-            fScore.set(neighbor, gScore.get(neighbor) + distanceBetweenSquared(neighbor, goal))
+            if (tentativeGScore < gScore.get(neighbor)) {
+                if (current.x !== start.x || current.y !== start.y) {
+                    cameFrom.set(neighbor, current);
+                }
+
+                gScore.set(neighbor, tentativeGScore);
+                fScore.set(neighbor, gScore.get(neighbor) + distanceBetweenSquared(neighbor, goal));
+            }
         });
 
         passes++;

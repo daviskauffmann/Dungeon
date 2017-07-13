@@ -103,22 +103,14 @@ export function tick(entity: Entity) {
 
     const itemNames: Array<string> = [];
     dungeon.items.forEach((item, index) => {
-        if (item.x !== entity.x || item.y !== entity.y) {
-            return;
+        if (item.x === entity.x && item.y === entity.y &&
+            randomFloat(0, 1) < 0.5) {
+
+            itemNames.push(item.name);
+
+            entity.inventory.push(item);
+            dungeon.items.splice(index, 1);
         }
-
-        if (randomFloat(0, 1) < 0.5) {
-            return;
-        }
-
-        itemNames.push(item.name);
-
-        if (entity.id === 0) {
-            return;
-        }
-
-        entity.inventory.push(item);
-        dungeon.items.splice(index, 1);
     });
     if (itemNames.length) {
         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} picks up ${itemNames.join(', ')}`);
@@ -131,66 +123,50 @@ export function tick(entity: Entity) {
             break;
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
-                break;
-            }
-
-            const corpses: Array<Corpse> = [];
-            fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, coord => {
-                dungeon.items.forEach(item => {
-                    if (item.x !== coord.x || item.y !== coord.y) {
-                        return;
-                    }
-
-                    if (!('originalChar' in item)) {
-                        return;
-                    }
-
-                    const corpse = <Corpse>item;
-
-                    if (!corpse.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-                        return;
-                    }
-
-                    if (corpses.indexOf(corpse) > -1) {
-                        return;
-                    }
-
-                    corpses.push(corpse);
+                const corpses = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
+                    return dungeon.items.some(item => {
+                        return item.x === coord.x && item.y === coord.y &&
+                            'originalChar' in item &&
+                            (<Corpse>item).factions.every(faction => entity.hostileFactions.indexOf(faction) === -1);
+                    });
+                }).map(coord => {
+                    return <Corpse>dungeon.items.find(item => {
+                        return item.x === coord.x && item.y === coord.y;
+                    });
                 });
-            });
-            if (corpses.length) {
-                const corpse = corpses[0];
 
-                const newEntity: Entity = {
-                    x: corpse.x,
-                    y: corpse.y,
-                    char: corpse.originalChar,
-                    color: corpse.color,
-                    alpha: corpse.alpha,
-                    id: corpse.id,
-                    name: corpse.name.replace(' corpse', ''),
-                    level: corpse.level,
-                    class: corpse.class,
-                    sight: corpse.sight,
-                    inventory: corpse.inventory,
-                    factions: corpse.factions,
-                    hostileFactions: corpse.hostileFactions,
-                    hostileEntityIds: corpse.hostileEntityIds,
-                    disposition: corpse.disposition
-                };
+                if (corpses.length) {
+                    const corpse = corpses[0];
 
-                if (randomFloat(0, 1) < 0.5) {
-                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${newEntity.name}`);
+                    const newEntity: Entity = {
+                        x: corpse.x,
+                        y: corpse.y,
+                        char: corpse.originalChar,
+                        color: corpse.color,
+                        alpha: corpse.alpha,
+                        id: corpse.id,
+                        name: corpse.name.replace(' corpse', ''),
+                        level: corpse.level,
+                        class: corpse.class,
+                        sight: corpse.sight,
+                        inventory: corpse.inventory,
+                        factions: corpse.factions,
+                        hostileFactions: corpse.hostileFactions,
+                        hostileEntityIds: corpse.hostileEntityIds,
+                        disposition: corpse.disposition
+                    };
+
+                    if (randomFloat(0, 1) < 0.5) {
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ressurects ${newEntity.name}`);
+
+                        dungeon.entities.push(newEntity);
+                        dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
+                    } else {
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${newEntity.name}`);
+                    }
 
                     return;
                 }
-
-                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ressurects ${newEntity.name}`);
-
-                dungeon.entities.push(newEntity);
-                dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
-
-                return;
             }
 
             break;
@@ -200,27 +176,15 @@ export function tick(entity: Entity) {
         case Disposition.Passive:
             break;
         case Disposition.Aggressive:
-            const targets: Array<Entity> = [];
-            
-            fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1, coord => {
-                return dungeon.entities.forEach(target => {
-                    if (target === entity) {
-                        return;
-                    }
-
-                    if (target.x !== coord.x || target.y !== coord.y) {
-                        return;
-                    }
-
-                    if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-                        return;
-                    }
-
-                    if (targets.indexOf(target) > -1) {
-                        return;
-                    }
-
-                    targets.push(target);
+            const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
+                return dungeon.entities.some(target => {
+                    return target !== entity
+                        && target.x === coord.x && target.y === coord.y
+                        && target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1);
+                });
+            }).map(coord => {
+                return dungeon.entities.find(target => {
+                    return target.x === coord.x && target.y === coord.y;
                 });
             });
 
@@ -231,15 +195,13 @@ export function tick(entity: Entity) {
 
                 const path = astar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
 
-                if (!path || !path.length) {
-                    break;
+                if (path && path.length) {
+                    const next = path.pop();
+
+                    move(entity, next.x, next.y);
+
+                    return;
                 }
-
-                const next = path.pop();
-
-                move(entity, next.x, next.y);
-
-                return;
             }
 
             break;
@@ -248,20 +210,16 @@ export function tick(entity: Entity) {
     }
 
     if (entity.inventory.some((item, index) => {
-        if (!item.name.includes('corpse')) {
-            return false;
+        if (item.name.includes('corpse') &&
+            randomFloat(0, 1) < 0.5) {
+
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
+
+            dungeon.items.push(item);
+            entity.inventory.splice(index, 1);
+
+            return true;
         }
-
-        if (randomFloat(0, 1) < 0.5) {
-            return false;
-        }
-
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
-
-        dungeon.items.push(item);
-        entity.inventory.splice(index, 1);
-
-        return true;
     })) {
         return;
     }
@@ -279,165 +237,13 @@ export function tick(entity: Entity) {
 }
 
 export function move(entity: Entity, x: number, y: number) {
-    const dungeon = getDungeon(entity);
-
-    if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-        return;
-    }
-
-    switch (dungeon.cells[x][y].type) {
-        case CellType.Wall:
-            return;
-        case CellType.DoorClosed:
-            if (randomFloat(0, 1) < 0.5) {
-                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
-
-                return;
-            }
-
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the door`);
-
-            dungeon.cells[x][y].type = CellType.DoorOpen;
-
-            return;
-        case CellType.StairsUp:
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
-
-            changeLevel(entity, getLevel(entity) - 1, (newDungeon) => {
-                for (let x = 0; x < newDungeon.width; x++) {
-                    for (let y = 0; y < newDungeon.height; y++) {
-                        if (newDungeon.cells[x][y].type !== CellType.StairsDown) {
-                            continue;
-                        }
-
-                        return { x, y };
-                    }
-                }
-            });
-
-            return;
-        case CellType.StairsDown:
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} descends`);
-
-            changeLevel(entity, getLevel(entity) + 1, (newDungeon) => {
-                for (let x = 0; x < newDungeon.width; x++) {
-                    for (let y = 0; y < newDungeon.height; y++) {
-                        if (newDungeon.cells[x][y].type !== CellType.StairsUp) {
-                            continue;
-                        }
-
-                        return { x, y };
-                    }
-                }
-            });
-
-            return;
-    }
-
-    if (dungeon.entities.some((target, index) => {
-        if (target === entity) {
-            return false;
-        }
-
-        if (target.x !== x || target.y !== y) {
-            return false;
-        }
-
-        if (target.factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)) {
-            return true;
-        }
-
-        if (randomFloat(0, 1) < 0.5) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);
-
-            return true;
-        }
-
-        if (target.id === 0 && game.godMode) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
-
-            return true;
-        }
-
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
-
-        if (target.inventory.length) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
-
-            target.inventory.forEach((item, index) => {
-                dungeon.items.push({
-                    ...item,
-                    x: target.x,
-                    y: target.y,
-                    equipped: false
-                });
-                target.inventory.splice(index, 1);
-            });
-        }
-
-        dungeon.items.push(<Corpse>{
-            ...target,
-            x: x,
-            y: y,
-            char: '%',
-            name: target.name + ' corpse',
-            equipped: false,
-            originalChar: target.char
-        });
-        dungeon.entities.splice(index, 1);
-
-        return true;
-    }) || dungeon.chests.some((chest, index) => {
-        if (chest.x !== x || chest.y !== y) {
-            return false;
-        }
-
-        if (randomFloat(0, 1) < 0.5) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the chest`);
-
-            return true;
-        }
-
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the chest`);
-
-        dungeon.chests.splice(index, 1);
-
-        if (!chest.loot) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees nothing inside`);
-
-            return true;
-        }
-
-        if (entity.inventory.length >= 26) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name}'s inventory is full`);
-
-            return true;
-        }
-
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} loots a ${chest.loot.name}`);
-
-        entity.inventory.push(chest.loot);
-
-        return true;
-    })) {
-        return;
-    }
-
-    const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
-    if (itemNames) {
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
-    }
-
-    entity.x = x;
-    entity.y = y;
-
     function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
         const dungeon = getDungeon(entity);
 
         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${level}`);
 
         while (level >= game.dungeons.length) {
-            game.dungeons.push(createDungeon(50, 50, 20, 5, 15, true, true, 0.5, 3, 20, 5));
+            game.dungeons.push(createDungeon(50, 50, 20, 5, 15, false, false, 0.5, 3, 20, 5));
         }
 
         const newDungeon = game.dungeons[level];
@@ -448,5 +254,134 @@ export function move(entity: Entity, x: number, y: number) {
         const spawn = calcSpawnCoord(newDungeon);
         entity.x = spawn.x;
         entity.y = spawn.y;
+    }
+
+    const dungeon = getDungeon(entity);
+
+    if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
+        switch (dungeon.cells[x][y].type) {
+            case CellType.Wall:
+                return;
+            case CellType.DoorClosed:
+                if (randomFloat(0, 1) < 0.5) {
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the door`);
+
+                    dungeon.cells[x][y].type = CellType.DoorOpen;
+                } else {
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
+                }
+
+                return;
+            case CellType.StairsUp:
+                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
+
+                changeLevel(entity, getLevel(entity) - 1, (newDungeon) => {
+                    for (let x = 0; x < newDungeon.width; x++) {
+                        for (let y = 0; y < newDungeon.height; y++) {
+                            if (newDungeon.cells[x][y].type === CellType.StairsDown) {
+                                return { x, y };
+                            }
+                        }
+                    }
+                });
+
+                return;
+            case CellType.StairsDown:
+                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} descends`);
+
+                changeLevel(entity, getLevel(entity) + 1, (newDungeon) => {
+                    for (let x = 0; x < newDungeon.width; x++) {
+                        for (let y = 0; y < newDungeon.height; y++) {
+                            if (newDungeon.cells[x][y].type === CellType.StairsUp) {
+                                return { x, y };
+                            }
+                        }
+                    }
+                });
+
+                return;
+        }
+
+        if (dungeon.entities.some((target, index) => {
+            if (target !== entity &&
+                target.x === x && target.y === y &&
+                target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
+
+                if (randomFloat(0, 1) < 0.5) {
+                    if (target.id === 0 && game.godMode) {
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
+                    } else {
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
+
+                        if (target.inventory.length) {
+                            log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
+
+                            target.inventory.forEach((item, index) => {
+                                const droppedItem: Item = {
+                                    ...item,
+                                    x: target.x,
+                                    y: target.y,
+                                    equipped: false
+                                };
+
+                                dungeon.items.push(droppedItem);
+                                target.inventory.splice(index, 1);
+                            });
+                        }
+
+                        const corpse: Corpse = {
+                            ...target,
+                            x: x,
+                            y: y,
+                            char: '%',
+                            name: target.name + ' corpse',
+                            equipped: false,
+                            originalChar: target.char
+                        };
+
+                        dungeon.items.push(corpse);
+                        dungeon.entities.splice(index, 1);
+                    }
+                } else {
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);
+                }
+
+                return true;
+            }
+        }) || dungeon.chests.some((chest, index) => {
+            if (chest.x === x && chest.y === y) {
+                if (randomFloat(0, 1) < 0.5) {
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the chest`);
+
+                    dungeon.chests.splice(index, 1);
+
+                    if (chest.loot) {
+                        if (entity.inventory.length < 26) {
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} loots a ${chest.loot.name}`);
+
+                            entity.inventory.push(chest.loot);
+                        } else {
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name}'s inventory is full`);
+                        }
+                    } else {
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees nothing inside`);
+                    }
+                } else {
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the chest`);
+                }
+
+                return true;
+            }
+        })) {
+            return;
+        }
+
+        const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
+        if (itemNames) {
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
+        }
+
+        entity.x = x;
+        entity.y = y;
     }
 }

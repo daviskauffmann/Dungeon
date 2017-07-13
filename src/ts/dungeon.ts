@@ -206,65 +206,59 @@ export function createDungeon(
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            if (dungeon.cells[x][y].type !== CellType.Floor) {
-                continue;
-            }
-
-            if (dungeon.cells[x][y - 1].type === CellType.Empty) {
-                dungeon.cells[x][y - 1].type = CellType.Wall;
-            }
-            if (dungeon.cells[x + 1][y - 1].type === CellType.Empty) {
-                dungeon.cells[x + 1][y - 1].type = CellType.Wall;
-            }
-            if (dungeon.cells[x + 1][y].type === CellType.Empty) {
-                dungeon.cells[x + 1][y].type = CellType.Wall;
-            }
-            if (dungeon.cells[x + 1][y + 1].type === CellType.Empty) {
-                dungeon.cells[x + 1][y + 1].type = CellType.Wall;
-            }
-            if (dungeon.cells[x][y + 1].type === CellType.Empty) {
-                dungeon.cells[x][y + 1].type = CellType.Wall;
-            }
-            if (dungeon.cells[x - 1][y - 1].type === CellType.Empty) {
-                dungeon.cells[x - 1][y - 1].type = CellType.Wall;
-            }
-            if (dungeon.cells[x - 1][y].type === CellType.Empty) {
-                dungeon.cells[x - 1][y].type = CellType.Wall;
-            }
-            if (dungeon.cells[x - 1][y + 1].type === CellType.Empty) {
-                dungeon.cells[x - 1][y + 1].type = CellType.Wall;
+            if (dungeon.cells[x][y].type === CellType.Floor) {
+                if (dungeon.cells[x][y - 1].type === CellType.Empty) {
+                    dungeon.cells[x][y - 1].type = CellType.Wall;
+                }
+                if (dungeon.cells[x + 1][y - 1].type === CellType.Empty) {
+                    dungeon.cells[x + 1][y - 1].type = CellType.Wall;
+                }
+                if (dungeon.cells[x + 1][y].type === CellType.Empty) {
+                    dungeon.cells[x + 1][y].type = CellType.Wall;
+                }
+                if (dungeon.cells[x + 1][y + 1].type === CellType.Empty) {
+                    dungeon.cells[x + 1][y + 1].type = CellType.Wall;
+                }
+                if (dungeon.cells[x][y + 1].type === CellType.Empty) {
+                    dungeon.cells[x][y + 1].type = CellType.Wall;
+                }
+                if (dungeon.cells[x - 1][y - 1].type === CellType.Empty) {
+                    dungeon.cells[x - 1][y - 1].type = CellType.Wall;
+                }
+                if (dungeon.cells[x - 1][y].type === CellType.Empty) {
+                    dungeon.cells[x - 1][y].type = CellType.Wall;
+                }
+                if (dungeon.cells[x - 1][y + 1].type === CellType.Empty) {
+                    dungeon.cells[x - 1][y + 1].type = CellType.Wall;
+                }
             }
         }
     }
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            if (randomFloat(0, 1) < doorChance) {
-                continue;
-            }
+            if (randomFloat(0, 1) < doorChance &&
+                dungeon.cells[x][y].type === CellType.Floor) {
 
-            if (dungeon.cells[x][y].type !== CellType.Floor) {
-                continue;
-            }
-
-            if (dungeon.cells[x][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
-                if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
-                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (dungeon.cells[x][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
+                    if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                    }
                 }
-            }
-            if (dungeon.cells[x + 1][y].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
-                if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
-                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (dungeon.cells[x + 1][y].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
+                    if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                    }
                 }
-            }
-            if (dungeon.cells[x][y + 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
-                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (dungeon.cells[x][y + 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                    if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                    }
                 }
-            }
-            if (dungeon.cells[x - 1][y].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
-                    dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (dungeon.cells[x - 1][y].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                    if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                    }
                 }
             }
         }
@@ -373,34 +367,32 @@ export function createDungeon(
             alpha: 1,
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
-                    return undefined;
-                }
+                    const item: Item = {
+                        x: -1,
+                        y: -1,
+                        char: '',
+                        color: '#ffffff',
+                        alpha: 1,
+                        name: '',
+                        equipped: false
+                    }
+                    const roll = randomFloat(0, 1);
+                    if (roll < 0.25) {
+                        item.name = 'sword';
+                        item.char = '|';
+                    } else if (roll < 0.50) {
+                        item.name = 'spear';
+                        item.char = '/';
+                    } else if (roll < 0.75) {
+                        item.name = 'shield';
+                        item.char = ')';
+                    } else {
+                        item.name = 'bow';
+                        item.char = '}';
+                    }
 
-                const item: Item = {
-                    x: -1,
-                    y: -1,
-                    char: '',
-                    color: '#ffffff',
-                    alpha: 1,
-                    name: '',
-                    equipped: false
+                    return item;
                 }
-                const roll = randomFloat(0, 1);
-                if (roll < 0.25) {
-                    item.name = 'sword';
-                    item.char = '|';
-                } else if (roll < 0.50) {
-                    item.name = 'spear';
-                    item.char = '/';
-                } else if (roll < 0.75) {
-                    item.name = 'shield';
-                    item.char = ')';
-                } else {
-                    item.name = 'bow';
-                    item.char = '}';
-                }
-
-                return item;
             })()
         });
     }

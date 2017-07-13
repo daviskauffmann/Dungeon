@@ -20,21 +20,19 @@ export let game: Game = {
 };
 
 export function tick() {
-    if (game.stopTime) {
-        return;
-    }
+    if (!game.stopTime) {
+        game.dungeons.forEach(dungeon => {
+            dungeon.entities.forEach(entity => {
+                if (entity.id === 0) {
+                    return;
+                }
 
-    game.dungeons.forEach(dungeon => {
-        dungeon.entities.forEach(entity => {
-            if (entity.id === 0) {
-                return;
-            }
-
-            entity_tick(entity);
+                entity_tick(entity);
+            });
         });
-    });
 
-    game.turn++;
+        game.turn++;
+    }
 }
 
 export function save() {

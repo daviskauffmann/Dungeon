@@ -24,25 +24,13 @@ export const ui: UI = {
 export function log(dungeon: Dungeon, location: Coord, message: string) {
     const player = getEntity(0);
 
-    if (dungeon !== getDungeon(player)) {
-        return;
-    }
+    if (dungeon === getDungeon(player) &&
+        fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).find(coord => coord.x === location.x && coord.y === location.y)) {
 
-    let hidden = true;
-    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, coord => {
-        if (coord.x !== location.x || coord.y !== location.y) {
-            return;
+        ui.messages.push(message);
+
+        if (ui.messages.length > ui.maxMessages) {
+            ui.messages.shift();
         }
-
-        hidden = false;
-    });
-    if (hidden) {
-        return;
-    }
-
-    ui.messages.push(message);
-
-    if (ui.messages.length > ui.maxMessages) {
-        ui.messages.shift();
     }
 }

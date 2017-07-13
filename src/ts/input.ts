@@ -73,38 +73,29 @@ export function input(ev: KeyboardEvent) {
                     break;
                 case 'g':
                     dungeon.items.forEach((item, index) => {
-                        if (item.x !== player.x || item.y !== player.y) {
-                            return;
+                        if (item.x === player.x && item.y === player.y) {
+                            log(dungeon, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
+
+                            player.inventory.push(item);
+                            dungeon.items.splice(index, 1);
                         }
-
-                        log(dungeon, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
-
-                        player.inventory.push(item);
-                        dungeon.items.splice(index, 1);
                     });
 
                     tick();
 
                     break;
                 case 's':
-                    const targets: Array<Entity> = [];
-                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, coord => {
-                        dungeon.entities.forEach(target => {
-                            if (target === player) {
-                                return;
-                            }
-
-                            if (target.x !== coord.x || target.y !== coord.y) {
-                                return;
-                            }
-
-                            if (targets.indexOf(target) > -1) {
-                                return;
-                            }
-
-                            targets.push(target);
+                    const targets = fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).filter(coord => {
+                        return dungeon.entities.some(target => {
+                            return target !== player &&
+                                target.x === coord.x && target.y === coord.y;
+                        });
+                    }).map(coord => {
+                        return dungeon.entities.find(target => {
+                            return target.x === coord.x && target.y === coord.y;
                         });
                     });
+
                     if (targets.length) {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} spots a ${targets.map(target => target.name).join(', ')}`);
                     } else {
@@ -113,41 +104,38 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 'r':
-                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1, coord => {
-                        dungeon.items.forEach((item, index) => {
-                            if (item.x !== coord.x || item.y !== coord.y) {
-                                return;
-                            }
-
-                            if (!('originalChar' in item)) {
-                                return;
-                            }
-
-                            const corpse = <Corpse>item;
-
-                            const newEntity: Entity = {
-                                x: corpse.x,
-                                y: corpse.y,
-                                char: corpse.originalChar,
-                                color: corpse.color,
-                                alpha: corpse.alpha,
-                                id: corpse.id,
-                                name: corpse.name.replace(' corpse', ''),
-                                level: corpse.level,
-                                class: corpse.class,
-                                sight: corpse.sight,
-                                inventory: corpse.inventory,
-                                factions: corpse.factions,
-                                hostileFactions: corpse.hostileFactions,
-                                hostileEntityIds: corpse.hostileEntityIds,
-                                disposition: corpse.disposition
-                            };
-
-                            log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
-
-                            dungeon.entities.push(newEntity);
-                            dungeon.items.splice(index, 1);
+                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).filter(coord => {
+                        return dungeon.items.some(item => {
+                            return item.x === coord.x && item.y === coord.y &&
+                                'originalChar' in item;
                         });
+                    }).map(coord => {
+                        return <Corpse>dungeon.items.find(item => {
+                            return item.x === coord.x && item.y === coord.y;
+                        });
+                    }).forEach(corpse => {
+                        const newEntity: Entity = {
+                            x: corpse.x,
+                            y: corpse.y,
+                            char: corpse.originalChar,
+                            color: corpse.color,
+                            alpha: corpse.alpha,
+                            id: corpse.id,
+                            name: corpse.name.replace(' corpse', ''),
+                            level: corpse.level,
+                            class: corpse.class,
+                            sight: corpse.sight,
+                            inventory: corpse.inventory,
+                            factions: corpse.factions,
+                            hostileFactions: corpse.hostileFactions,
+                            hostileEntityIds: corpse.hostileEntityIds,
+                            disposition: corpse.disposition
+                        };
+
+                        log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
+
+                        dungeon.entities.push(newEntity);
+                        dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
                     });
 
                     tick();
@@ -219,19 +207,17 @@ export function input(ev: KeyboardEvent) {
             break;
         case 'inventory_drop':
             player.inventory.forEach((item, index) => {
-                if (getInventoryChar(player, item) !== ev.key) {
-                    return;
+                if (ev.key === getInventoryChar(player, item)) {
+                    log(dungeon, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
+
+                    item.x = player.x;
+                    item.y = player.y;
+
+                    dungeon.items.push(item);
+                    player.inventory.splice(index, 1);
+
+                    ui.mode = '';
                 }
-
-                log(dungeon, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
-
-                item.x = player.x;
-                item.y = player.y;
-
-                dungeon.items.push(item);
-                player.inventory.splice(index, 1);
-
-                ui.mode = '';
             });
 
             switch (ev.key) {
@@ -244,15 +230,13 @@ export function input(ev: KeyboardEvent) {
             break;
         case 'inventory_equip':
             player.inventory.forEach(item => {
-                if (getInventoryChar(player, item) !== ev.key) {
-                    return;
+                if (ev.key === getInventoryChar(player, item)) {
+                    log(dungeon, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
+
+                    item.equipped = true;
+
+                    ui.mode = '';
                 }
-
-                log(dungeon, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
-
-                item.equipped = true;
-
-                ui.mode = '';
             });
 
             switch (ev.key) {
@@ -265,15 +249,13 @@ export function input(ev: KeyboardEvent) {
             break;
         case 'inventory_unequip':
             player.inventory.forEach(item => {
-                if (getInventoryChar(player, item) !== ev.key) {
-                    return;
+                if (ev.key === getInventoryChar(player, item)) {
+                    log(dungeon, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
+
+                    item.equipped = false;
+
+                    ui.mode = '';
                 }
-
-                log(dungeon, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
-
-                item.equipped = false;
-
-                ui.mode = '';
             });
 
             switch (ev.key) {
@@ -286,16 +268,14 @@ export function input(ev: KeyboardEvent) {
             break;
         case 'inventory_swapFirst':
             player.inventory.forEach((item, index) => {
-                if (getInventoryChar(player, item) !== ev.key) {
-                    return;
+                if (ev.key === getInventoryChar(player, item)) {
+                    ui.inventorySwapFirst = index;
+
+                    log(dungeon, { x: player.x, y: player.y }, 'select second item to swap');
+                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
+
+                    ui.mode = 'inventory_swapSecond';
                 }
-
-                ui.inventorySwapFirst = index;
-
-                log(dungeon, { x: player.x, y: player.y }, 'select second item to swap');
-                log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
-
-                ui.mode = 'inventory_swapSecond';
             });
 
             switch (ev.key) {
@@ -308,19 +288,17 @@ export function input(ev: KeyboardEvent) {
             break;
         case 'inventory_swapSecond':
             player.inventory.forEach((item, index) => {
-                if (getInventoryChar(player, item) !== ev.key) {
-                    return;
+                if (ev.key === getInventoryChar(player, item)) {
+                    ui.inventorySwapSecond = index;
+
+                    log(dungeon, { x: player.x, y: player.y }, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
+
+                    const t = player.inventory[ui.inventorySwapFirst];
+                    player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
+                    player.inventory[ui.inventorySwapSecond] = t;
+
+                    ui.mode = '';
                 }
-
-                ui.inventorySwapSecond = index;
-
-                log(dungeon, { x: player.x, y: player.y }, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
-
-                const t = player.inventory[ui.inventorySwapFirst];
-                player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
-                player.inventory[ui.inventorySwapSecond] = t;
-
-                ui.mode = '';
             });
 
             switch (ev.key) {

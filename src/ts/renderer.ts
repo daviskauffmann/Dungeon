@@ -62,50 +62,33 @@ export function draw(ev: UIEvent) {
         view.y = dungeon.height - view.height;
     }
 
-    const visibleCells: Array<Cell> = [];
+    const visibleCells = fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, coord => {
+        dungeon.cells[coord.x][coord.y].discovered = true;
+    }).map(coord => dungeon.cells[coord.x][coord.y]);
     if (game.ignoreFov) {
         for (let x = view.x; x < view.x + view.width; x++) {
             for (let y = view.y; y < view.y + view.height; y++) {
-                if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-                    continue;
-                }
+                if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height &&
+                    visibleCells.indexOf(dungeon.cells[x][y]) === -1) {
 
-                if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
-                    continue;
+                    visibleCells.push(dungeon.cells[x][y]);
                 }
-
-                visibleCells.push(dungeon.cells[x][y]);
             }
         }
     }
-    fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, coord => {
-        dungeon.cells[coord.x][coord.y].discovered = true;
-
-        if (visibleCells.indexOf(dungeon.cells[coord.x][coord.y]) > -1) {
-            return;
-        }
-
-        visibleCells.push(dungeon.cells[coord.x][coord.y]);
-    });
     if (dungeon.litRooms) {
         dungeon.rooms.forEach(room => {
-            if (!isInside({ x: player.x, y: player.y }, room)) {
-                return;
-            }
+            if (isInside({ x: player.x, y: player.y }, room)) {
+                for (let x = room.x - 1; x < room.x + room.width + 1; x++) {
+                    for (let y = room.y - 1; y < room.y + room.height + 1; y++) {
+                        if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
+                            dungeon.cells[x][y].discovered = true;
 
-            for (let x = room.x - 1; x < room.x + room.width + 1; x++) {
-                for (let y = room.y - 1; y < room.y + room.height + 1; y++) {
-                    if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-                        continue;
+                            if (visibleCells.indexOf(dungeon.cells[x][y]) === -1) {
+                                visibleCells.push(dungeon.cells[x][y]);
+                            }
+                        }
                     }
-
-                    dungeon.cells[x][y].discovered = true;
-
-                    if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
-                        continue;
-                    }
-
-                    visibleCells.push(dungeon.cells[x][y]);
                 }
             }
         });
@@ -116,74 +99,72 @@ export function draw(ev: UIEvent) {
 
     for (let x = view.x; x < view.x + view.width; x++) {
         for (let y = view.y; y < view.y + view.height; y++) {
-            if (x < 0 || x >= dungeon.width || y < 0 || y >= dungeon.height) {
-                continue;
-            }
-
-            const screen = {
-                x: (x - view.x) * graphics.fontSize,
-                y: (y - view.y + 1) * graphics.fontSize
-            }
-
-            if (ui.mode === 'target') {
-                if (ui.target.x + 1 === x && ui.target.y === y) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.globalAlpha = 1;
-                    ctx.fillText(']', screen.x, screen.y);
-
-                    continue;
+            if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
+                const screen = {
+                    x: (x - view.x) * graphics.fontSize,
+                    y: (y - view.y + 1) * graphics.fontSize
                 }
-                if (ui.target.x - 1 === x && ui.target.y === y) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.globalAlpha = 1;
-                    ctx.fillText('[', screen.x, screen.y);
 
-                    continue;
+                if (ui.mode === 'target') {
+                    if (ui.target.x + 1 === x && ui.target.y === y) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.globalAlpha = 1;
+                        ctx.fillText(']', screen.x, screen.y);
+
+                        continue;
+                    }
+                    if (ui.target.x - 1 === x && ui.target.y === y) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.globalAlpha = 1;
+                        ctx.fillText('[', screen.x, screen.y);
+
+                        continue;
+                    }
                 }
-            }
 
-            if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
-                if (dungeon.entities.some(entity => {
-                    if (entity.x !== x || entity.y !== y) {
-                        return false;
+                if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
+                    if (dungeon.entities.some(entity => {
+                        if (entity.x !== x || entity.y !== y) {
+                            return false;
+                        }
+
+                        ctx.fillStyle = entity.color;
+                        ctx.globalAlpha = entity.alpha;
+                        ctx.fillText(entity.char, screen.x, screen.y);
+
+                        return true;
+                    }) || dungeon.chests.some(chest => {
+                        if (chest.x !== x || chest.y !== y) {
+                            return false;
+                        }
+
+                        ctx.fillStyle = chest.color;
+                        ctx.globalAlpha = chest.alpha;
+                        ctx.fillText(chest.char, screen.x, screen.y);
+
+                        return true;
+                    }) || dungeon.items.sort((a, b) => {
+                        return 0;
+                    }).some(item => {
+                        if (item.x !== x || item.y !== y) {
+                            return false;
+                        }
+
+                        ctx.fillStyle = item.color;
+                        ctx.globalAlpha = item.alpha;
+                        ctx.fillText(item.char, screen.x, screen.y);
+
+                        return true;
+                    })) {
+                        continue;
                     }
-
-                    ctx.fillStyle = entity.color;
-                    ctx.globalAlpha = entity.alpha;
-                    ctx.fillText(entity.char, screen.x, screen.y);
-
-                    return true;
-                }) || dungeon.chests.some(chest => {
-                    if (chest.x !== x || chest.y !== y) {
-                        return false;
-                    }
-
-                    ctx.fillStyle = chest.color;
-                    ctx.globalAlpha = chest.alpha;
-                    ctx.fillText(chest.char, screen.x, screen.y);
-
-                    return true;
-                }) || dungeon.items.sort((a, b) => {
-                    return 0;
-                }).some(item => {
-                    if (item.x !== x || item.y !== y) {
-                        return false;
-                    }
-
-                    ctx.fillStyle = item.color;
-                    ctx.globalAlpha = item.alpha;
-                    ctx.fillText(item.char, screen.x, screen.y);
-
-                    return true;
-                })) {
-                    continue;
                 }
-            }
 
-            let cellType = graphics.cellTypes[dungeon.cells[x][y].type];
-            ctx.fillStyle = cellType.color;
-            ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
-            ctx.fillText(cellType.char, screen.x, screen.y);
+                let cellType = graphics.cellTypes[dungeon.cells[x][y].type];
+                ctx.fillStyle = cellType.color;
+                ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
+                ctx.fillText(cellType.char, screen.x, screen.y);
+            }
         }
     }
 
