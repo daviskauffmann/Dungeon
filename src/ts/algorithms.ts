@@ -80,7 +80,7 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
     while (openSet.length > 0) {
         let current: Coord;
         let lowestFScore = Infinity;
-
+        
         for (let i = 0; i < openSet.length; i++) {
             const value = fScore.get(openSet[i]);
 
@@ -130,23 +130,21 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
                         chest.x !== goal.x && chest.y !== goal.y;
                 });
         }).forEach(neighbor => {
-            if (closedSet.indexOf(neighbor) > -1) {
-                return;
-            }
-
-            if (openSet.indexOf(neighbor) === -1) {
-                openSet.push(neighbor);
-            }
-
-            const tentativeGScore = gScore.get(current) + distanceBetweenSquared(current, neighbor);
-
-            if (tentativeGScore < gScore.get(neighbor)) {
-                if (current.x !== start.x || current.y !== start.y) {
-                    cameFrom.set(neighbor, current);
+            if (closedSet.indexOf(neighbor) === -1) {
+                if (openSet.indexOf(neighbor) === -1) {
+                    openSet.push(neighbor);
                 }
 
-                gScore.set(neighbor, tentativeGScore);
-                fScore.set(neighbor, gScore.get(neighbor) + distanceBetweenSquared(neighbor, goal));
+                const tentativeGScore = gScore.get(current) + distanceBetweenSquared(current, neighbor);
+
+                if (tentativeGScore < gScore.get(neighbor)) {
+                    if (current.x !== start.x || current.y !== start.y) {
+                        cameFrom.set(neighbor, current);
+                    }
+
+                    gScore.set(neighbor, tentativeGScore);
+                    fScore.set(neighbor, gScore.get(neighbor) + distanceBetweenSquared(neighbor, goal));
+                }
             }
         });
 

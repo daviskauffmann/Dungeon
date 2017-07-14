@@ -134,8 +134,8 @@ export function input(ev: KeyboardEvent) {
 
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
 
-                        dungeon.entities.push(newEntity);
                         dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
+                        dungeon.entities.push(newEntity);
                     });
 
                     tick();
@@ -213,8 +213,8 @@ export function input(ev: KeyboardEvent) {
                     item.x = player.x;
                     item.y = player.y;
 
-                    dungeon.items.push(item);
                     player.inventory.splice(index, 1);
+                    dungeon.items.push(item);
 
                     ui.mode = '';
                 }

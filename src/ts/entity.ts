@@ -108,8 +108,8 @@ export function tick(entity: Entity) {
 
             itemNames.push(item.name);
 
-            entity.inventory.push(item);
             dungeon.items.splice(index, 1);
+            entity.inventory.push(item);
         }
     });
     if (itemNames.length) {
@@ -159,8 +159,8 @@ export function tick(entity: Entity) {
                     if (randomFloat(0, 1) < 0.5) {
                         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ressurects ${newEntity.name}`);
 
-                        dungeon.entities.push(newEntity);
                         dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
+                        dungeon.entities.push(newEntity);
                     } else {
                         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${newEntity.name}`);
                     }
@@ -176,31 +176,33 @@ export function tick(entity: Entity) {
         case Disposition.Passive:
             break;
         case Disposition.Aggressive:
-            const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
-                return dungeon.entities.some(target => {
-                    return target !== entity
-                        && target.x === coord.x && target.y === coord.y
-                        && target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1);
+            if (randomFloat(0, 1) < 0.5) {
+                const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
+                    return dungeon.entities.some(target => {
+                        return target !== entity &&
+                            target.x === coord.x && target.y === coord.y &&
+                            target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1);
+                    });
+                }).map(coord => {
+                    return dungeon.entities.find(target => {
+                        return target.x === coord.x && target.y === coord.y;
+                    });
                 });
-            }).map(coord => {
-                return dungeon.entities.find(target => {
-                    return target.x === coord.x && target.y === coord.y;
-                });
-            });
 
-            if (targets.length) {
-                const target = targets[0];
+                if (targets.length) {
+                    const target = targets[0];
 
-                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots a ${target.name}`);
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots a ${target.name}`);
 
-                const path = astar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+                    const path = astar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
 
-                if (path && path.length) {
-                    const next = path.pop();
+                    if (path && path.length) {
+                        const next = path.pop();
 
-                    move(entity, next.x, next.y);
+                        move(entity, next.x, next.y);
 
-                    return;
+                        return;
+                    }
                 }
             }
 
@@ -215,8 +217,8 @@ export function tick(entity: Entity) {
 
             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
 
-            dungeon.items.push(item);
             entity.inventory.splice(index, 1);
+            dungeon.items.push(item);
 
             return true;
         }
@@ -248,8 +250,8 @@ export function move(entity: Entity, x: number, y: number) {
 
         const newDungeon = game.dungeons[level];
 
-        newDungeon.entities.push(entity);
         dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
+        newDungeon.entities.push(entity);
 
         const spawn = calcSpawnCoord(newDungeon);
         entity.x = spawn.x;
@@ -324,8 +326,8 @@ export function move(entity: Entity, x: number, y: number) {
                                     equipped: false
                                 };
 
-                                dungeon.items.push(droppedItem);
                                 target.inventory.splice(index, 1);
+                                dungeon.items.push(droppedItem);
                             });
                         }
 
@@ -339,8 +341,8 @@ export function move(entity: Entity, x: number, y: number) {
                             originalChar: target.char
                         };
 
-                        dungeon.items.push(corpse);
                         dungeon.entities.splice(index, 1);
+                        dungeon.items.push(corpse);
                     }
                 } else {
                     log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);

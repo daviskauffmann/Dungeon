@@ -124,37 +124,31 @@ export function draw(ev: UIEvent) {
 
                 if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
                     if (dungeon.entities.some(entity => {
-                        if (entity.x !== x || entity.y !== y) {
-                            return false;
+                        if (entity.x === x && entity.y === y) {
+                            ctx.fillStyle = entity.color;
+                            ctx.globalAlpha = entity.alpha;
+                            ctx.fillText(entity.char, screen.x, screen.y);
+
+                            return true;
                         }
-
-                        ctx.fillStyle = entity.color;
-                        ctx.globalAlpha = entity.alpha;
-                        ctx.fillText(entity.char, screen.x, screen.y);
-
-                        return true;
                     }) || dungeon.chests.some(chest => {
-                        if (chest.x !== x || chest.y !== y) {
-                            return false;
+                        if (chest.x === x && chest.y === y) {
+                            ctx.fillStyle = chest.color;
+                            ctx.globalAlpha = chest.alpha;
+                            ctx.fillText(chest.char, screen.x, screen.y);
+
+                            return true;
                         }
-
-                        ctx.fillStyle = chest.color;
-                        ctx.globalAlpha = chest.alpha;
-                        ctx.fillText(chest.char, screen.x, screen.y);
-
-                        return true;
                     }) || dungeon.items.sort((a, b) => {
                         return 0;
                     }).some(item => {
-                        if (item.x !== x || item.y !== y) {
-                            return false;
+                        if (item.x === x || item.y === y) {
+                            ctx.fillStyle = item.color;
+                            ctx.globalAlpha = item.alpha;
+                            ctx.fillText(item.char, screen.x, screen.y);
+
+                            return true;
                         }
-
-                        ctx.fillStyle = item.color;
-                        ctx.globalAlpha = item.alpha;
-                        ctx.fillText(item.char, screen.x, screen.y);
-
-                        return true;
                     })) {
                         continue;
                     }
@@ -168,14 +162,13 @@ export function draw(ev: UIEvent) {
         }
     }
 
-    for (let i = 0; i < ui.messages.length; i++) {
+    ui.messages.forEach((message, index) => {
         ctx.fillStyle = '#ffffff';
         ctx.globalAlpha = 1;
-        ctx.fillText(ui.messages[i], 0, graphics.fontSize * (i + 1));
-    }
+        ctx.fillText(message, 0, graphics.fontSize * (index + 1));
+    });
 
     ctx.fillStyle = '#ffffff';
-
     ctx.fillText(`Level: ${getLevel(player)} Turn: ${game.turn}`, 0, canvas.height);
 
     if (ui.mode.includes('inventory')) {
