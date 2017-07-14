@@ -1,52 +1,6 @@
-import { Dungeon, Cell, CellType } from './dungeon';
+import { Cell, CellType, Dungeon } from './dungeon';
 import { game } from './game';
 import { Coord, distanceBetweenSquared, toRadians } from './math';
-
-export function lineOfSight(dungeon: Dungeon, origin: Coord, range: number, radians: number) {
-    const coords: Array<Coord> = [];
-
-    const dx = Math.cos(radians);
-    const dy = Math.sin(radians);
-
-    const current: Coord = {
-        x: origin.x + 0.5,
-        y: origin.y + 0.5
-    };
-
-    for (let i = 0; i < range; i++) {
-        const coord: Coord = {
-            x: Math.trunc(current.x),
-            y: Math.trunc(current.y)
-        };
-
-        if (coord.x >= 0 && coord.x < dungeon.width && coord.y >= 0 && coord.y < dungeon.height) {
-            if (!coords.find(c => c.x === coord.x && c.y === coord.y)) {
-                coords.push(coord);
-            }
-
-            if (game.cellInfo[dungeon.cells[coord.x][coord.y].type].solid) {
-                break;
-            }
-
-            current.x += dx;
-            current.y += dy;
-        }
-    }
-
-    return coords;
-}
-
-export function fieldOfView(dungeon: Dungeon, origin: Coord, range: number, accuracy: number) {
-    const coords: Array<Coord> = [];
-
-    for (let degrees = 0; degrees < 360; degrees += accuracy) {
-        coords.push(...lineOfSight(dungeon, origin, range, toRadians(degrees)).filter(coord => {
-            return !coords.find(c => c.x === coord.x && c.y === coord.y);
-        }));
-    }
-
-    return coords;
-}
 
 export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
     const coords: Array<Array<Coord>> = [];
@@ -150,4 +104,50 @@ export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
     }
 
     return undefined;
+}
+
+export function fieldOfView(dungeon: Dungeon, origin: Coord, range: number, accuracy: number) {
+    const coords: Array<Coord> = [];
+
+    for (let degrees = 0; degrees < 360; degrees += accuracy) {
+        coords.push(...lineOfSight(dungeon, origin, range, toRadians(degrees)).filter(coord => {
+            return !coords.find(c => c.x === coord.x && c.y === coord.y);
+        }));
+    }
+
+    return coords;
+}
+
+export function lineOfSight(dungeon: Dungeon, origin: Coord, range: number, radians: number) {
+    const coords: Array<Coord> = [];
+
+    const dx = Math.cos(radians);
+    const dy = Math.sin(radians);
+
+    const current: Coord = {
+        x: origin.x + 0.5,
+        y: origin.y + 0.5
+    };
+
+    for (let i = 0; i < range; i++) {
+        const coord: Coord = {
+            x: Math.trunc(current.x),
+            y: Math.trunc(current.y)
+        };
+
+        if (coord.x >= 0 && coord.x < dungeon.width && coord.y >= 0 && coord.y < dungeon.height) {
+            if (!coords.find(c => c.x === coord.x && c.y === coord.y)) {
+                coords.push(coord);
+            }
+
+            if (game.cellInfo[dungeon.cells[coord.x][coord.y].type].solid) {
+                break;
+            }
+
+            current.x += dx;
+            current.y += dy;
+        }
+    }
+
+    return coords;
 }

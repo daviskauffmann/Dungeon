@@ -12,10 +12,6 @@ export function input(ev: KeyboardEvent) {
     switch (ui.mode) {
         case 'target':
             switch (ev.key) {
-                case 't':
-                    ui.mode = '';
-
-                    break;
                 case 'ArrowUp':
                     ui.target.y--;
 
@@ -32,17 +28,15 @@ export function input(ev: KeyboardEvent) {
                     ui.target.x--;
 
                     break;
+                case 't':
+                    ui.mode = '';
+
+                    break;
             }
 
             break;
         case '':
             switch (ev.key) {
-                case 't':
-                    ui.mode = 'target';
-                    ui.target.x = player.x;
-                    ui.target.y = player.y;
-
-                    break;
                 case 'ArrowUp':
                     move(player, player.x, player.y - 1);
 
@@ -142,6 +136,12 @@ export function input(ev: KeyboardEvent) {
                     }
 
                     tick();
+
+                    break;
+                case 't':
+                    ui.mode = 'target';
+                    ui.target.x = player.x;
+                    ui.target.y = player.y;
 
                     break;
                 case 'i':
