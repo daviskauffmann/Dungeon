@@ -11,13 +11,13 @@ export function lineOfSight(dungeon: Dungeon, origin: Coord, range: number, radi
     const current: Coord = {
         x: origin.x + 0.5,
         y: origin.y + 0.5
-    }
+    };
 
     for (let i = 0; i < range; i++) {
         const coord: Coord = {
             x: Math.trunc(current.x),
             y: Math.trunc(current.y)
-        }
+        };
 
         if (coord.x >= 0 && coord.x < dungeon.width && coord.y >= 0 && coord.y < dungeon.height) {
             if (!coords.find(c => c.x === coord.x && c.y === coord.y)) {

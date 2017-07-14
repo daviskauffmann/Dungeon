@@ -59,7 +59,7 @@ export function createTown() {
             town.cells[x][y] = {
                 type: CellType.Grass,
                 discovered: false
-            }
+            };
         }
     }
 
@@ -68,7 +68,7 @@ export function createTown() {
         y: 0,
         width: town.width,
         height: town.height
-    }
+    };
 
     town.rooms.push(room);
 
@@ -97,7 +97,7 @@ export function createTown() {
         hostileEntityIds: [],
         disposition: Disposition.Aggressive
     };
-    
+
     town.entities.push(player);
 
     return town;
@@ -133,7 +133,7 @@ export function createDungeon(
             dungeon.cells[x][y] = {
                 type: CellType.Empty,
                 discovered: false
-            }
+            };
         }
     }
 
@@ -143,7 +143,7 @@ export function createDungeon(
             y: randomInt(0, dungeon.height),
             width: randomInt(minRoomSize, maxRoomSize),
             height: randomInt(minRoomSize, maxRoomSize)
-        }
+        };
 
         if (room.x < 1 || room.x + room.width > dungeon.width - 1 || room.y < 1 || room.y + room.height > dungeon.height - 1) {
             continue;
@@ -379,7 +379,8 @@ export function createDungeon(
                         alpha: 1,
                         name: '',
                         equipped: false
-                    }
+                    };
+
                     const roll = randomFloat(0, 1);
                     if (roll < 0.25) {
                         item.name = 'sword';

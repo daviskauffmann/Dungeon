@@ -138,7 +138,7 @@ export function input(ev: KeyboardEvent) {
                     if (dungeon.cells[player.x][player.y].type === CellType.DoorOpen) {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} closes the door`);
 
-                        dungeon.cells[player.x][player.y].type = CellType.DoorClosed
+                        dungeon.cells[player.x][player.y].type = CellType.DoorClosed;
                     }
 
                     tick();
@@ -154,7 +154,7 @@ export function input(ev: KeyboardEvent) {
                     ui.mode = 'character';
 
                     break;
-				/*case 'i':
+                /*case 'i':
 					ui.mode = 'spellbook';
 
 					break;*/

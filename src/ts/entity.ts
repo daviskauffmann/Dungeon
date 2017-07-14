@@ -92,7 +92,7 @@ export function calcStats(entity: Entity) {
         precision: entity.level,
         charisma: entity.level,
         luck: entity.level
-    }
+    };
 
     return stats;
 }
@@ -104,7 +104,6 @@ export function tick(entity: Entity) {
     dungeon.items.forEach((item, index) => {
         if (item.x === entity.x && item.y === entity.y
             && randomFloat(0, 1) < 0.5) {
-
             itemNames.push(item.name);
 
             dungeon.items.splice(index, 1);

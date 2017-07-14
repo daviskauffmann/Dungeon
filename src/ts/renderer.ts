@@ -87,7 +87,7 @@ export function draw(ev?: UIEvent) {
                 const screen = {
                     x: (x - view.x) * game.fontSize,
                     y: (y - view.y + 1) * game.fontSize
-                }
+                };
 
                 if (ui.mode === 'target') {
                     if (ui.target.x + 1 === x && ui.target.y === y) {
@@ -138,7 +138,7 @@ export function draw(ev?: UIEvent) {
                     }
                 }
 
-                let cellInfo = game.cellInfo[dungeon.cells[x][y].type];
+                const cellInfo = game.cellInfo[dungeon.cells[x][y].type];
                 ctx.fillStyle = cellInfo.color;
                 ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? 1 : dungeon.cells[x][y].discovered ? 0.25 : 0;
                 ctx.fillText(cellInfo.char, screen.x, screen.y);

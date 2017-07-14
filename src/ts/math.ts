@@ -30,11 +30,11 @@ export function isInside(coord: Coord, rect: Rect) {
 }
 
 export function radiansBetween(coord1: Coord, coord2: Coord) {
-    return Math.atan2(coord2.y - coord1.y, coord2.x - coord1.x)
+    return Math.atan2(coord2.y - coord1.y, coord2.x - coord1.x);
 }
 
 export function randomFloat(min?: number, max?: number) {
-    return Math.random() * (max - min) + min
+    return Math.random() * (max - min) + min;
 }
 
 export function randomInt(min: number, max: number) {
