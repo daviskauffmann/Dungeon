@@ -10,12 +10,8 @@ export interface Size {
 
 export interface Rect extends Coord, Size { }
 
-export function randomFloat(min?: number, max?: number) {
-    return Math.random() * (max - min) + min
-}
-
-export function randomInt(min: number, max: number) {
-    return Math.floor(randomFloat(Math.ceil(min), Math.floor(max)));
+export function degreesBetween(coord1: Coord, coord2: Coord) {
+    return toDegrees(radiansBetween(coord1, coord2));
 }
 
 export function distanceBetweenSquared(coord1: Coord, coord2: Coord) {
@@ -31,4 +27,24 @@ export function isInside(coord: Coord, rect: Rect) {
         && coord.x < Math.max(rect.x, rect.x + rect.width)
         && Math.min(rect.y, rect.y + rect.height) <= coord.y
         && coord.y < Math.max(rect.y, rect.y + rect.height);
+}
+
+export function radiansBetween(coord1: Coord, coord2: Coord) {
+    return Math.atan2(coord2.y - coord1.y, coord2.x - coord1.x)
+}
+
+export function randomFloat(min?: number, max?: number) {
+    return Math.random() * (max - min) + min
+}
+
+export function randomInt(min: number, max: number) {
+    return Math.floor(randomFloat(Math.ceil(min), Math.floor(max)));
+}
+
+export function toRadians(degrees: number) {
+    return degrees * Math.PI / 180;
+}
+
+export function toDegrees(radians: number) {
+    return radians * 180 / Math.PI;
 }

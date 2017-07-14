@@ -1,7 +1,7 @@
-import { fov } from './algorithms';
+import { lineOfSight } from './algorithms';
 import { Dungeon } from './dungeon';
 import { getDungeon, getEntity, tick as entity_tick } from './entity';
-import { Coord } from './math';
+import { Coord, radiansBetween } from './math';
 
 export interface Game {
     currentId: number;
@@ -36,14 +36,14 @@ export let game: Game = {
     dungeons: [],
     fontSize: 24,
     cellInfo: [
-        { name: 'empty',        char: ' ', color: '#ffffff', solid: false },
-        { name: 'floor',        char: '.', color: '#ffffff', solid: false },
-        { name: 'grass',        char: '^', color: '#50ff50', solid: false },
-        { name: 'wall',         char: '#', color: '#ffffff', solid: true  },
-        { name: 'doorOpen',     char: '-', color: '#ffffff', solid: false },
-        { name: 'doorClosed',   char: '+', color: '#ffffff', solid: true  },
-        { name: 'stairsUp',     char: '<', color: '#ffffff', solid: false },
-        { name: 'stairsDown',   char: '>', color: '#ffffff', solid: false }
+        { name: 'empty', char: ' ', color: '#ffffff', solid: false },
+        { name: 'floor', char: '.', color: '#ffffff', solid: false },
+        { name: 'grass', char: '^', color: '#50ff50', solid: false },
+        { name: 'wall', char: '#', color: '#ffffff', solid: true },
+        { name: 'doorOpen', char: '-', color: '#ffffff', solid: false },
+        { name: 'doorClosed', char: '+', color: '#ffffff', solid: true },
+        { name: 'stairsUp', char: '<', color: '#ffffff', solid: false },
+        { name: 'stairsDown', char: '>', color: '#ffffff', solid: false }
     ],
     messages: [],
     godMode: true,
@@ -76,9 +76,9 @@ export function tick() {
 export function log(dungeon: Dungeon, location: Coord, message: string) {
     const player = getEntity(0);
 
-    if (dungeon === getDungeon(player) &&
-        fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).find(coord => coord.x === location.x && coord.y === location.y)) {
 
+    if (dungeon === getDungeon(player)
+        && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, location)).find(coord => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 
         if (game.messages.length > ui.maxMessages) {

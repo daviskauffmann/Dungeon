@@ -1,7 +1,8 @@
-import { fov } from './algorithms';
+import { lineOfSight } from './algorithms';
 import { CellType, Corpse } from './dungeon';
 import { Entity, getDungeon, getEntity, getInventoryChar, move } from './entity';
 import { game, load, log, save, tick, ui } from './game';
+import { radiansBetween } from './math';
 import { draw } from './renderer';
 
 export function input(ev: KeyboardEvent) {
@@ -84,15 +85,12 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 's':
-                    const targets = fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).filter(coord => {
-                        return dungeon.entities.some(target => {
-                            return target !== player
-                                && target.x === coord.x && target.y === coord.y;
-                        });
-                    }).map(coord => {
-                        return dungeon.entities.find(target => {
-                            return target.x === coord.x && target.y === coord.y;
-                        });
+                    const targets = dungeon.entities.filter(target => {
+                        return target !== player
+                            && target.factions.some(faction => player.hostileFactions.indexOf(faction) > -1)
+                            && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y })).some(coord => {
+                                return coord.x === target.x && coord.y === target.y;
+                            });
                     });
 
                     if (targets.length) {
@@ -103,16 +101,12 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 'r':
-                    fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).filter(coord => {
-                        return dungeon.items.some(item => {
-                            return item.x === coord.x && item.y === coord.y
-                                && 'originalChar' in item;
-                        });
-                    }).map(coord => {
-                        return <Corpse>dungeon.items.find(item => {
-                            return item.x === coord.x && item.y === coord.y;
-                        });
-                    }).forEach(corpse => {
+                    dungeon.items.filter(item => {
+                        return 'originalChar' in item
+                            && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y })).some(coord => {
+                                return coord.x === item.x && coord.y === item.y;
+                            });
+                    }).map(item => <Corpse>item).forEach(corpse => {
                         const newEntity: Entity = {
                             x: corpse.x,
                             y: corpse.y,

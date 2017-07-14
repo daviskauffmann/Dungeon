@@ -1,7 +1,7 @@
-import { astar, fov } from './algorithms';
+import { aStar, lineOfSight } from './algorithms';
 import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
 import { game, log } from './game';
-import { Coord, randomFloat, randomInt } from './math';
+import { radiansBetween, Coord, randomFloat, randomInt } from './math';
 import { Glyph } from './renderer';
 
 export interface Entity extends Coord, Glyph {
@@ -122,17 +122,13 @@ export function tick(entity: Entity) {
             break;
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
-                const corpses = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
-                    return dungeon.items.some(item => {
-                        return item.x === coord.x && item.y === coord.y
-                            && 'originalChar' in item
-                            && (<Corpse>item).factions.some(faction => entity.factions.indexOf(faction) > -1);
-                    });
-                }).map(coord => {
-                    return <Corpse>dungeon.items.find(item => {
-                        return item.x === coord.x && item.y === coord.y;
-                    });
-                });
+                const corpses = dungeon.items.filter(item => {
+                    return 'originalChar' in item
+                        && (<Corpse>item).factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)
+                        && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y })).some(coord => {
+                            return coord.x === item.x && coord.y === item.y;
+                        });
+                }).map(item => <Corpse>item);
 
                 if (corpses.length) {
                     const corpse = corpses[0];
@@ -176,16 +172,12 @@ export function tick(entity: Entity) {
             break;
         case Disposition.Aggressive:
             if (randomFloat(0, 1) < 0.5) {
-                const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
-                    return dungeon.entities.some(target => {
-                        return target !== entity
-                            && target.x === coord.x && target.y === coord.y
-                            && target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1);
-                    });
-                }).map(coord => {
-                    return dungeon.entities.find(target => {
-                        return target.x === coord.x && target.y === coord.y;
-                    });
+                const targets = dungeon.entities.filter(target => {
+                    return target !== entity
+                        && target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)
+                        && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y })).some(coord => {
+                            return coord.x === target.x && coord.y === target.y;
+                        });
                 });
 
                 if (targets.length) {
@@ -193,7 +185,7 @@ export function tick(entity: Entity) {
 
                     log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots a ${target.name}`);
 
-                    const path = astar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+                    const path = aStar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
 
                     if (path && path.length) {
                         const next = path.pop();

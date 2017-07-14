@@ -1,4 +1,4 @@
-import { fov } from './algorithms';
+import { fieldOfView } from './algorithms';
 import { Cell, CellType } from './dungeon';
 import { calcStats, Entity, getDungeon, getEntity, getInventoryChar, getLevel } from './entity';
 import { game, ui } from './game';
@@ -43,7 +43,7 @@ export function draw(ev: UIEvent) {
         view.y = dungeon.height - view.height;
     }
 
-    const visibleCells = fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5).map(coord => dungeon.cells[coord.x][coord.y]);
+    const visibleCells = fieldOfView(dungeon, { x: player.x, y: player.y }, player.sight, 0.5).map(coord => dungeon.cells[coord.x][coord.y]);
 
     visibleCells.forEach(cell => {
         cell.discovered = true;
