@@ -1,9 +1,8 @@
 import { astar, fov } from './algorithms';
 import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
-import { game } from './game';
+import { game, log } from './game';
 import { Coord, randomFloat, randomInt } from './math';
 import { Glyph } from './renderer';
-import { log } from './ui';
 
 export interface Entity extends Coord, Glyph {
     id: number;
@@ -103,8 +102,8 @@ export function tick(entity: Entity) {
 
     const itemNames: Array<string> = [];
     dungeon.items.forEach((item, index) => {
-        if (item.x === entity.x && item.y === entity.y &&
-            randomFloat(0, 1) < 0.5) {
+        if (item.x === entity.x && item.y === entity.y
+            && randomFloat(0, 1) < 0.5) {
 
             itemNames.push(item.name);
 
@@ -125,9 +124,9 @@ export function tick(entity: Entity) {
             if (randomFloat(0, 1) < 0.5) {
                 const corpses = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
                     return dungeon.items.some(item => {
-                        return item.x === coord.x && item.y === coord.y &&
-                            'originalChar' in item &&
-                            (<Corpse>item).factions.every(faction => entity.hostileFactions.indexOf(faction) === -1);
+                        return item.x === coord.x && item.y === coord.y
+                            && 'originalChar' in item
+                            && (<Corpse>item).factions.some(faction => entity.factions.indexOf(faction) > -1);
                     });
                 }).map(coord => {
                     return <Corpse>dungeon.items.find(item => {
@@ -179,9 +178,9 @@ export function tick(entity: Entity) {
             if (randomFloat(0, 1) < 0.5) {
                 const targets = fov(dungeon, { x: entity.x, y: entity.y }, entity.sight, 1).filter(coord => {
                     return dungeon.entities.some(target => {
-                        return target !== entity &&
-                            target.x === coord.x && target.y === coord.y &&
-                            target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1);
+                        return target !== entity
+                            && target.x === coord.x && target.y === coord.y
+                            && target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1);
                     });
                 }).map(coord => {
                     return dungeon.entities.find(target => {
@@ -305,47 +304,47 @@ export function move(entity: Entity, x: number, y: number) {
         }
 
         if (dungeon.entities.some((target, index) => {
-            if (target !== entity &&
-                target.x === x && target.y === y &&
-                target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
+            if (target !== entity
+                && target.x === x && target.y === y) {
+                if (target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
+                    if (randomFloat(0, 1) < 0.5) {
+                        if (target.id === 0 && game.godMode) {
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
+                        } else {
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
 
-                if (randomFloat(0, 1) < 0.5) {
-                    if (target.id === 0 && game.godMode) {
-                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
-                    } else {
-                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
+                            if (target.inventory.length) {
+                                log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
 
-                        if (target.inventory.length) {
-                            log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
+                                target.inventory.forEach((item, index) => {
+                                    const droppedItem: Item = {
+                                        ...item,
+                                        x: target.x,
+                                        y: target.y,
+                                        equipped: false
+                                    };
 
-                            target.inventory.forEach((item, index) => {
-                                const droppedItem: Item = {
-                                    ...item,
-                                    x: target.x,
-                                    y: target.y,
-                                    equipped: false
-                                };
+                                    target.inventory.splice(index, 1);
+                                    dungeon.items.push(droppedItem);
+                                });
+                            }
 
-                                target.inventory.splice(index, 1);
-                                dungeon.items.push(droppedItem);
-                            });
+                            const corpse: Corpse = {
+                                ...target,
+                                x: x,
+                                y: y,
+                                char: '%',
+                                name: target.name + ' corpse',
+                                equipped: false,
+                                originalChar: target.char
+                            };
+
+                            dungeon.entities.splice(index, 1);
+                            dungeon.items.push(corpse);
                         }
-
-                        const corpse: Corpse = {
-                            ...target,
-                            x: x,
-                            y: y,
-                            char: '%',
-                            name: target.name + ' corpse',
-                            equipped: false,
-                            originalChar: target.char
-                        };
-
-                        dungeon.entities.splice(index, 1);
-                        dungeon.items.push(corpse);
+                    } else {
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);
                     }
-                } else {
-                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);
                 }
 
                 return true;

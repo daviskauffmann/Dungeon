@@ -1,9 +1,8 @@
 import { fov } from './algorithms';
 import { CellType, Corpse } from './dungeon';
 import { Entity, getDungeon, getEntity, getInventoryChar, move } from './entity';
-import { game, load, save, tick } from './game';
-import { draw, graphics } from './renderer';
-import { log, ui } from './ui';
+import { game, load, log, save, tick, ui } from './game';
+import { draw } from './renderer';
 
 export function input(ev: KeyboardEvent) {
     const player = getEntity(0);
@@ -87,8 +86,8 @@ export function input(ev: KeyboardEvent) {
                 case 's':
                     const targets = fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).filter(coord => {
                         return dungeon.entities.some(target => {
-                            return target !== player &&
-                                target.x === coord.x && target.y === coord.y;
+                            return target !== player
+                                && target.x === coord.x && target.y === coord.y;
                         });
                     }).map(coord => {
                         return dungeon.entities.find(target => {
@@ -106,8 +105,8 @@ export function input(ev: KeyboardEvent) {
                 case 'r':
                     fov(dungeon, { x: player.x, y: player.y }, player.sight, 1).filter(coord => {
                         return dungeon.items.some(item => {
-                            return item.x === coord.x && item.y === coord.y &&
-                                'originalChar' in item;
+                            return item.x === coord.x && item.y === coord.y
+                                && 'originalChar' in item;
                         });
                     }).map(coord => {
                         return <Corpse>dungeon.items.find(item => {
@@ -338,11 +337,11 @@ export function input(ev: KeyboardEvent) {
 
             break;
         case '-':
-            graphics.fontSize--;
+            game.fontSize--;
 
             break;
         case '=':
-            graphics.fontSize++;
+            game.fontSize++;
 
             break;
         case '1':

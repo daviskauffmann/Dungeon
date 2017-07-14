@@ -27,8 +27,8 @@ export function distanceBetween(coord1: Coord, coord2: Coord) {
 }
 
 export function isInside(coord: Coord, rect: Rect) {
-    return Math.min(rect.x, rect.x + rect.width) <= coord.x &&
-        coord.x < Math.max(rect.x, rect.x + rect.width) &&
-        Math.min(rect.y, rect.y + rect.height) <= coord.y &&
-        coord.y < Math.max(rect.y, rect.y + rect.height);
+    return Math.min(rect.x, rect.x + rect.width) <= coord.x
+        && coord.x < Math.max(rect.x, rect.x + rect.width)
+        && Math.min(rect.y, rect.y + rect.height) <= coord.y
+        && coord.y < Math.max(rect.y, rect.y + rect.height);
 }

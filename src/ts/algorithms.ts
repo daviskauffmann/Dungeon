@@ -1,13 +1,8 @@
 import { Dungeon, Cell, CellType } from './dungeon';
+import { game } from './game';
 import { Coord, distanceBetweenSquared } from './math';
 
-export function fov(
-    dungeon: Dungeon,
-    origin: Coord,
-    range: number,
-    accuracy: number,
-    action?: (coord: Coord) => void) {
-
+export function fov(dungeon: Dungeon, origin: Coord, range: number, accuracy: number) {
     const coords: Array<Coord> = [];
 
     for (let dir = 0; dir < 360; dir += accuracy) {
@@ -26,17 +21,11 @@ export function fov(
             }
 
             if (coord.x >= 0 && coord.x < dungeon.width && coord.y >= 0 && coord.y < dungeon.height) {
-                if (action) {
-                    action(coord);
-                }
-
                 if (!coords.find(c => c.x === coord.x && c.y === coord.y)) {
                     coords.push(coord);
                 }
 
-                if (dungeon.cells[coord.x][coord.y].type === CellType.Wall ||
-                    dungeon.cells[coord.x][coord.y].type === CellType.DoorClosed) {
-
+                if (game.cells[dungeon.cells[coord.x][coord.y].type].solid) {
                     break;
                 }
 
@@ -80,7 +69,7 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
     while (openSet.length > 0) {
         let current: Coord;
         let lowestFScore = Infinity;
-        
+
         for (let i = 0; i < openSet.length; i++) {
             const value = fScore.get(openSet[i]);
 
@@ -119,15 +108,14 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
         }
 
         neighbors.filter(neighbor => {
-            return dungeon.cells[neighbor.x][neighbor.y].type !== CellType.Wall &&
-                dungeon.cells[neighbor.x][neighbor.y].type !== CellType.DoorClosed &&
-                !dungeon.entities.some(entity => {
-                    return entity.x === neighbor.x && entity.y === neighbor.y &&
-                        entity.x !== goal.x && entity.y !== goal.y;
-                }) &&
-                !dungeon.chests.some(chest => {
-                    return chest.x === neighbor.x && chest.y === neighbor.y &&
-                        chest.x !== goal.x && chest.y !== goal.y;
+            return !game.cells[dungeon.cells[neighbor.x][neighbor.y].type].solid
+                && !dungeon.entities.some(entity => {
+                    return entity.x === neighbor.x && entity.y === neighbor.y
+                        && entity.x !== goal.x && entity.y !== goal.y;
+                })
+                && !dungeon.chests.some(chest => {
+                    return chest.x === neighbor.x && chest.y === neighbor.y
+                        && chest.x !== goal.x && chest.y !== goal.y;
                 });
         }).forEach(neighbor => {
             if (closedSet.indexOf(neighbor) === -1) {

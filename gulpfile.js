@@ -43,11 +43,10 @@ gulp.task('webpack', callback => {
             extensions: ['.ts']
         },
         module: {
-            rules: [
+            loaders: [
                 { test: /\.ts$/, loader: 'ts-loader' }
             ]
         },
-        plugins: [],
         devtool: 'source-map'
     }).run((err, stats) => {
         if (err) throw new gutil.PluginError("webpack:build", err);

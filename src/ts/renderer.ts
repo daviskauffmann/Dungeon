@@ -1,9 +1,8 @@
 import { fov } from './algorithms';
 import { Cell, CellType } from './dungeon';
 import { calcStats, Entity, getDungeon, getEntity, getInventoryChar, getLevel } from './entity';
-import { game } from './game';
+import { game, ui } from './game';
 import { isInside, Rect } from './math';
-import { ui } from './ui';
 
 export interface Glyph {
     char: string;
@@ -11,26 +10,8 @@ export interface Glyph {
     alpha: number;
 }
 
-export interface Graphics {
-    fontSize: number;
-    cellTypes: Array<Glyph>;
-}
-
 const canvas = <HTMLCanvasElement>document.getElementById('game');
 const ctx = canvas.getContext('2d');
-export const graphics: Graphics = {
-    fontSize: 24,
-    cellTypes: [
-        { char: ' ', color: '#ffffff', alpha: 1 },
-        { char: '.', color: '#ffffff', alpha: 1 },
-        { char: '^', color: '#50ff50', alpha: 1 },
-        { char: '#', color: '#ffffff', alpha: 1 },
-        { char: '-', color: '#ffffff', alpha: 1 },
-        { char: '+', color: '#ffffff', alpha: 1 },
-        { char: '<', color: '#ffffff', alpha: 1 },
-        { char: '>', color: '#ffffff', alpha: 1 }
-    ]
-};
 
 export function draw(ev: UIEvent) {
     const player = getEntity(0);
@@ -45,8 +26,8 @@ export function draw(ev: UIEvent) {
         width: 0,
         height: 0
     };
-    view.width = Math.round(canvas.width / graphics.fontSize);
-    view.height = Math.round(canvas.height / graphics.fontSize);
+    view.width = Math.round(canvas.width / game.fontSize);
+    view.height = Math.round(canvas.height / game.fontSize);
     view.x = player.x - Math.round(view.width / 2);
     view.y = player.y - Math.round(view.height / 2);
     if (view.x < 0) {
@@ -62,20 +43,23 @@ export function draw(ev: UIEvent) {
         view.y = dungeon.height - view.height;
     }
 
-    const visibleCells = fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5, coord => {
-        dungeon.cells[coord.x][coord.y].discovered = true;
-    }).map(coord => dungeon.cells[coord.x][coord.y]);
+    const visibleCells = fov(dungeon, { x: player.x, y: player.y }, player.sight, 0.5).map(coord => dungeon.cells[coord.x][coord.y]);
+
+    visibleCells.forEach(cell => {
+        cell.discovered = true;
+    });
+
     if (game.ignoreFov) {
         for (let x = view.x; x < view.x + view.width; x++) {
             for (let y = view.y; y < view.y + view.height; y++) {
-                if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height &&
-                    visibleCells.indexOf(dungeon.cells[x][y]) === -1) {
-
+                if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height
+                    && visibleCells.indexOf(dungeon.cells[x][y]) === -1) {
                     visibleCells.push(dungeon.cells[x][y]);
                 }
             }
         }
     }
+
     if (dungeon.litRooms) {
         dungeon.rooms.forEach(room => {
             if (isInside({ x: player.x, y: player.y }, room)) {
@@ -95,14 +79,14 @@ export function draw(ev: UIEvent) {
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = graphics.fontSize + 'px mono';
+    ctx.font = game.fontSize + 'px mono';
 
     for (let x = view.x; x < view.x + view.width; x++) {
         for (let y = view.y; y < view.y + view.height; y++) {
             if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
                 const screen = {
-                    x: (x - view.x) * graphics.fontSize,
-                    y: (y - view.y + 1) * graphics.fontSize
+                    x: (x - view.x) * game.fontSize,
+                    y: (y - view.y + 1) * game.fontSize
                 }
 
                 if (ui.mode === 'target') {
@@ -142,7 +126,7 @@ export function draw(ev: UIEvent) {
                     }) || dungeon.items.sort((a, b) => {
                         return 0;
                     }).some(item => {
-                        if (item.x === x || item.y === y) {
+                        if (item.x === x && item.y === y) {
                             ctx.fillStyle = item.color;
                             ctx.globalAlpha = item.alpha;
                             ctx.fillText(item.char, screen.x, screen.y);
@@ -154,18 +138,18 @@ export function draw(ev: UIEvent) {
                     }
                 }
 
-                let cellType = graphics.cellTypes[dungeon.cells[x][y].type];
-                ctx.fillStyle = cellType.color;
-                ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? cellType.alpha : dungeon.cells[x][y].discovered ? cellType.alpha * 0.25 : 0;
-                ctx.fillText(cellType.char, screen.x, screen.y);
+                let cell = game.cells[dungeon.cells[x][y].type];
+                ctx.fillStyle = cell.color;
+                ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? 1 : dungeon.cells[x][y].discovered ? 0.25 : 0;
+                ctx.fillText(cell.char, screen.x, screen.y);
             }
         }
     }
 
-    ui.messages.forEach((message, index) => {
+    game.messages.forEach((message, index) => {
         ctx.fillStyle = '#ffffff';
         ctx.globalAlpha = 1;
-        ctx.fillText(message, 0, graphics.fontSize * (index + 1));
+        ctx.fillText(message, 0, game.fontSize * (index + 1));
     });
 
     ctx.fillStyle = '#ffffff';
@@ -174,13 +158,13 @@ export function draw(ev: UIEvent) {
     if (ui.mode.includes('inventory')) {
         ctx.fillStyle = '#ffffff';
         player.inventory.forEach((item, index) => {
-            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (graphics.fontSize * 10), (index + 1) * graphics.fontSize);
+            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }
 
     if (ui.mode === 'character') {
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`Health: ${calcStats(player).health}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize);
-        ctx.fillText(`Mana: ${calcStats(player).mana}`, canvas.width - (graphics.fontSize * 10), graphics.fontSize * 2);
+        ctx.fillText(`Health: ${calcStats(player).health}`, canvas.width - (game.fontSize * 10), game.fontSize);
+        ctx.fillText(`Mana: ${calcStats(player).mana}`, canvas.width - (game.fontSize * 10), game.fontSize * 2);
     }
 }
