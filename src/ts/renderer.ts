@@ -13,7 +13,7 @@ export interface Glyph {
 const canvas = <HTMLCanvasElement>document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-export function draw(ev: UIEvent) {
+export function draw(ev?: UIEvent) {
     const player = getEntity(0);
     const dungeon = getDungeon(player);
 

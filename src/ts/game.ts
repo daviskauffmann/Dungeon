@@ -76,7 +76,6 @@ export function tick() {
 export function log(dungeon: Dungeon, location: Coord, message: string) {
     const player = getEntity(0);
 
-
     if (dungeon === getDungeon(player)
         && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, location)).find(coord => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);

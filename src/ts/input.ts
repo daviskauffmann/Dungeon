@@ -352,5 +352,5 @@ export function input(ev: KeyboardEvent) {
             break;
     }
 
-    draw(undefined);
+    draw();
 }

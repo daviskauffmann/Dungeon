@@ -9,4 +9,4 @@ game.dungeons.push(createTown());
 window.addEventListener('resize', draw);
 document.addEventListener('keydown', input);
 
-draw(undefined);
+draw();
