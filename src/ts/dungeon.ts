@@ -63,18 +63,20 @@ export function createTown() {
         }
     }
 
-    town.rooms.push({
+    const room: Rect = {
         x: 0,
         y: 0,
         width: town.width,
         height: town.height
-    });
+    }
+
+    town.rooms.push(room);
 
     const x = Math.round(town.width / 2);
     const y = Math.round(town.height / 2);
     town.cells[x][y].type = CellType.StairsDown;
 
-    town.entities.push({
+    const player: Entity = {
         x: x,
         y: y,
         char: '@',
@@ -94,7 +96,9 @@ export function createTown() {
         ],
         hostileEntityIds: [],
         disposition: Disposition.Aggressive
-    });
+    };
+    
+    town.entities.push(player);
 
     return town;
 }

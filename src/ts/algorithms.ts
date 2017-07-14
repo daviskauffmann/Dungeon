@@ -25,7 +25,7 @@ export function fov(dungeon: Dungeon, origin: Coord, range: number, accuracy: nu
                     coords.push(coord);
                 }
 
-                if (game.cells[dungeon.cells[coord.x][coord.y].type].solid) {
+                if (game.cellInfo[dungeon.cells[coord.x][coord.y].type].solid) {
                     break;
                 }
 
@@ -108,7 +108,7 @@ export function astar(dungeon: Dungeon, start: Coord, goal: Coord) {
         }
 
         neighbors.filter(neighbor => {
-            return !game.cells[dungeon.cells[neighbor.x][neighbor.y].type].solid
+            return !game.cellInfo[dungeon.cells[neighbor.x][neighbor.y].type].solid
                 && !dungeon.entities.some(entity => {
                     return entity.x === neighbor.x && entity.y === neighbor.y
                         && entity.x !== goal.x && entity.y !== goal.y;

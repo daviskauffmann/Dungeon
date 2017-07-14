@@ -5,14 +5,21 @@ import { Coord } from './math';
 
 export interface Game {
     currentId: number;
-    dungeons: Array<Dungeon>;
     turn: number;
-    messages: Array<string>;
+    dungeons: Array<Dungeon>;
     fontSize: number;
-    cells: Array<any>;
+    cellInfo: Array<CellInfo>;
+    messages: Array<string>;
     godMode: boolean;
     stopTime: boolean;
     ignoreFov: boolean;
+}
+
+interface CellInfo {
+    name: string;
+    char: string;
+    color: string;
+    solid: boolean;
 }
 
 export interface UI {
@@ -25,11 +32,10 @@ export interface UI {
 
 export let game: Game = {
     currentId: 0,
-    dungeons: [],
     turn: 0,
-    messages: [],
+    dungeons: [],
     fontSize: 24,
-    cells: [
+    cellInfo: [
         { name: 'empty',        char: ' ', color: '#ffffff', solid: false },
         { name: 'floor',        char: '.', color: '#ffffff', solid: false },
         { name: 'grass',        char: '^', color: '#50ff50', solid: false },
@@ -39,6 +45,7 @@ export let game: Game = {
         { name: 'stairsUp',     char: '<', color: '#ffffff', solid: false },
         { name: 'stairsDown',   char: '>', color: '#ffffff', solid: false }
     ],
+    messages: [],
     godMode: true,
     stopTime: false,
     ignoreFov: false

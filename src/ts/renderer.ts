@@ -138,10 +138,10 @@ export function draw(ev: UIEvent) {
                     }
                 }
 
-                let cell = game.cells[dungeon.cells[x][y].type];
-                ctx.fillStyle = cell.color;
+                let cellInfo = game.cellInfo[dungeon.cells[x][y].type];
+                ctx.fillStyle = cellInfo.color;
                 ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? 1 : dungeon.cells[x][y].discovered ? 0.25 : 0;
-                ctx.fillText(cell.char, screen.x, screen.y);
+                ctx.fillText(cellInfo.char, screen.x, screen.y);
             }
         }
     }
