@@ -1,4 +1,4 @@
-import { Coord, Rect } from './types';
+import { Coord, Rect } from "./types";
 
 export function degreesBetween(coord1: Coord, coord2: Coord) {
     return toDegrees(radiansBetween(coord1, coord2));

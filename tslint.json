@@ -9,10 +9,6 @@
         ],
         "no-console": [
             false
-        ],
-        "quotemark": [
-            true,
-            "single"
         ]
     }
 }

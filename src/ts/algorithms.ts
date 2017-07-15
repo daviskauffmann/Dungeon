@@ -1,6 +1,6 @@
-import { game } from './game';
-import {distanceBetweenSquared, toRadians } from './math';
-import { Coord, Dungeon } from './types';
+import { game } from "./game";
+import {distanceBetweenSquared, toRadians } from "./math";
+import { Coord, Dungeon } from "./types";
 
 export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
     const coords: Coord[][] = [];

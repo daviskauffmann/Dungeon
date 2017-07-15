@@ -1,18 +1,18 @@
-import { lineOfSight } from './algorithms';
-import { getDungeon, getEntity, tick as entity_tick } from './entity';
-import { radiansBetween } from './math';
-import { Coord, Dungeon, Game, UI, UIMode } from './types';
+import { lineOfSight } from "./algorithms";
+import { getDungeon, getEntity, tick as entity_tick } from "./entity";
+import { radiansBetween } from "./math";
+import { Coord, Dungeon, Game, UI, UIMode } from "./types";
 
 export let game: Game = {
     cellInfo: [
-        { name: 'empty', char: ' ', color: '#ffffff', solid: false },
-        { name: 'floor', char: '.', color: '#ffffff', solid: false },
-        { name: 'grass', char: '^', color: '#50ff50', solid: false },
-        { name: 'wall', char: '#', color: '#ffffff', solid: true },
-        { name: 'doorOpen', char: '-', color: '#ffffff', solid: false },
-        { name: 'doorClosed', char: '+', color: '#ffffff', solid: true },
-        { name: 'stairsUp', char: '<', color: '#ffffff', solid: false },
-        { name: 'stairsDown', char: '>', color: '#ffffff', solid: false },
+        { name: "empty", char: " ", color: "#ffffff", solid: false },
+        { name: "floor", char: ".", color: "#ffffff", solid: false },
+        { name: "grass", char: "^", color: "#50ff50", solid: false },
+        { name: "wall", char: "#", color: "#ffffff", solid: true },
+        { name: "doorOpen", char: "-", color: "#ffffff", solid: false },
+        { name: "doorClosed", char: "+", color: "#ffffff", solid: true },
+        { name: "stairsUp", char: "<", color: "#ffffff", solid: false },
+        { name: "stairsDown", char: ">", color: "#ffffff", solid: false },
     ],
     currentId: 0,
     dungeons: [],
@@ -25,7 +25,7 @@ export let game: Game = {
 };
 
 export function load() {
-    game = JSON.parse(localStorage.getItem('game'));
+    game = JSON.parse(localStorage.getItem("game"));
     console.log(game);
 }
 
@@ -44,7 +44,7 @@ export function log(dungeon: Dungeon, location: Coord, message: string) {
 }
 
 export function save() {
-    localStorage.setItem('game', JSON.stringify(game));
+    localStorage.setItem("game", JSON.stringify(game));
     console.log(JSON.stringify(game));
 }
 

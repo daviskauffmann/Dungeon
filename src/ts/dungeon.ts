@@ -1,6 +1,6 @@
-import { game } from './game';
-import { randomFloat, randomInt } from './math';
-import { CellType, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Rect } from './types';
+import { game } from "./game";
+import { randomFloat, randomInt } from "./math";
+import { CellType, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Rect } from "./types";
 
 export function createDungeon(
     width: number,
@@ -205,9 +205,9 @@ export function createDungeon(
 
         const monster: Entity = {
             alpha: 1,
-            char: '',
+            char: "",
             class: Class.Warrior,
-            color: '#ffffff',
+            color: "#ffffff",
             disposition: Disposition.Aggressive,
             factions: [],
             hostileEntityIds: [],
@@ -215,7 +215,7 @@ export function createDungeon(
             id: game.currentId++,
             inventory: [],
             level: 1,
-            name: '',
+            name: "",
             sight: 10,
             x: coord.x,
             y: coord.y,
@@ -223,23 +223,23 @@ export function createDungeon(
 
         const roll = randomFloat(0, 1);
         if (roll < 0.25) {
-            monster.name = 'rat';
-            monster.char = 'r';
+            monster.name = "rat";
+            monster.char = "r";
             monster.factions = [
                 Faction.Monster,
             ];
             monster.hostileFactions = [];
             monster.disposition = Disposition.Cowardly;
         } else if (roll < 0.50) {
-            monster.name = 'slime';
-            monster.char = 's';
+            monster.name = "slime";
+            monster.char = "s";
             monster.factions = [
                 Faction.Monster,
             ];
             monster.disposition = Disposition.Passive;
         } else if (roll < 0.75) {
-            monster.name = 'orc';
-            monster.char = 'o';
+            monster.name = "orc";
+            monster.char = "o";
             monster.factions = [
                 Faction.Monster,
                 Faction.Orc,
@@ -249,13 +249,13 @@ export function createDungeon(
                 Faction.Bugbear,
             ];
             if (randomFloat(0, 1) < 0.5) {
-                monster.color = '#ffff00';
-                monster.name += ' shaman';
+                monster.color = "#ffff00";
+                monster.name += " shaman";
                 monster.class = Class.Shaman;
             }
         } else {
-            monster.name = 'bugbear';
-            monster.char = 'b';
+            monster.name = "bugbear";
+            monster.char = "b";
             monster.factions = [
                 Faction.Monster,
                 Faction.Bugbear,
@@ -265,8 +265,8 @@ export function createDungeon(
                 Faction.Orc,
             ];
             if (randomFloat(0, 1) < 0.5) {
-                monster.color = '#ffff00';
-                monster.name += ' shaman';
+                monster.color = "#ffff00";
+                monster.name += " shaman";
                 monster.class = Class.Shaman;
             }
         }
@@ -283,32 +283,32 @@ export function createDungeon(
 
         dungeon.chests.push({
             alpha: 1,
-            char: '~',
-            color: '#ffffff',
+            char: "~",
+            color: "#ffffff",
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
                     const item: Item = {
                         alpha: 1,
-                        char: '',
-                        color: '#ffffff',
+                        char: "",
+                        color: "#ffffff",
                         equipped: false,
-                        name: '',
+                        name: "",
                         x: -1, y: -1,
                     };
 
                     const roll = randomFloat(0, 1);
                     if (roll < 0.25) {
-                        item.name = 'sword';
-                        item.char = '|';
+                        item.name = "sword";
+                        item.char = "|";
                     } else if (roll < 0.50) {
-                        item.name = 'spear';
-                        item.char = '/';
+                        item.name = "spear";
+                        item.char = "/";
                     } else if (roll < 0.75) {
-                        item.name = 'shield';
-                        item.char = ')';
+                        item.name = "shield";
+                        item.char = ")";
                     } else {
-                        item.name = 'bow';
-                        item.char = '}';
+                        item.name = "bow";
+                        item.char = "}";
                     }
 
                     return item;
@@ -363,9 +363,9 @@ export function createTown() {
 
         const player: Entity = {
             alpha: 1,
-            char: '@',
+            char: "@",
             class: Class.Warrior,
-            color: '#ffffff',
+            color: "#ffffff",
             disposition: Disposition.Aggressive,
             factions: [
                 Faction.Player,
@@ -377,7 +377,7 @@ export function createTown() {
             id: game.currentId++,
             inventory: [],
             level: 1,
-            name: 'player',
+            name: "player",
             sight: 5,
             x: coord.x,
             y: coord.y,

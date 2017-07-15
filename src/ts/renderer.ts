@@ -1,11 +1,11 @@
-import { fieldOfView } from './algorithms';
-import { calcStats, getDungeon, getEntity, getInventoryChar, getLevel } from './entity';
-import { game, ui } from './game';
-import { isInside } from './math';
-import { Rect, UIMode } from './types';
+import { fieldOfView } from "./algorithms";
+import { calcStats, getDungeon, getEntity, getInventoryChar, getLevel } from "./entity";
+import { game, ui } from "./game";
+import { isInside } from "./math";
+import { Rect, UIMode } from "./types";
 
-const canvas = document.getElementById('game') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game") as HTMLCanvasElement;
+const ctx = canvas.getContext("2d");
 
 export function draw(ev?: UIEvent) {
     const player = getEntity(0);
@@ -74,7 +74,7 @@ export function draw(ev?: UIEvent) {
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = game.fontSize + 'px mono';
+    ctx.font = game.fontSize + "px mono";
 
     for (let x = view.left; x < view.left + view.width; x++) {
         for (let y = view.top; y < view.top + view.height; y++) {
@@ -83,16 +83,16 @@ export function draw(ev?: UIEvent) {
 
                 if (ui.mode === UIMode.Target) {
                     if (ui.target.x + 1 === x && ui.target.y === y) {
-                        ctx.fillStyle = '#ffffff';
+                        ctx.fillStyle = "#ffffff";
                         ctx.globalAlpha = 1;
-                        ctx.fillText(']', screen.x, screen.y);
+                        ctx.fillText("]", screen.x, screen.y);
 
                         continue;
                     }
                     if (ui.target.x - 1 === x && ui.target.y === y) {
-                        ctx.fillStyle = '#ffffff';
+                        ctx.fillStyle = "#ffffff";
                         ctx.globalAlpha = 1;
-                        ctx.fillText('[', screen.x, screen.y);
+                        ctx.fillText("[", screen.x, screen.y);
 
                         continue;
                     }
@@ -149,12 +149,12 @@ export function draw(ev?: UIEvent) {
     }
 
     game.messages.forEach((message, index) => {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = 1;
         ctx.fillText(message, 0, game.fontSize * (index + 1));
     });
 
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = "#ffffff";
     ctx.fillText(`Level: ${getLevel(player)} Turn: ${game.turn}`, 0, canvas.height);
 
     if (ui.mode === UIMode.Inventory
@@ -163,14 +163,14 @@ export function draw(ev?: UIEvent) {
         || ui.mode === UIMode.InventorySwapFirst
         || ui.mode === UIMode.InventorySwapSecond
         || ui.mode === UIMode.InventoryUnequip) {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = "#ffffff";
         player.inventory.forEach((item, index) => {
-            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
+            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }
 
     if (ui.mode === UIMode.Character) {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = "#ffffff";
         ctx.fillText(`Health: ${calcStats(player).health}`, canvas.width - (game.fontSize * 10), game.fontSize);
         ctx.fillText(`Mana: ${calcStats(player).mana}`, canvas.width - (game.fontSize * 10), game.fontSize * 2);
     }

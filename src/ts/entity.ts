@@ -1,8 +1,8 @@
-import { aStar, lineOfSight } from './algorithms';
-import { createDungeon } from './dungeon';
-import { game, log } from './game';
-import { radiansBetween, randomFloat, randomInt } from './math';
-import { CellInfo, CellType, Class, Coord, Corpse, Disposition, Dungeon, Entity, Item, Stats } from './types';
+import { aStar, lineOfSight } from "./algorithms";
+import { createDungeon } from "./dungeon";
+import { game, log } from "./game";
+import { radiansBetween, randomFloat, randomInt } from "./math";
+import { CellInfo, CellType, Class, Coord, Corpse, Disposition, Dungeon, Entity, Item, Stats } from "./types";
 
 export function calcStats(entity: Entity) {
     const stats: Stats = {
@@ -71,7 +71,7 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
 
                     cell.type = CellType.DoorOpen;
                 } else {
-                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can"t open the door`);
                 }
 
                 return;
@@ -116,7 +116,7 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
                             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills ${target.name}`);
 
                             if (target.inventory.length) {
-                                log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(', ')}`);
+                                log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(", ")}`);
 
                                 target.inventory.forEach((item, itemIndex) => {
                                     item.x = target.x;
@@ -130,9 +130,9 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
 
                             const corpse: Corpse = {
                                 ...target,
-                                char: '%',
+                                char: "%",
                                 equipped: false,
-                                name: target.name + ' corpse',
+                                name: target.name + " corpse",
                                 originalChar: target.char,
                             };
 
@@ -163,13 +163,13 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
 
                             entity.inventory.push(chest.loot);
                         } else {
-                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name}'s inventory is full`);
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name}"s inventory is full`);
                         }
                     } else {
                         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees nothing inside`);
                     }
                 } else {
-                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the chest`);
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can"t open the chest`);
                 }
 
                 return true;
@@ -180,7 +180,7 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
 
         {
             const itemNames = dungeon.items.filter((item) => item.x === coord.x && item.y === coord.y)
-                .map((item) => item.name).join(', ');
+                .map((item) => item.name).join(", ");
 
             if (itemNames) {
                 log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
@@ -198,7 +198,7 @@ export function tick(dungeon: Dungeon, entity: Entity) {
             && randomFloat(0, 1) < 0.5);
 
         if (items.length) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} picks up ${items.map((item) => item.name).join(', ')}`);
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} picks up ${items.map((item) => item.name).join(", ")}`);
 
             items.forEach((item) => {
                 dungeon.items.splice(dungeon.items.indexOf(item), 1);
@@ -214,7 +214,7 @@ export function tick(dungeon: Dungeon, entity: Entity) {
             break;
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
-                const corpses = dungeon.items.filter((item) => 'originalChar' in item
+                const corpses = dungeon.items.filter((item) => "originalChar" in item
                     && (item as Corpse).factions.every((faction) => entity.hostileFactions.indexOf(faction) === -1)
                     && lineOfSight(dungeon, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }), entity.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))
@@ -236,7 +236,7 @@ export function tick(dungeon: Dungeon, entity: Entity) {
                             id: corpse.id,
                             inventory: corpse.inventory,
                             level: corpse.level,
-                            name: corpse.name.replace(' corpse', ''),
+                            name: corpse.name.replace(" corpse", ""),
                             sight: corpse.sight,
                             x: corpse.x,
                             y: corpse.y,
@@ -291,7 +291,7 @@ export function tick(dungeon: Dungeon, entity: Entity) {
     }
 
     if (entity.inventory.some((item, index) => {
-        if (item.name.includes('corpse')
+        if (item.name.includes("corpse")
             && randomFloat(0, 1) < 0.5) {
             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
 

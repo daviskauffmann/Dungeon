@@ -1,9 +1,9 @@
-import { lineOfSight } from './algorithms';
-import { getDungeon, getEntity, getInventoryChar, move } from './entity';
-import { game, load, log, save, tick, ui } from './game';
-import { radiansBetween } from './math';
-import { draw } from './renderer';
-import { CellType, Corpse, Entity, UIMode } from './types';
+import { lineOfSight } from "./algorithms";
+import { getDungeon, getEntity, getInventoryChar, move } from "./entity";
+import { game, load, log, save, tick, ui } from "./game";
+import { radiansBetween } from "./math";
+import { draw } from "./renderer";
+import { CellType, Corpse, Entity, UIMode } from "./types";
 
 export function input(ev: KeyboardEvent) {
     const player = getEntity(0);
@@ -12,35 +12,35 @@ export function input(ev: KeyboardEvent) {
     switch (ui.mode) {
         case UIMode.Default:
             switch (ev.key) {
-                case 'ArrowUp':
+                case "ArrowUp":
                     move(dungeon, player, { x: player.x, y: player.y - 1 });
 
                     tick();
 
                     break;
-                case 'ArrowRight':
+                case "ArrowRight":
                     move(dungeon, player, { x: player.x + 1, y: player.y });
 
                     tick();
 
                     break;
-                case 'ArrowDown':
+                case "ArrowDown":
                     move(dungeon, player, { x: player.x, y: player.y + 1 });
 
                     tick();
 
                     break;
-                case 'ArrowLeft':
+                case "ArrowLeft":
                     move(dungeon, player, { x: player.x - 1, y: player.y });
 
                     tick();
 
                     break;
-                case '.':
+                case ".":
                     tick();
 
                     break;
-                case 'g':
+                case "g":
                     dungeon.items.forEach((item, index) => {
                         if (item.x === player.x && item.y === player.y) {
                             log(dungeon, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
@@ -53,7 +53,7 @@ export function input(ev: KeyboardEvent) {
                     tick();
 
                     break;
-                case 's':
+                case "s":
                     const targets = dungeon.entities.filter((target) => target !== player
                         && target.factions.some((faction) => player.hostileFactions.indexOf(faction) > -1)
                         && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), player.sight)
@@ -61,14 +61,14 @@ export function input(ev: KeyboardEvent) {
 
                     if (targets.length) {
                         log(dungeon, { x: player.x, y: player.y },
-                            `${player.name} spots ${targets.map((target) => target.name).join(', ')}`);
+                            `${player.name} spots ${targets.map((target) => target.name).join(", ")}`);
                     } else {
-                        log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn't see anything`);
+                        log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn"t see anything`);
                     }
 
                     break;
-                case 'r':
-                    dungeon.items.filter((item) => 'originalChar' in item
+                case "r":
+                    dungeon.items.filter((item) => "originalChar" in item
                         && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), player.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
@@ -85,7 +85,7 @@ export function input(ev: KeyboardEvent) {
                                 id: corpse.id,
                                 inventory: corpse.inventory,
                                 level: corpse.level,
-                                name: corpse.name.replace(' corpse', ''),
+                                name: corpse.name.replace(" corpse", ""),
                                 sight: corpse.sight,
                                 x: corpse.x,
                                 y: corpse.y,
@@ -100,7 +100,7 @@ export function input(ev: KeyboardEvent) {
                     tick();
 
                     break;
-                case 'c':
+                case "c":
                     if (dungeon.cells[player.x][player.y].type === CellType.DoorOpen) {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} closes the door`);
 
@@ -110,19 +110,19 @@ export function input(ev: KeyboardEvent) {
                     tick();
 
                     break;
-                case 't':
+                case "t":
                     ui.mode = UIMode.Target;
                     ui.target.x = player.x;
                     ui.target.y = player.y;
 
                     break;
-                case 'i':
+                case "i":
                     if (player.inventory.length > 0) {
                         ui.mode = UIMode.Inventory;
                     }
 
                     break;
-                case 'o':
+                case "o":
                     ui.mode = UIMode.Character;
 
                     break;
@@ -131,23 +131,23 @@ export function input(ev: KeyboardEvent) {
             break;
         case UIMode.Target:
             switch (ev.key) {
-                case 'ArrowUp':
+                case "ArrowUp":
                     ui.target.y--;
 
                     break;
-                case 'ArrowRight':
+                case "ArrowRight":
                     ui.target.x++;
 
                     break;
-                case 'ArrowDown':
+                case "ArrowDown":
                     ui.target.y++;
 
                     break;
-                case 'ArrowLeft':
+                case "ArrowLeft":
                     ui.target.x--;
 
                     break;
-                case 't':
+                case "t":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -156,34 +156,34 @@ export function input(ev: KeyboardEvent) {
             break;
         case UIMode.Inventory:
             switch (ev.key) {
-                case 'i':
+                case "i":
                     ui.mode = UIMode.Default;
 
                     break;
-                case 'd':
-                    log(dungeon, { x: player.x, y: player.y }, 'select item to drop');
-                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
+                case "d":
+                    log(dungeon, { x: player.x, y: player.y }, "select item to drop");
+                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventoryDrop;
 
                     break;
-                case 'e':
-                    log(dungeon, { x: player.x, y: player.y }, 'select item to equip');
-                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
+                case "e":
+                    log(dungeon, { x: player.x, y: player.y }, "select item to equip");
+                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventoryEquip;
 
                     break;
-                case 'u':
-                    log(dungeon, { x: player.x, y: player.y }, 'select item to unequip');
-                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
+                case "u":
+                    log(dungeon, { x: player.x, y: player.y }, "select item to unequip");
+                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventoryUnequip;
 
                     break;
-                case 's':
-                    log(dungeon, { x: player.x, y: player.y }, 'select first item to swap');
-                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
+                case "s":
+                    log(dungeon, { x: player.x, y: player.y }, "select first item to swap");
+                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventorySwapFirst;
 
@@ -207,7 +207,7 @@ export function input(ev: KeyboardEvent) {
             });
 
             switch (ev.key) {
-                case ' ':
+                case " ":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -226,7 +226,7 @@ export function input(ev: KeyboardEvent) {
             });
 
             switch (ev.key) {
-                case ' ':
+                case " ":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -245,7 +245,7 @@ export function input(ev: KeyboardEvent) {
             });
 
             switch (ev.key) {
-                case ' ':
+                case " ":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -257,15 +257,15 @@ export function input(ev: KeyboardEvent) {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapFirst = index;
 
-                    log(dungeon, { x: player.x, y: player.y }, 'select second item to swap');
-                    log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
+                    log(dungeon, { x: player.x, y: player.y }, "select second item to swap");
+                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventorySwapSecond;
                 }
             });
 
             switch (ev.key) {
-                case ' ':
+                case " ":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -288,7 +288,7 @@ export function input(ev: KeyboardEvent) {
             });
 
             switch (ev.key) {
-                case ' ':
+                case " ":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -297,7 +297,7 @@ export function input(ev: KeyboardEvent) {
             break;
         case UIMode.Character:
             switch (ev.key) {
-                case 'o':
+                case "o":
                     ui.mode = UIMode.Default;
 
                     break;
@@ -307,39 +307,39 @@ export function input(ev: KeyboardEvent) {
     }
 
     switch (ev.key) {
-        case '[':
-            log(dungeon, { x: player.x, y: player.y }, 'game saved');
+        case "[":
+            log(dungeon, { x: player.x, y: player.y }, "game saved");
 
             save();
 
             break;
-        case ']':
-            log(dungeon, { x: player.x, y: player.y }, 'game loaded');
+        case "]":
+            log(dungeon, { x: player.x, y: player.y }, "game loaded");
 
             load();
 
             break;
-        case '\\':
+        case "\\":
             console.log(game);
 
             break;
-        case '-':
+        case "-":
             game.fontSize--;
 
             break;
-        case '=':
+        case "=":
             game.fontSize++;
 
             break;
-        case '1':
+        case "1":
             game.godMode = !game.godMode;
 
             break;
-        case '2':
+        case "2":
             game.stopTime = !game.stopTime;
 
             break;
-        case '3':
+        case "3":
             game.ignoreFov = !game.ignoreFov;
 
             break;
