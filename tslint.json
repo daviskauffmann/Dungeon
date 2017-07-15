@@ -1,5 +1,18 @@
 {
+    "extends": "tslint:recommended",
     "rules": {
-        
+        "interface-name": [
+            false
+        ],
+        "max-line-length": [
+            false
+        ],
+        "no-console": [
+            false
+        ],
+        "quotemark": [
+            true,
+            "single"
+        ]
     }
 }

@@ -1,119 +1,63 @@
 import { aStar, lineOfSight } from './algorithms';
-import { CellType, Corpse, createDungeon, Dungeon, Item } from './dungeon';
+import { createDungeon } from './dungeon';
 import { game, log } from './game';
-import { radiansBetween, Coord, randomFloat, randomInt } from './math';
-import { Glyph } from './renderer';
-
-export interface Entity extends Coord, Glyph {
-    id: number;
-    name: string;
-    level: number;
-    class: Class;
-    sight: number;
-    inventory: Array<Item>;
-    factions: Array<Faction>;
-    hostileFactions: Array<Faction>;
-    hostileEntityIds: Array<number>;
-    disposition: Disposition;
-}
-
-export enum Class {
-    Warrior,
-    Shaman
-}
-
-export enum Faction {
-    Player,
-    Monster,
-    Bugbear,
-    Orc
-}
-
-export enum Disposition {
-    Passive,
-    Aggressive,
-    Cowardly
-}
-
-export interface Stats {
-    health: number;
-    energy: number;
-    mana: number;
-
-    stamina: number;
-    endurance: number;
-    attunement: number;
-    resistance: number;
-    strength: number;
-    intellect: number;
-    avoidance: number;
-    precision: number;
-    charisma: number;
-    luck: number;
-}
+import { radiansBetween, randomFloat, randomInt } from './math';
+import { CellInfo, CellType, Class, Coord, Corpse, Disposition, Dungeon, Entity, Item, Stats } from './types';
 
 export function getEntity(id: number) {
-    return game.dungeons.find(dungeon => {
-        return dungeon.entities.some(entity => {
-            return entity.id === id;
-        });
-    }).entities.find(entity => {
-        return entity.id === id;
-    });
+    return game.dungeons.find((dungeon) => dungeon.entities.some((entity) => entity.id === id))
+        .entities.find((entity) => entity.id === id);
 }
 
 export function getDungeon(entity: Entity) {
-    return game.dungeons.find(dungeon => {
-        return dungeon.entities.indexOf(entity) > -1;
-    });
+    return game.dungeons.find((dungeon) => dungeon.entities.indexOf(entity) > -1);
 }
 
 export function getLevel(entity: Entity) {
     return game.dungeons.indexOf(getDungeon(entity));
 }
 
-export function getInventoryChar(entity: Entity, item: Item) {
-    return String.fromCharCode(97 + entity.inventory.indexOf(item));
-}
-
 export function calcStats(entity: Entity) {
     const stats: Stats = {
-        health: entity.level * 100,
-        energy: entity.level * 100,
-        mana: entity.level * 100,
-
-        stamina: entity.level,
-        endurance: entity.level,
         attunement: entity.level,
-        resistance: entity.level,
-        strength: entity.level,
-        intellect: entity.level,
         avoidance: entity.level,
-        precision: entity.level,
         charisma: entity.level,
-        luck: entity.level
+        endurance: entity.level,
+        energy: entity.level * 100,
+        health: entity.level * 100,
+        intellect: entity.level,
+        luck: entity.level,
+        mana: entity.level * 100,
+        precision: entity.level,
+        resistance: entity.level,
+        stamina: entity.level,
+        strength: entity.level,
     };
 
     return stats;
 }
 
+export function getInventoryChar(entity: Entity, item: Item) {
+    return String.fromCharCode(97 + entity.inventory.indexOf(item));
+}
+
 export function tick(entity: Entity) {
     const dungeon = getDungeon(entity);
 
-    const itemNames: Array<string> = [];
-    dungeon.items.forEach((item, index) => {
-        if (item.x === entity.x && item.y === entity.y
-            && randomFloat(0, 1) < 0.5) {
-            itemNames.push(item.name);
+    {
+        const items = dungeon.items.filter((item) => item.x === entity.x && item.y === entity.y
+            && randomFloat(0, 1) < 0.5);
 
-            dungeon.items.splice(index, 1);
-            entity.inventory.push(item);
+        if (items.length) {
+            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} picks up ${items.map((item) => item.name).join(', ')}`);
+
+            items.forEach((item) => {
+                dungeon.items.splice(dungeon.items.indexOf(item), 1);
+                entity.inventory.push(item);
+            });
+
+            return;
         }
-    });
-    if (itemNames.length) {
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} picks up ${itemNames.join(', ')}`);
-
-        return;
     }
 
     switch (entity.class) {
@@ -121,33 +65,31 @@ export function tick(entity: Entity) {
             break;
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
-                const corpses = dungeon.items.filter(item => {
-                    return 'originalChar' in item
-                        && (<Corpse>item).factions.every(faction => entity.hostileFactions.indexOf(faction) === -1)
-                        && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y })).some(coord => {
-                            return coord.x === item.x && coord.y === item.y;
-                        });
-                }).map(item => <Corpse>item);
+                const corpses = dungeon.items.filter((item) => 'originalChar' in item
+                    && (item as Corpse).factions.every((faction) => entity.hostileFactions.indexOf(faction) === -1)
+                    && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }))
+                        .some((coord) => coord.x === item.x && coord.y === item.y))
+                    .map((item) => item as Corpse);
 
                 if (corpses.length) {
                     const corpse = corpses[0];
 
                     const newEntity: Entity = {
+                        alpha: corpse.alpha,
+                        char: corpse.originalChar,
+                        class: corpse.class,
+                        color: corpse.color,
+                        disposition: corpse.disposition,
+                        factions: corpse.factions,
+                        hostileEntityIds: corpse.hostileEntityIds,
+                        hostileFactions: corpse.hostileFactions,
+                        id: corpse.id,
+                        inventory: corpse.inventory,
+                        level: corpse.level,
+                        name: corpse.name.replace(' corpse', ''),
+                        sight: corpse.sight,
                         x: corpse.x,
                         y: corpse.y,
-                        char: corpse.originalChar,
-                        color: corpse.color,
-                        alpha: corpse.alpha,
-                        id: corpse.id,
-                        name: corpse.name.replace(' corpse', ''),
-                        level: corpse.level,
-                        class: corpse.class,
-                        sight: corpse.sight,
-                        inventory: corpse.inventory,
-                        factions: corpse.factions,
-                        hostileFactions: corpse.hostileFactions,
-                        hostileEntityIds: corpse.hostileEntityIds,
-                        disposition: corpse.disposition
                     };
 
                     if (randomFloat(0, 1) < 0.5) {
@@ -171,13 +113,11 @@ export function tick(entity: Entity) {
             break;
         case Disposition.Aggressive:
             if (randomFloat(0, 1) < 0.5) {
-                const targets = dungeon.entities.filter(target => {
-                    return target !== entity
-                        && target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)
-                        && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y })).some(coord => {
-                            return coord.x === target.x && coord.y === target.y;
-                        });
-                });
+                const targets = dungeon.entities.filter((target) => target !== entity
+                    && target.factions
+                        .some((faction) => entity.hostileFactions.indexOf(faction) > -1)
+                    && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y }))
+                        .some((coord) => coord.x === target.x && coord.y === target.y));
 
                 if (targets.length) {
                     const target = targets[0];
@@ -189,7 +129,7 @@ export function tick(entity: Entity) {
                     if (path && path.length) {
                         const next = path.pop();
 
-                        move(entity, next.x, next.y);
+                        move(entity, { x: next.x, y: next.y });
 
                         return;
                     }
@@ -202,9 +142,8 @@ export function tick(entity: Entity) {
     }
 
     if (entity.inventory.some((item, index) => {
-        if (item.name.includes('corpse') &&
-            randomFloat(0, 1) < 0.5) {
-
+        if (item.name.includes('corpse')
+            && randomFloat(0, 1) < 0.5) {
             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
 
             entity.inventory.splice(index, 1);
@@ -218,47 +157,30 @@ export function tick(entity: Entity) {
 
     const roll = randomFloat(0, 1);
     if (roll < 0.25) {
-        move(entity, entity.x, entity.y - 1);
+        move(entity, { x: entity.x, y: entity.y - 1 });
     } else if (roll < 0.5) {
-        move(entity, entity.x + 1, entity.y);
+        move(entity, { x: entity.x + 1, y: entity.y });
     } else if (roll < 0.75) {
-        move(entity, entity.x, entity.y + 1);
+        move(entity, { x: entity.x, y: entity.y + 1 });
     } else {
-        move(entity, entity.x - 1, entity.y);
+        move(entity, { x: entity.x - 1, y: entity.y });
     }
 }
 
-export function move(entity: Entity, x: number, y: number) {
-    function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
-        const dungeon = getDungeon(entity);
-
-        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${level}`);
-
-        while (level >= game.dungeons.length) {
-            game.dungeons.push(createDungeon(50, 50, 20, 5, 15, false, false, 0.5, 3, 20, 5));
-        }
-
-        const newDungeon = game.dungeons[level];
-
-        dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
-        newDungeon.entities.push(entity);
-
-        const spawn = calcSpawnCoord(newDungeon);
-        entity.x = spawn.x;
-        entity.y = spawn.y;
-    }
-
+export function move(entity: Entity, coord: Coord) {
     const dungeon = getDungeon(entity);
 
-    if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
-        switch (dungeon.cells[x][y].type) {
+    if (coord.x >= 0 && coord.x < dungeon.width && coord.y >= 0 && coord.y < dungeon.height) {
+        const cell = dungeon.cells[coord.x][coord.y];
+
+        switch (cell.type) {
             case CellType.Wall:
                 return;
             case CellType.DoorClosed:
                 if (randomFloat(0, 1) < 0.5) {
                     log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the door`);
 
-                    dungeon.cells[x][y].type = CellType.DoorOpen;
+                    cell.type = CellType.DoorOpen;
                 } else {
                     log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
                 }
@@ -268,13 +190,23 @@ export function move(entity: Entity, x: number, y: number) {
                 log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
 
                 changeLevel(entity, getLevel(entity) - 1, (newDungeon) => {
+                    const spawn: Coord = {
+                        x: 0,
+                        y: 0,
+                    };
+
                     for (let x = 0; x < newDungeon.width; x++) {
                         for (let y = 0; y < newDungeon.height; y++) {
                             if (newDungeon.cells[x][y].type === CellType.StairsDown) {
-                                return { x, y };
+                                spawn.x = x;
+                                spawn.y = y;
+
+                                break;
                             }
                         }
                     }
+
+                    return spawn;
                 });
 
                 return;
@@ -282,22 +214,32 @@ export function move(entity: Entity, x: number, y: number) {
                 log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} descends`);
 
                 changeLevel(entity, getLevel(entity) + 1, (newDungeon) => {
+                    const spawn: Coord = {
+                        x: 0,
+                        y: 0,
+                    };
+
                     for (let x = 0; x < newDungeon.width; x++) {
                         for (let y = 0; y < newDungeon.height; y++) {
                             if (newDungeon.cells[x][y].type === CellType.StairsUp) {
-                                return { x, y };
+                                spawn.x = x;
+                                spawn.y = y;
+
+                                break;
                             }
                         }
                     }
+
+                    return spawn;
                 });
 
                 return;
         }
 
-        if (dungeon.entities.some((target, index) => {
+        if (dungeon.entities.some((target, targetIndex) => {
             if (target !== entity
-                && target.x === x && target.y === y) {
-                if (target.factions.some(faction => entity.hostileFactions.indexOf(faction) > -1)) {
+                && target.x === coord.x && target.y === coord.y) {
+                if (target.factions.some((faction) => entity.hostileFactions.indexOf(faction) > -1)) {
                     if (randomFloat(0, 1) < 0.5) {
                         if (target.id === 0 && game.godMode) {
                             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
@@ -305,32 +247,30 @@ export function move(entity: Entity, x: number, y: number) {
                             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
 
                             if (target.inventory.length) {
-                                log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map(item => item.name).join(', ')}`);
+                                log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(', ')}`);
 
-                                target.inventory.forEach((item, index) => {
+                                target.inventory.forEach((item, itemIndex) => {
                                     const droppedItem: Item = {
                                         ...item,
+                                        equipped: false,
                                         x: target.x,
                                         y: target.y,
-                                        equipped: false
                                     };
 
-                                    target.inventory.splice(index, 1);
+                                    target.inventory.splice(itemIndex, 1);
                                     dungeon.items.push(droppedItem);
                                 });
                             }
 
                             const corpse: Corpse = {
                                 ...target,
-                                x: x,
-                                y: y,
                                 char: '%',
-                                name: target.name + ' corpse',
                                 equipped: false,
-                                originalChar: target.char
+                                name: target.name + ' corpse',
+                                originalChar: target.char,
                             };
 
-                            dungeon.entities.splice(index, 1);
+                            dungeon.entities.splice(targetIndex, 1);
                             dungeon.items.push(corpse);
                         }
                     } else {
@@ -340,8 +280,12 @@ export function move(entity: Entity, x: number, y: number) {
 
                 return true;
             }
-        }) || dungeon.chests.some((chest, index) => {
-            if (chest.x === x && chest.y === y) {
+        })) {
+            return;
+        }
+
+        if (dungeon.chests.some((chest, index) => {
+            if (chest.x === coord.x && chest.y === coord.y) {
                 if (randomFloat(0, 1) < 0.5) {
                     log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} opens the chest`);
 
@@ -368,12 +312,35 @@ export function move(entity: Entity, x: number, y: number) {
             return;
         }
 
-        const itemNames = dungeon.items.filter(item => item.x === x && item.y === y).map(item => item.name).join(', ');
-        if (itemNames) {
-            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
+        {
+            const itemNames = dungeon.items.filter((item) => item.x === coord.x && item.y === coord.y)
+                .map((item) => item.name).join(', ');
+
+            if (itemNames) {
+                log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
+            }
         }
 
-        entity.x = x;
-        entity.y = y;
+        entity.x = coord.x;
+        entity.y = coord.y;
     }
+}
+
+function changeLevel(entity: Entity, level: number, calcSpawnCoord: (newDungeon: Dungeon) => Coord) {
+    const dungeon = getDungeon(entity);
+
+    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${level}`);
+
+    while (level >= game.dungeons.length) {
+        game.dungeons.push(createDungeon(50, 50, 20, 5, 15, false, false, 0.5, 3, 20, 5));
+    }
+
+    const newDungeon = game.dungeons[level];
+
+    dungeon.entities.splice(dungeon.entities.indexOf(entity), 1);
+    newDungeon.entities.push(entity);
+
+    const spawn = calcSpawnCoord(newDungeon);
+    entity.x = spawn.x;
+    entity.y = spawn.y;
 }

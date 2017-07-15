@@ -1,9 +1,9 @@
 import { lineOfSight } from './algorithms';
-import { CellType, Corpse } from './dungeon';
-import { Entity, getDungeon, getEntity, getInventoryChar, move } from './entity';
+import { getDungeon, getEntity, getInventoryChar, move } from './entity';
 import { game, load, log, save, tick, ui } from './game';
 import { radiansBetween } from './math';
 import { draw } from './renderer';
+import { CellType, Corpse, Entity } from './types';
 
 export function input(ev: KeyboardEvent) {
     const player = getEntity(0);
@@ -38,25 +38,25 @@ export function input(ev: KeyboardEvent) {
         case '':
             switch (ev.key) {
                 case 'ArrowUp':
-                    move(player, player.x, player.y - 1);
+                    move(player, { x: player.x, y: player.y - 1 });
 
                     tick();
 
                     break;
                 case 'ArrowRight':
-                    move(player, player.x + 1, player.y);
+                    move(player, { x: player.x + 1, y: player.y });
 
                     tick();
 
                     break;
                 case 'ArrowDown':
-                    move(player, player.x, player.y + 1);
+                    move(player, { x: player.x, y: player.y + 1 });
 
                     tick();
 
                     break;
                 case 'ArrowLeft':
-                    move(player, player.x - 1, player.y);
+                    move(player, { x: player.x - 1, y: player.y });
 
                     tick();
 
@@ -79,51 +79,48 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 's':
-                    const targets = dungeon.entities.filter(target => {
-                        return target !== player
-                            && target.factions.some(faction => player.hostileFactions.indexOf(faction) > -1)
-                            && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y })).some(coord => {
-                                return coord.x === target.x && coord.y === target.y;
-                            });
-                    });
+                    const targets = dungeon.entities.filter((target) => target !== player
+                        && target.factions.some((faction) => player.hostileFactions.indexOf(faction) > -1)
+                        && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }))
+                            .some((coord) => coord.x === target.x && coord.y === target.y));
 
                     if (targets.length) {
-                        log(dungeon, { x: player.x, y: player.y }, `${player.name} spots a ${targets.map(target => target.name).join(', ')}`);
+                        log(dungeon, { x: player.x, y: player.y },
+                            `${player.name} spots a ${targets.map((target) => target.name).join(', ')}`);
                     } else {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn't see anything`);
                     }
 
                     break;
                 case 'r':
-                    dungeon.items.filter(item => {
-                        return 'originalChar' in item
-                            && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y })).some(coord => {
-                                return coord.x === item.x && coord.y === item.y;
-                            });
-                    }).map(item => <Corpse>item).forEach(corpse => {
-                        const newEntity: Entity = {
-                            x: corpse.x,
-                            y: corpse.y,
-                            char: corpse.originalChar,
-                            color: corpse.color,
-                            alpha: corpse.alpha,
-                            id: corpse.id,
-                            name: corpse.name.replace(' corpse', ''),
-                            level: corpse.level,
-                            class: corpse.class,
-                            sight: corpse.sight,
-                            inventory: corpse.inventory,
-                            factions: corpse.factions,
-                            hostileFactions: corpse.hostileFactions,
-                            hostileEntityIds: corpse.hostileEntityIds,
-                            disposition: corpse.disposition
-                        };
+                    dungeon.items.filter((item) => 'originalChar' in item
+                        && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }))
+                            .some((coord) => coord.x === item.x && coord.y === item.y))
+                        .map((item) => (item as Corpse))
+                        .forEach((corpse) => {
+                            const newEntity: Entity = {
+                                alpha: corpse.alpha,
+                                char: corpse.originalChar,
+                                class: corpse.class,
+                                color: corpse.color,
+                                disposition: corpse.disposition,
+                                factions: corpse.factions,
+                                hostileEntityIds: corpse.hostileEntityIds,
+                                hostileFactions: corpse.hostileFactions,
+                                id: corpse.id,
+                                inventory: corpse.inventory,
+                                level: corpse.level,
+                                name: corpse.name.replace(' corpse', ''),
+                                sight: corpse.sight,
+                                x: corpse.x,
+                                y: corpse.y,
+                            };
 
-                        log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
+                            log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
 
-                        dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
-                        dungeon.entities.push(newEntity);
-                    });
+                            dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
+                            dungeon.entities.push(newEntity);
+                        });
 
                     tick();
 
@@ -222,7 +219,7 @@ export function input(ev: KeyboardEvent) {
 
             break;
         case 'inventory_equip':
-            player.inventory.forEach(item => {
+            player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     log(dungeon, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
 
@@ -241,7 +238,7 @@ export function input(ev: KeyboardEvent) {
 
             break;
         case 'inventory_unequip':
-            player.inventory.forEach(item => {
+            player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     log(dungeon, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
 

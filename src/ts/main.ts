@@ -1,5 +1,4 @@
 import { createTown } from './dungeon';
-import { getEntity } from './entity';
 import { game } from './game';
 import { input } from './input';
 import { draw } from './renderer';

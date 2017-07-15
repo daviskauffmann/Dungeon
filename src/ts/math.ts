@@ -1,14 +1,4 @@
-export interface Coord {
-    x: number;
-    y: number;
-}
-
-export interface Size {
-    width: number;
-    height: number;
-}
-
-export interface Rect extends Coord, Size { }
+import { Coord, Rect } from './types';
 
 export function degreesBetween(coord1: Coord, coord2: Coord) {
     return toDegrees(radiansBetween(coord1, coord2));
@@ -23,10 +13,10 @@ export function distanceBetween(coord1: Coord, coord2: Coord) {
 }
 
 export function isInside(coord: Coord, rect: Rect) {
-    return Math.min(rect.x, rect.x + rect.width) <= coord.x
-        && coord.x < Math.max(rect.x, rect.x + rect.width)
-        && Math.min(rect.y, rect.y + rect.height) <= coord.y
-        && coord.y < Math.max(rect.y, rect.y + rect.height);
+    return Math.min(rect.left, rect.left + rect.width) <= coord.x
+        && coord.x < Math.max(rect.left, rect.left + rect.width)
+        && Math.min(rect.top, rect.top + rect.height) <= coord.y
+        && coord.y < Math.max(rect.top, rect.top + rect.height);
 }
 
 export function radiansBetween(coord1: Coord, coord2: Coord) {
@@ -41,10 +31,10 @@ export function randomInt(min: number, max: number) {
     return Math.floor(randomFloat(Math.ceil(min), Math.floor(max)));
 }
 
-export function toRadians(degrees: number) {
-    return degrees * Math.PI / 180;
-}
-
 export function toDegrees(radians: number) {
     return radians * 180 / Math.PI;
+}
+
+export function toRadians(degrees: number) {
+    return degrees * Math.PI / 180;
 }

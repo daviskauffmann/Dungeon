@@ -1,104 +1,70 @@
-import { Class, Disposition, Entity, Faction } from './entity';
 import { game } from './game';
-import { Coord, randomFloat, randomInt, Rect, Size } from './math';
-import { Glyph } from './renderer';
-
-export interface Dungeon extends Size {
-    cells: Array<Array<Cell>>;
-    rooms: Array<Rect>;
-    litRooms: boolean;
-    entities: Array<Entity>;
-    chests: Array<Chest>;
-    items: Array<Item>;
-}
-
-export interface Cell {
-    type: CellType;
-    discovered: boolean;
-}
-
-export enum CellType {
-    Empty,
-    Floor,
-    Grass,
-    Wall,
-    DoorOpen,
-    DoorClosed,
-    StairsUp,
-    StairsDown
-}
-
-export interface Chest extends Coord, Glyph {
-    loot: Item;
-}
-
-export interface Item extends Coord, Glyph {
-    name: string;
-    equipped: boolean;
-}
-
-export interface Corpse extends Entity, Item {
-    originalChar: string;
-}
+import { randomFloat, randomInt } from './math';
+import { CellType, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Rect } from './types';
 
 export function createTown() {
     const town: Dungeon = {
-        width: 25,
-        height: 25,
         cells: [],
-        rooms: [],
-        litRooms: false,
-        entities: [],
         chests: [],
-        items: []
+        entities: [],
+        height: 25,
+        items: [],
+        litRooms: false,
+        rooms: [],
+        width: 25,
     };
 
     for (let x = 0; x < town.width; x++) {
         town.cells[x] = [];
         for (let y = 0; y < town.height; y++) {
             town.cells[x][y] = {
+                discovered: false,
                 type: CellType.Grass,
-                discovered: false
             };
         }
     }
 
     const room: Rect = {
-        x: 0,
-        y: 0,
+        height: town.height,
+        left: 0,
+        top: 0,
         width: town.width,
-        height: town.height
     };
 
     town.rooms.push(room);
 
-    const x = Math.round(town.width / 2);
-    const y = Math.round(town.height / 2);
-    town.cells[x][y].type = CellType.StairsDown;
+    {
+        const coord: Coord = {
+            x: Math.round(town.width / 2),
+            y: Math.round(town.height / 2),
+        };
 
-    const player: Entity = {
-        x: x,
-        y: y,
-        char: '@',
-        color: '#ffffff',
-        alpha: 1,
-        id: game.currentId++,
-        name: 'player',
-        level: 1,
-        class: Class.Warrior,
-        sight: 5,
-        inventory: [],
-        factions: [
-            Faction.Player
-        ],
-        hostileFactions: [
-            Faction.Monster
-        ],
-        hostileEntityIds: [],
-        disposition: Disposition.Aggressive
-    };
+        town.cells[coord.x][coord.y].type = CellType.StairsDown;
 
-    town.entities.push(player);
+        const player: Entity = {
+            alpha: 1,
+            char: '@',
+            class: Class.Warrior,
+            color: '#ffffff',
+            disposition: Disposition.Aggressive,
+            factions: [
+                Faction.Player,
+            ],
+            hostileEntityIds: [],
+            hostileFactions: [
+                Faction.Monster,
+            ],
+            id: game.currentId++,
+            inventory: [],
+            level: 1,
+            name: 'player',
+            sight: 5,
+            x: coord.x,
+            y: coord.y,
+        };
+
+        town.entities.push(player);
+    }
 
     return town;
 }
@@ -117,41 +83,42 @@ export function createDungeon(
     chestAmount: number) {
 
     const dungeon: Dungeon = {
-        width: width,
-        height: height,
         cells: [],
-        rooms: [],
-        litRooms: litRooms,
-        entities: [],
         chests: [],
-        items: []
+        entities: [],
+        height,
+        items: [],
+        litRooms,
+        rooms: [],
+        width,
     };
 
     for (let x = 0; x < dungeon.width; x++) {
         dungeon.cells[x] = [];
         for (let y = 0; y < dungeon.height; y++) {
             dungeon.cells[x][y] = {
+                discovered: false,
                 type: CellType.Empty,
-                discovered: false
             };
         }
     }
 
     for (let i = 0; i < roomAttempts || dungeon.rooms.length < 2; i++) {
         const room: Rect = {
-            x: randomInt(0, dungeon.width),
-            y: randomInt(0, dungeon.height),
+            height: randomInt(minRoomSize, maxRoomSize),
+            left: randomInt(0, dungeon.width),
+            top: randomInt(0, dungeon.height),
             width: randomInt(minRoomSize, maxRoomSize),
-            height: randomInt(minRoomSize, maxRoomSize)
         };
 
-        if (room.x < 1 || room.x + room.width > dungeon.width - 1 || room.y < 1 || room.y + room.height > dungeon.height - 1) {
+        if (room.left < 1 || room.left + room.width > dungeon.width - 1 || room.top < 1
+            || room.top + room.height > dungeon.height - 1) {
             continue;
         }
 
         if (preventOverlap && (() => {
-            for (let x = room.x; x < room.x + room.width; x++) {
-                for (let y = room.y; y < room.y + room.height; y++) {
+            for (let x = room.left; x < room.left + room.width; x++) {
+                for (let y = room.top; y < room.top + room.height; y++) {
                     if (dungeon.cells[x][y].type === CellType.Floor) {
                         return true;
                     }
@@ -173,8 +140,8 @@ export function createDungeon(
             continue;
         }
 
-        for (let x = room.x; x < room.x + room.width; x++) {
-            for (let y = room.y; y < room.y + room.height; y++) {
+        for (let x = room.left; x < room.left + room.width; x++) {
+            for (let y = room.top; y < room.top + room.height; y++) {
                 dungeon.cells[x][y].type = CellType.Floor;
             }
         }
@@ -183,10 +150,10 @@ export function createDungeon(
     }
 
     for (let i = 0; i < dungeon.rooms.length - 1; i++) {
-        let x1 = randomInt(dungeon.rooms[i].x, dungeon.rooms[i].x + dungeon.rooms[i].width);
-        let y1 = randomInt(dungeon.rooms[i].y, dungeon.rooms[i].y + dungeon.rooms[i].height);
-        let x2 = randomInt(dungeon.rooms[i + 1].x, dungeon.rooms[i + 1].x + dungeon.rooms[i + 1].width);
-        let y2 = randomInt(dungeon.rooms[i + 1].y, dungeon.rooms[i + 1].y + dungeon.rooms[i + 1].height);
+        let x1 = randomInt(dungeon.rooms[i].left, dungeon.rooms[i].left + dungeon.rooms[i].width);
+        let y1 = randomInt(dungeon.rooms[i].top, dungeon.rooms[i].top + dungeon.rooms[i].height);
+        let x2 = randomInt(dungeon.rooms[i + 1].left, dungeon.rooms[i + 1].left + dungeon.rooms[i + 1].width);
+        let y2 = randomInt(dungeon.rooms[i + 1].top, dungeon.rooms[i + 1].top + dungeon.rooms[i + 1].height);
 
         if (x1 > x2) {
             const t = x1;
@@ -241,26 +208,38 @@ export function createDungeon(
 
     for (let x = 0; x < dungeon.width; x++) {
         for (let y = 0; y < dungeon.height; y++) {
-            if (randomFloat(0, 1) < doorChance &&
-                dungeon.cells[x][y].type === CellType.Floor) {
+            if (dungeon.cells[x][y].type === CellType.Floor
+                && randomFloat(0, 1) < doorChance) {
 
-                if (dungeon.cells[x][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
-                    if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                if (dungeon.cells[x][y - 1].type === CellType.Floor
+                    && dungeon.cells[x + 1][y - 1].type === CellType.Floor
+                    && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
+                    if (dungeon.cells[x - 1][y].type === CellType.Wall
+                        && dungeon.cells[x + 1][y].type === CellType.Wall) {
                         dungeon.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
-                if (dungeon.cells[x + 1][y].type === CellType.Floor && dungeon.cells[x + 1][y - 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
-                    if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                if (dungeon.cells[x + 1][y].type === CellType.Floor
+                    && dungeon.cells[x + 1][y - 1].type === CellType.Floor
+                    && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
+                    if (dungeon.cells[x][y + 1].type === CellType.Wall
+                        && dungeon.cells[x][y - 1].type === CellType.Wall) {
                         dungeon.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
-                if (dungeon.cells[x][y + 1].type === CellType.Floor && dungeon.cells[x + 1][y + 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                    if (dungeon.cells[x - 1][y].type === CellType.Wall && dungeon.cells[x + 1][y].type === CellType.Wall) {
+                if (dungeon.cells[x][y + 1].type === CellType.Floor
+                    && dungeon.cells[x + 1][y + 1].type === CellType.Floor
+                    && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                    if (dungeon.cells[x - 1][y].type === CellType.Wall
+                        && dungeon.cells[x + 1][y].type === CellType.Wall) {
                         dungeon.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
-                if (dungeon.cells[x - 1][y].type === CellType.Floor && dungeon.cells[x - 1][y - 1].type === CellType.Floor && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                    if (dungeon.cells[x][y + 1].type === CellType.Wall && dungeon.cells[x][y - 1].type === CellType.Wall) {
+                if (dungeon.cells[x - 1][y].type === CellType.Floor
+                    && dungeon.cells[x - 1][y - 1].type === CellType.Floor
+                    && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
+                    if (dungeon.cells[x][y + 1].type === CellType.Wall
+                        && dungeon.cells[x][y - 1].type === CellType.Wall) {
                         dungeon.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
@@ -269,39 +248,44 @@ export function createDungeon(
     }
 
     {
-        const x = randomInt(dungeon.rooms[0].x, dungeon.rooms[0].x + dungeon.rooms[0].width);
-        const y = randomInt(dungeon.rooms[0].y, dungeon.rooms[0].y + dungeon.rooms[0].height);
-        dungeon.cells[x][y].type = CellType.StairsUp;
+        const coord: Coord = {
+            x: randomInt(dungeon.rooms[0].left, dungeon.rooms[0].left + dungeon.rooms[0].width),
+            y: randomInt(dungeon.rooms[0].top, dungeon.rooms[0].top + dungeon.rooms[0].height),
+        };
+        dungeon.cells[coord.x][coord.y].type = CellType.StairsUp;
     }
 
     {
-        const x = randomInt(dungeon.rooms[dungeon.rooms.length - 1].x, dungeon.rooms[dungeon.rooms.length - 1].x + dungeon.rooms[dungeon.rooms.length - 1].width);
-        const y = randomInt(dungeon.rooms[dungeon.rooms.length - 1].y, dungeon.rooms[dungeon.rooms.length - 1].y + dungeon.rooms[dungeon.rooms.length - 1].height);
-        dungeon.cells[x][y].type = CellType.StairsDown;
+        const coord: Coord = {
+            x: randomInt(dungeon.rooms[dungeon.rooms.length - 1].left, dungeon.rooms[dungeon.rooms.length - 1].left + dungeon.rooms[dungeon.rooms.length - 1].width),
+            y: randomInt(dungeon.rooms[dungeon.rooms.length - 1].top, dungeon.rooms[dungeon.rooms.length - 1].top + dungeon.rooms[dungeon.rooms.length - 1].height),
+        };
+        dungeon.cells[coord.x][coord.y].type = CellType.StairsDown;
     }
 
     for (let i = 0; i < monsterAmount; i++) {
         const roomIndex = randomInt(1, dungeon.rooms.length);
-
-        const x = randomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-        const y = randomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+        const coord: Coord = {
+            x: randomInt(dungeon.rooms[roomIndex].left, dungeon.rooms[roomIndex].left + dungeon.rooms[roomIndex].width),
+            y: randomInt(dungeon.rooms[roomIndex].top, dungeon.rooms[roomIndex].top + dungeon.rooms[roomIndex].height),
+        };
 
         const monster: Entity = {
-            x: x,
-            y: y,
-            char: '',
-            color: '#ffffff',
             alpha: 1,
-            id: game.currentId++,
-            name: '',
-            level: 1,
+            char: '',
             class: Class.Warrior,
-            sight: 10,
-            inventory: [],
+            color: '#ffffff',
+            disposition: Disposition.Aggressive,
             factions: [],
-            hostileFactions: [],
             hostileEntityIds: [],
-            disposition: Disposition.Aggressive
+            hostileFactions: [],
+            id: game.currentId++,
+            inventory: [],
+            level: 1,
+            name: '',
+            sight: 10,
+            x: coord.x,
+            y: coord.y,
         };
 
         const roll = randomFloat(0, 1);
@@ -309,7 +293,7 @@ export function createDungeon(
             monster.name = 'rat';
             monster.char = 'r';
             monster.factions = [
-                Faction.Monster
+                Faction.Monster,
             ];
             monster.hostileFactions = [];
             monster.disposition = Disposition.Cowardly;
@@ -317,7 +301,7 @@ export function createDungeon(
             monster.name = 'slime';
             monster.char = 's';
             monster.factions = [
-                Faction.Monster
+                Faction.Monster,
             ];
             monster.disposition = Disposition.Passive;
         } else if (roll < 0.75) {
@@ -325,11 +309,11 @@ export function createDungeon(
             monster.char = 'o';
             monster.factions = [
                 Faction.Monster,
-                Faction.Orc
+                Faction.Orc,
             ];
             monster.hostileFactions = [
                 Faction.Player,
-                Faction.Bugbear
+                Faction.Bugbear,
             ];
             if (randomFloat(0, 1) < 0.5) {
                 monster.color = '#ffff00';
@@ -341,11 +325,11 @@ export function createDungeon(
             monster.char = 'b';
             monster.factions = [
                 Faction.Monster,
-                Faction.Bugbear
+                Faction.Bugbear,
             ];
             monster.hostileFactions = [
                 Faction.Player,
-                Faction.Orc
+                Faction.Orc,
             ];
             if (randomFloat(0, 1) < 0.5) {
                 monster.color = '#ffff00';
@@ -359,26 +343,24 @@ export function createDungeon(
 
     for (let i = 0; i < chestAmount; i++) {
         const roomIndex = randomInt(0, dungeon.rooms.length);
-
-        const x = randomInt(dungeon.rooms[roomIndex].x, dungeon.rooms[roomIndex].x + dungeon.rooms[roomIndex].width);
-        const y = randomInt(dungeon.rooms[roomIndex].y, dungeon.rooms[roomIndex].y + dungeon.rooms[roomIndex].height);
+        const coord: Coord = {
+            x: randomInt(dungeon.rooms[roomIndex].left, dungeon.rooms[roomIndex].left + dungeon.rooms[roomIndex].width),
+            y: randomInt(dungeon.rooms[roomIndex].top, dungeon.rooms[roomIndex].top + dungeon.rooms[roomIndex].height),
+        };
 
         dungeon.chests.push({
-            x: x,
-            y: y,
+            alpha: 1,
             char: '~',
             color: '#ffffff',
-            alpha: 1,
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
                     const item: Item = {
-                        x: -1,
-                        y: -1,
+                        alpha: 1,
                         char: '',
                         color: '#ffffff',
-                        alpha: 1,
+                        equipped: false,
                         name: '',
-                        equipped: false
+                        x: -1, y: -1,
                     };
 
                     const roll = randomFloat(0, 1);
@@ -398,7 +380,9 @@ export function createDungeon(
 
                     return item;
                 }
-            })()
+            })(),
+            x: coord.x,
+            y: coord.y,
         });
     }
 
