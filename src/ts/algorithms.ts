@@ -1,12 +1,12 @@
 import { game } from "./game";
-import {distanceBetweenSquared, toRadians } from "./math";
-import { Coord, Dungeon } from "./types";
+import { distanceBetweenSquared, toRadians } from "./math";
+import { Area, Coord } from "./types";
 
-export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
+export function aStar(area: Area, start: Coord, goal: Coord) {
     const coords: Coord[][] = [];
-    for (let x = 0; x < dungeon.width; x++) {
+    for (let x = 0; x < area.width; x++) {
         coords[x] = [];
-        for (let y = 0; y < dungeon.height; y++) {
+        for (let y = 0; y < area.height; y++) {
             coords[x][y] = { x, y };
         }
     }
@@ -19,8 +19,8 @@ export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
     const cameFrom = new Map<Coord, Coord>();
     const gScore = new Map<Coord, number>();
     const fScore = new Map<Coord, number>();
-    for (let x = 0; x < dungeon.width; x++) {
-        for (let y = 0; y < dungeon.height; y++) {
+    for (let x = 0; x < area.width; x++) {
+        for (let y = 0; y < area.height; y++) {
             gScore.set(coords[x][y], Infinity);
             fScore.set(coords[x][y], Infinity);
         }
@@ -62,20 +62,20 @@ export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
         if (current.y - 1 >= 0) {
             neighbors.push(coords[current.x][current.y - 1]);
         }
-        if (current.x + 1 < dungeon.width) {
+        if (current.x + 1 < area.width) {
             neighbors.push(coords[current.x + 1][current.y]);
         }
-        if (current.y + 1 < dungeon.height) {
+        if (current.y + 1 < area.height) {
             neighbors.push(coords[current.x][current.y + 1]);
         }
         if (current.x - 1 >= 0) {
             neighbors.push(coords[current.x - 1][current.y]);
         }
 
-        neighbors.filter((neighbor) => !game.cellInfo[dungeon.cells[neighbor.x][neighbor.y].type].solid
-            && !dungeon.entities.some((entity) => entity.x === neighbor.x && entity.y === neighbor.y
+        neighbors.filter((neighbor) => !game.cellInfo[area.cells[neighbor.x][neighbor.y].type].solid
+            && !area.entities.some((entity) => entity.x === neighbor.x && entity.y === neighbor.y
                 && entity.x !== goal.x && entity.y !== goal.y)
-            && !dungeon.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y
+            && !area.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y
                 && chest.x !== goal.x && chest.y !== goal.y))
             .forEach((neighbor) => {
                 if (closedSet.indexOf(neighbor) === -1) {
@@ -102,11 +102,11 @@ export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
     return undefined;
 }
 
-export function fieldOfView(dungeon: Dungeon, origin: Coord, accuracy: number, range: number) {
+export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: number) {
     const coords: Coord[] = [];
 
     for (let degrees = 0; degrees < 360; degrees += accuracy) {
-        coords.push(...lineOfSight(dungeon, origin, toRadians(degrees), range)
+        coords.push(...lineOfSight(area, origin, toRadians(degrees), range)
             .filter((coord) => {
                 return !coords.some((c) => c.x === coord.x && c.y === coord.y);
             }));
@@ -115,7 +115,7 @@ export function fieldOfView(dungeon: Dungeon, origin: Coord, accuracy: number, r
     return coords;
 }
 
-export function lineOfSight(dungeon: Dungeon, origin: Coord, radians: number, range: number) {
+export function lineOfSight(area: Area, origin: Coord, radians: number, range: number) {
     const coords: Coord[] = [];
 
     const dx = Math.cos(radians);
@@ -132,13 +132,13 @@ export function lineOfSight(dungeon: Dungeon, origin: Coord, radians: number, ra
             y: Math.trunc(current.y),
         };
 
-        if (coord.x >= 0 && coord.x < dungeon.width
-            && coord.y >= 0 && coord.y < dungeon.height) {
+        if (coord.x >= 0 && coord.x < area.width
+            && coord.y >= 0 && coord.y < area.height) {
             if (!coords.some((c) => c.x === coord.x && c.y === coord.y)) {
                 coords.push(coord);
             }
 
-            if (game.cellInfo[dungeon.cells[coord.x][coord.y].type].solid) {
+            if (game.cellInfo[area.cells[coord.x][coord.y].type].solid) {
                 break;
             }
 

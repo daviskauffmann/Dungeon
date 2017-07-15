@@ -1,3 +1,12 @@
+export interface Area {
+    width: number;
+    height: number;
+    cells: Cell[][];
+    entities: Entity[];
+    chests: Chest[];
+    items: Item[];
+}
+
 export interface Cell {
     type: CellType;
     discovered: boolean;
@@ -46,14 +55,12 @@ export enum Disposition {
 }
 
 export interface Dungeon {
-    width: number;
-    height: number;
-    cells: Cell[][];
+    levels: Level[];
+}
+
+export interface Level extends Area {
     rooms: Rect[];
     litRooms: boolean;
-    entities: Entity[];
-    chests: Chest[];
-    items: Item[];
 }
 
 export interface Entity extends Coord, Glyph {
@@ -77,9 +84,9 @@ export enum Faction {
 }
 
 export interface Game {
+    chunks: Chunk[][];
     currentId: number;
     turn: number;
-    dungeons: Dungeon[];
     fontSize: number;
     cellInfo: CellInfo[];
     messages: string[];
@@ -97,6 +104,10 @@ export interface Glyph {
 export interface Item extends Coord, Glyph {
     name: string;
     equipped: boolean;
+}
+
+export interface Chunk extends Area {
+    dungeons: Dungeon[];
 }
 
 export interface Rect {

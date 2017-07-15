@@ -1,21 +1,9 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { CellType, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Rect } from "./types";
+import { CellType, Chunk, Class, Coord, Disposition, Entity, Faction, Item, Level, Rect } from "./types";
 
-export function createDungeon(
-    width: number,
-    height: number,
-    roomAttempts: number,
-    minRoomSize: number,
-    maxRoomSize: number,
-    preventOverlap: boolean,
-    litRooms: boolean,
-    doorChance: number,
-    trapAmount: number,
-    monsterAmount: number,
-    chestAmount: number) {
-
-    const dungeon: Dungeon = {
+export function createLevel(width: number, height: number, roomAttempts: number, minRoomSize: number, maxRoomSize: number, preventOverlap: boolean, litRooms: boolean, doorChance: number, trapAmount: number, monsterAmount: number, chestAmount: number) {
+    const level: Level = {
         cells: [],
         chests: [],
         entities: [],
@@ -26,45 +14,45 @@ export function createDungeon(
         width,
     };
 
-    for (let x = 0; x < dungeon.width; x++) {
-        dungeon.cells[x] = [];
-        for (let y = 0; y < dungeon.height; y++) {
-            dungeon.cells[x][y] = {
+    for (let x = 0; x < level.width; x++) {
+        level.cells[x] = [];
+        for (let y = 0; y < level.height; y++) {
+            level.cells[x][y] = {
                 discovered: false,
                 type: CellType.Empty,
             };
         }
     }
 
-    for (let i = 0; i < roomAttempts || dungeon.rooms.length < 2; i++) {
+    for (let i = 0; i < roomAttempts || level.rooms.length < 2; i++) {
         const room: Rect = {
             height: randomInt(minRoomSize, maxRoomSize),
-            left: randomInt(0, dungeon.width),
-            top: randomInt(0, dungeon.height),
+            left: randomInt(0, level.width),
+            top: randomInt(0, level.height),
             width: randomInt(minRoomSize, maxRoomSize),
         };
 
-        if (room.left < 1 || room.left + room.width > dungeon.width - 1 || room.top < 1
-            || room.top + room.height > dungeon.height - 1) {
+        if (room.left < 1 || room.left + room.width > level.width - 1 || room.top < 1
+            || room.top + room.height > level.height - 1) {
             continue;
         }
 
         if (preventOverlap && (() => {
             for (let x = room.left; x < room.left + room.width; x++) {
                 for (let y = room.top; y < room.top + room.height; y++) {
-                    if (dungeon.cells[x][y].type === CellType.Floor) {
+                    if (level.cells[x][y].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x][y - 1].type === CellType.Floor) {
+                    if (level.cells[x][y - 1].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x + 1][y].type === CellType.Floor) {
+                    if (level.cells[x + 1][y].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x][y + 1].type === CellType.Floor) {
+                    if (level.cells[x][y + 1].type === CellType.Floor) {
                         return true;
                     }
-                    if (dungeon.cells[x - 1][y].type === CellType.Floor) {
+                    if (level.cells[x - 1][y].type === CellType.Floor) {
                         return true;
                     }
                 }
@@ -75,18 +63,18 @@ export function createDungeon(
 
         for (let x = room.left; x < room.left + room.width; x++) {
             for (let y = room.top; y < room.top + room.height; y++) {
-                dungeon.cells[x][y].type = CellType.Floor;
+                level.cells[x][y].type = CellType.Floor;
             }
         }
 
-        dungeon.rooms.push(room);
+        level.rooms.push(room);
     }
 
-    for (let i = 0; i < dungeon.rooms.length - 1; i++) {
-        let x1 = randomInt(dungeon.rooms[i].left, dungeon.rooms[i].left + dungeon.rooms[i].width);
-        let y1 = randomInt(dungeon.rooms[i].top, dungeon.rooms[i].top + dungeon.rooms[i].height);
-        let x2 = randomInt(dungeon.rooms[i + 1].left, dungeon.rooms[i + 1].left + dungeon.rooms[i + 1].width);
-        let y2 = randomInt(dungeon.rooms[i + 1].top, dungeon.rooms[i + 1].top + dungeon.rooms[i + 1].height);
+    for (let i = 0; i < level.rooms.length - 1; i++) {
+        let x1 = randomInt(level.rooms[i].left, level.rooms[i].left + level.rooms[i].width);
+        let y1 = randomInt(level.rooms[i].top, level.rooms[i].top + level.rooms[i].height);
+        let x2 = randomInt(level.rooms[i + 1].left, level.rooms[i + 1].left + level.rooms[i + 1].width);
+        let y2 = randomInt(level.rooms[i + 1].top, level.rooms[i + 1].top + level.rooms[i + 1].height);
 
         if (x1 > x2) {
             const t = x1;
@@ -102,78 +90,78 @@ export function createDungeon(
         for (let x = x1; x <= x2; x++) {
             for (let y = y1; y <= y2; y++) {
                 if (x === x1 || x === x2 || y === y1 || y === y2) {
-                    dungeon.cells[x][y].type = CellType.Floor;
+                    level.cells[x][y].type = CellType.Floor;
                 }
             }
         }
     }
 
-    for (let x = 0; x < dungeon.width; x++) {
-        for (let y = 0; y < dungeon.height; y++) {
-            if (dungeon.cells[x][y].type === CellType.Floor) {
-                if (dungeon.cells[x][y - 1].type === CellType.Empty) {
-                    dungeon.cells[x][y - 1].type = CellType.Wall;
+    for (let x = 0; x < level.width; x++) {
+        for (let y = 0; y < level.height; y++) {
+            if (level.cells[x][y].type === CellType.Floor) {
+                if (level.cells[x][y - 1].type === CellType.Empty) {
+                    level.cells[x][y - 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x + 1][y - 1].type === CellType.Empty) {
-                    dungeon.cells[x + 1][y - 1].type = CellType.Wall;
+                if (level.cells[x + 1][y - 1].type === CellType.Empty) {
+                    level.cells[x + 1][y - 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x + 1][y].type === CellType.Empty) {
-                    dungeon.cells[x + 1][y].type = CellType.Wall;
+                if (level.cells[x + 1][y].type === CellType.Empty) {
+                    level.cells[x + 1][y].type = CellType.Wall;
                 }
-                if (dungeon.cells[x + 1][y + 1].type === CellType.Empty) {
-                    dungeon.cells[x + 1][y + 1].type = CellType.Wall;
+                if (level.cells[x + 1][y + 1].type === CellType.Empty) {
+                    level.cells[x + 1][y + 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x][y + 1].type === CellType.Empty) {
-                    dungeon.cells[x][y + 1].type = CellType.Wall;
+                if (level.cells[x][y + 1].type === CellType.Empty) {
+                    level.cells[x][y + 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x - 1][y - 1].type === CellType.Empty) {
-                    dungeon.cells[x - 1][y - 1].type = CellType.Wall;
+                if (level.cells[x - 1][y - 1].type === CellType.Empty) {
+                    level.cells[x - 1][y - 1].type = CellType.Wall;
                 }
-                if (dungeon.cells[x - 1][y].type === CellType.Empty) {
-                    dungeon.cells[x - 1][y].type = CellType.Wall;
+                if (level.cells[x - 1][y].type === CellType.Empty) {
+                    level.cells[x - 1][y].type = CellType.Wall;
                 }
-                if (dungeon.cells[x - 1][y + 1].type === CellType.Empty) {
-                    dungeon.cells[x - 1][y + 1].type = CellType.Wall;
+                if (level.cells[x - 1][y + 1].type === CellType.Empty) {
+                    level.cells[x - 1][y + 1].type = CellType.Wall;
                 }
             }
         }
     }
 
-    for (let x = 0; x < dungeon.width; x++) {
-        for (let y = 0; y < dungeon.height; y++) {
-            if (dungeon.cells[x][y].type === CellType.Floor
+    for (let x = 0; x < level.width; x++) {
+        for (let y = 0; y < level.height; y++) {
+            if (level.cells[x][y].type === CellType.Floor
                 && randomFloat(0, 1) < doorChance) {
 
-                if (dungeon.cells[x][y - 1].type === CellType.Floor
-                    && dungeon.cells[x + 1][y - 1].type === CellType.Floor
-                    && dungeon.cells[x - 1][y - 1].type === CellType.Floor) {
-                    if (dungeon.cells[x - 1][y].type === CellType.Wall
-                        && dungeon.cells[x + 1][y].type === CellType.Wall) {
-                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (level.cells[x][y - 1].type === CellType.Floor
+                    && level.cells[x + 1][y - 1].type === CellType.Floor
+                    && level.cells[x - 1][y - 1].type === CellType.Floor) {
+                    if (level.cells[x - 1][y].type === CellType.Wall
+                        && level.cells[x + 1][y].type === CellType.Wall) {
+                        level.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
-                if (dungeon.cells[x + 1][y].type === CellType.Floor
-                    && dungeon.cells[x + 1][y - 1].type === CellType.Floor
-                    && dungeon.cells[x + 1][y + 1].type === CellType.Floor) {
-                    if (dungeon.cells[x][y + 1].type === CellType.Wall
-                        && dungeon.cells[x][y - 1].type === CellType.Wall) {
-                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (level.cells[x + 1][y].type === CellType.Floor
+                    && level.cells[x + 1][y - 1].type === CellType.Floor
+                    && level.cells[x + 1][y + 1].type === CellType.Floor) {
+                    if (level.cells[x][y + 1].type === CellType.Wall
+                        && level.cells[x][y - 1].type === CellType.Wall) {
+                        level.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
-                if (dungeon.cells[x][y + 1].type === CellType.Floor
-                    && dungeon.cells[x + 1][y + 1].type === CellType.Floor
-                    && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                    if (dungeon.cells[x - 1][y].type === CellType.Wall
-                        && dungeon.cells[x + 1][y].type === CellType.Wall) {
-                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (level.cells[x][y + 1].type === CellType.Floor
+                    && level.cells[x + 1][y + 1].type === CellType.Floor
+                    && level.cells[x - 1][y + 1].type === CellType.Floor) {
+                    if (level.cells[x - 1][y].type === CellType.Wall
+                        && level.cells[x + 1][y].type === CellType.Wall) {
+                        level.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
-                if (dungeon.cells[x - 1][y].type === CellType.Floor
-                    && dungeon.cells[x - 1][y - 1].type === CellType.Floor
-                    && dungeon.cells[x - 1][y + 1].type === CellType.Floor) {
-                    if (dungeon.cells[x][y + 1].type === CellType.Wall
-                        && dungeon.cells[x][y - 1].type === CellType.Wall) {
-                        dungeon.cells[x][y].type = CellType.DoorClosed;
+                if (level.cells[x - 1][y].type === CellType.Floor
+                    && level.cells[x - 1][y - 1].type === CellType.Floor
+                    && level.cells[x - 1][y + 1].type === CellType.Floor) {
+                    if (level.cells[x][y + 1].type === CellType.Wall
+                        && level.cells[x][y - 1].type === CellType.Wall) {
+                        level.cells[x][y].type = CellType.DoorClosed;
                     }
                 }
             }
@@ -182,25 +170,25 @@ export function createDungeon(
 
     {
         const coord: Coord = {
-            x: randomInt(dungeon.rooms[0].left, dungeon.rooms[0].left + dungeon.rooms[0].width),
-            y: randomInt(dungeon.rooms[0].top, dungeon.rooms[0].top + dungeon.rooms[0].height),
+            x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
+            y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
         };
-        dungeon.cells[coord.x][coord.y].type = CellType.StairsUp;
+        level.cells[coord.x][coord.y].type = CellType.StairsUp;
     }
 
     {
         const coord: Coord = {
-            x: randomInt(dungeon.rooms[dungeon.rooms.length - 1].left, dungeon.rooms[dungeon.rooms.length - 1].left + dungeon.rooms[dungeon.rooms.length - 1].width),
-            y: randomInt(dungeon.rooms[dungeon.rooms.length - 1].top, dungeon.rooms[dungeon.rooms.length - 1].top + dungeon.rooms[dungeon.rooms.length - 1].height),
+            x: randomInt(level.rooms[level.rooms.length - 1].left, level.rooms[level.rooms.length - 1].left + level.rooms[level.rooms.length - 1].width),
+            y: randomInt(level.rooms[level.rooms.length - 1].top, level.rooms[level.rooms.length - 1].top + level.rooms[level.rooms.length - 1].height),
         };
-        dungeon.cells[coord.x][coord.y].type = CellType.StairsDown;
+        level.cells[coord.x][coord.y].type = CellType.StairsDown;
     }
 
     for (let i = 0; i < monsterAmount; i++) {
-        const roomIndex = randomInt(1, dungeon.rooms.length);
+        const roomIndex = randomInt(1, level.rooms.length);
         const coord: Coord = {
-            x: randomInt(dungeon.rooms[roomIndex].left, dungeon.rooms[roomIndex].left + dungeon.rooms[roomIndex].width),
-            y: randomInt(dungeon.rooms[roomIndex].top, dungeon.rooms[roomIndex].top + dungeon.rooms[roomIndex].height),
+            x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
+            y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         };
 
         const monster: Entity = {
@@ -271,17 +259,17 @@ export function createDungeon(
             }
         }
 
-        dungeon.entities.push(monster);
+        level.entities.push(monster);
     }
 
     for (let i = 0; i < chestAmount; i++) {
-        const roomIndex = randomInt(0, dungeon.rooms.length);
+        const roomIndex = randomInt(0, level.rooms.length);
         const coord: Coord = {
-            x: randomInt(dungeon.rooms[roomIndex].left, dungeon.rooms[roomIndex].left + dungeon.rooms[roomIndex].width),
-            y: randomInt(dungeon.rooms[roomIndex].top, dungeon.rooms[roomIndex].top + dungeon.rooms[roomIndex].height),
+            x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
+            y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         };
 
-        dungeon.chests.push({
+        level.chests.push({
             alpha: 1,
             char: "~",
             color: "#ffffff",
@@ -319,18 +307,17 @@ export function createDungeon(
         });
     }
 
-    return dungeon;
+    return level;
 }
 
 export function createTown() {
-    const town: Dungeon = {
+    const town: Chunk = {
         cells: [],
         chests: [],
+        dungeons: [],
         entities: [],
         height: 25,
         items: [],
-        litRooms: false,
-        rooms: [],
         width: 25,
     };
 
@@ -343,15 +330,6 @@ export function createTown() {
             };
         }
     }
-
-    const room: Rect = {
-        height: town.height,
-        left: 0,
-        top: 0,
-        width: town.width,
-    };
-
-    town.rooms.push(room);
 
     {
         const coord: Coord = {

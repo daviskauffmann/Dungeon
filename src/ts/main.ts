@@ -3,7 +3,7 @@ import { game } from "./game";
 import { input } from "./input";
 import { draw } from "./renderer";
 
-game.dungeons.push(createTown());
+game.chunks[0][0] = createTown();
 
 document.addEventListener("keydown", input);
 window.addEventListener("resize", draw);

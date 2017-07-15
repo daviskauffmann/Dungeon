@@ -1,7 +1,7 @@
 import { lineOfSight } from "./algorithms";
-import { getDungeon, getEntity, tick as entity_tick } from "./entity";
+import { getArea, getEntity, tick as entity_tick } from "./entity";
 import { radiansBetween } from "./math";
-import { Coord, Dungeon, Game, UI, UIMode } from "./types";
+import { Area, Coord, Game, Level, UI, UIMode } from "./types";
 
 export let game: Game = {
     cellInfo: [
@@ -14,8 +14,8 @@ export let game: Game = {
         { name: "stairsUp", char: "<", color: "#ffffff", solid: false },
         { name: "stairsDown", char: ">", color: "#ffffff", solid: false },
     ],
+    chunks: [],
     currentId: 0,
-    dungeons: [],
     fontSize: 24,
     godMode: true,
     ignoreFov: false,
@@ -29,11 +29,11 @@ export function load() {
     console.log(game);
 }
 
-export function log(dungeon: Dungeon, location: Coord, message: string) {
+export function log(area: Area, location: Coord, message: string) {
     const player = getEntity(0);
 
-    if (dungeon === getDungeon(player)
-        && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
+    if (area === getArea(player)
+        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 
@@ -50,11 +50,21 @@ export function save() {
 
 export function tick() {
     if (!game.stopTime) {
-        game.dungeons.forEach((dungeon) => {
-            dungeon.entities.forEach((entity) => {
-                if (entity.id !== 0) {
-                    entity_tick(dungeon, entity);
-                }
+        game.chunks.forEach((col) => {
+            col.forEach((chunk) => {
+                chunk.entities.forEach((entity) => {
+                    entity_tick(chunk, entity);
+                });
+
+                chunk.dungeons.forEach((dungeon) => {
+                    dungeon.levels.forEach((level) => {
+                        level.entities.forEach((entity) => {
+                            if (entity.id !== 0) {
+                                entity_tick(level, entity);
+                            }
+                        });
+                    });
+                });
             });
         });
 

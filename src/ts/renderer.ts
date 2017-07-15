@@ -1,5 +1,5 @@
 import { fieldOfView } from "./algorithms";
-import { calcStats, getDungeon, getEntity, getInventoryChar, getLevel } from "./entity";
+import { calcStats, getArea, getEntity, getInventoryChar, getLevel } from "./entity";
 import { game, ui } from "./game";
 import { isInside } from "./math";
 import { Rect, UIMode } from "./types";
@@ -9,7 +9,7 @@ const ctx = canvas.getContext("2d");
 
 export function draw(ev?: UIEvent) {
     const player = getEntity(0);
-    const dungeon = getDungeon(player);
+    const dungeon = getArea(player);
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
