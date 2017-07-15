@@ -24,26 +24,9 @@ export let game: Game = {
     turn: 0,
 };
 
-export const ui: UI = {
-    inventorySwapFirst: -1,
-    inventorySwapSecond: -1,
-    maxMessages: 10,
-    mode: UIMode.Default,
-    target: { x: 0, y: 0 },
-};
-
-export function tick() {
-    if (!game.stopTime) {
-        game.dungeons.forEach((dungeon) => {
-            dungeon.entities.forEach((entity) => {
-                if (entity.id !== 0) {
-                    entity_tick(entity);
-                }
-            });
-        });
-
-        game.turn++;
-    }
+export function load() {
+    game = JSON.parse(localStorage.getItem('game'));
+    console.log(game);
 }
 
 export function log(dungeon: Dungeon, location: Coord, message: string) {
@@ -65,7 +48,24 @@ export function save() {
     console.log(JSON.stringify(game));
 }
 
-export function load() {
-    game = JSON.parse(localStorage.getItem('game'));
-    console.log(game);
+export function tick() {
+    if (!game.stopTime) {
+        game.dungeons.forEach((dungeon) => {
+            dungeon.entities.forEach((entity) => {
+                if (entity.id !== 0) {
+                    entity_tick(dungeon, entity);
+                }
+            });
+        });
+
+        game.turn++;
+    }
 }
+
+export const ui: UI = {
+    inventorySwapFirst: -1,
+    inventorySwapSecond: -1,
+    maxMessages: 10,
+    mode: UIMode.Default,
+    target: { x: 0, y: 0 },
+};

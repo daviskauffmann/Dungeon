@@ -2,73 +2,6 @@ import { game } from './game';
 import { randomFloat, randomInt } from './math';
 import { CellType, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Rect } from './types';
 
-export function createTown() {
-    const town: Dungeon = {
-        cells: [],
-        chests: [],
-        entities: [],
-        height: 25,
-        items: [],
-        litRooms: false,
-        rooms: [],
-        width: 25,
-    };
-
-    for (let x = 0; x < town.width; x++) {
-        town.cells[x] = [];
-        for (let y = 0; y < town.height; y++) {
-            town.cells[x][y] = {
-                discovered: false,
-                type: CellType.Grass,
-            };
-        }
-    }
-
-    const room: Rect = {
-        height: town.height,
-        left: 0,
-        top: 0,
-        width: town.width,
-    };
-
-    town.rooms.push(room);
-
-    {
-        const coord: Coord = {
-            x: Math.round(town.width / 2),
-            y: Math.round(town.height / 2),
-        };
-
-        town.cells[coord.x][coord.y].type = CellType.StairsDown;
-
-        const player: Entity = {
-            alpha: 1,
-            char: '@',
-            class: Class.Warrior,
-            color: '#ffffff',
-            disposition: Disposition.Aggressive,
-            factions: [
-                Faction.Player,
-            ],
-            hostileEntityIds: [],
-            hostileFactions: [
-                Faction.Monster,
-            ],
-            id: game.currentId++,
-            inventory: [],
-            level: 1,
-            name: 'player',
-            sight: 5,
-            x: coord.x,
-            y: coord.y,
-        };
-
-        town.entities.push(player);
-    }
-
-    return town;
-}
-
 export function createDungeon(
     width: number,
     height: number,
@@ -387,4 +320,71 @@ export function createDungeon(
     }
 
     return dungeon;
+}
+
+export function createTown() {
+    const town: Dungeon = {
+        cells: [],
+        chests: [],
+        entities: [],
+        height: 25,
+        items: [],
+        litRooms: false,
+        rooms: [],
+        width: 25,
+    };
+
+    for (let x = 0; x < town.width; x++) {
+        town.cells[x] = [];
+        for (let y = 0; y < town.height; y++) {
+            town.cells[x][y] = {
+                discovered: false,
+                type: CellType.Grass,
+            };
+        }
+    }
+
+    const room: Rect = {
+        height: town.height,
+        left: 0,
+        top: 0,
+        width: town.width,
+    };
+
+    town.rooms.push(room);
+
+    {
+        const coord: Coord = {
+            x: Math.round(town.width / 2),
+            y: Math.round(town.height / 2),
+        };
+
+        town.cells[coord.x][coord.y].type = CellType.StairsDown;
+
+        const player: Entity = {
+            alpha: 1,
+            char: '@',
+            class: Class.Warrior,
+            color: '#ffffff',
+            disposition: Disposition.Aggressive,
+            factions: [
+                Faction.Player,
+            ],
+            hostileEntityIds: [],
+            hostileFactions: [
+                Faction.Monster,
+            ],
+            id: game.currentId++,
+            inventory: [],
+            level: 1,
+            name: 'player',
+            sight: 5,
+            x: coord.x,
+            y: coord.y,
+        };
+
+        town.entities.push(player);
+    }
+
+    return town;
 }

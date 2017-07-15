@@ -13,25 +13,25 @@ export function input(ev: KeyboardEvent) {
         case UIMode.Default:
             switch (ev.key) {
                 case 'ArrowUp':
-                    move(player, { x: player.x, y: player.y - 1 });
+                    move(dungeon, player, { x: player.x, y: player.y - 1 });
 
                     tick();
 
                     break;
                 case 'ArrowRight':
-                    move(player, { x: player.x + 1, y: player.y });
+                    move(dungeon, player, { x: player.x + 1, y: player.y });
 
                     tick();
 
                     break;
                 case 'ArrowDown':
-                    move(player, { x: player.x, y: player.y + 1 });
+                    move(dungeon, player, { x: player.x, y: player.y + 1 });
 
                     tick();
 
                     break;
                 case 'ArrowLeft':
-                    move(player, { x: player.x - 1, y: player.y });
+                    move(dungeon, player, { x: player.x - 1, y: player.y });
 
                     tick();
 

@@ -37,7 +37,7 @@ export function draw(ev?: UIEvent) {
         view.top = dungeon.height - view.height;
     }
 
-    const visibleCells = fieldOfView(dungeon, { x: player.x, y: player.y }, player.sight, 0.5)
+    const visibleCells = fieldOfView(dungeon, { x: player.x, y: player.y }, player.sight, 1)
         .map((coord) => dungeon.cells[coord.x][coord.y]);
 
     visibleCells.forEach((cell) => {
