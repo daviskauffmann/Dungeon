@@ -1,5 +1,5 @@
 import { lineOfSight } from "./algorithms";
-import { getArea, getEntity, tick as entity_tick } from "./entity";
+import { getContext, getEntity, tick as entity_tick } from "./entity";
 import { radiansBetween } from "./math";
 import { Area, Coord, Game, Level, UI, UIMode } from "./types";
 
@@ -14,7 +14,9 @@ export let game: Game = {
         { name: "stairsUp", char: "<", color: "#ffffff", solid: false },
         { name: "stairsDown", char: ">", color: "#ffffff", solid: false },
     ],
-    chunks: [],
+    chunks: [
+        [],
+    ],
     currentId: 0,
     fontSize: 24,
     godMode: true,
@@ -32,7 +34,7 @@ export function load() {
 export function log(area: Area, location: Coord, message: string) {
     const player = getEntity(0);
 
-    if (area === getArea(player)
+    if ((area === getContext(player).level || area === getContext(player).chunk)
         && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
@@ -53,14 +55,16 @@ export function tick() {
         game.chunks.forEach((col) => {
             col.forEach((chunk) => {
                 chunk.entities.forEach((entity) => {
-                    entity_tick(chunk, entity);
+                    if (entity.id !== 0) {
+                        entity_tick(entity, { chunk });
+                    }
                 });
 
                 chunk.dungeons.forEach((dungeon) => {
                     dungeon.levels.forEach((level) => {
                         level.entities.forEach((entity) => {
                             if (entity.id !== 0) {
-                                entity_tick(level, entity);
+                                entity_tick(entity, { chunk, dungeon, level });
                             }
                         });
                     });

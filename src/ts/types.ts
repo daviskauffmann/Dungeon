@@ -39,6 +39,12 @@ export enum Class {
     Shaman,
 }
 
+export interface Context {
+    chunk: Chunk;
+    dungeon?: Dungeon;
+    level?: Level;
+}
+
 export interface Coord {
     x: number;
     y: number;

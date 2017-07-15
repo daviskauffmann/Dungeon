@@ -1,15 +1,16 @@
 import { fieldOfView } from "./algorithms";
-import { calcStats, getArea, getEntity, getInventoryChar, getLevel } from "./entity";
+import { calcStats, getContext, getEntity, getInventoryChar } from "./entity";
 import { game, ui } from "./game";
 import { isInside } from "./math";
-import { Rect, UIMode } from "./types";
+import { Level, Rect, UIMode } from "./types";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
 export function draw(ev?: UIEvent) {
     const player = getEntity(0);
-    const dungeon = getArea(player);
+    const context = getContext(player);
+    const area = context.level || context.chunk;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -27,18 +28,18 @@ export function draw(ev?: UIEvent) {
     if (view.left < 0) {
         view.left = 0;
     }
-    if (view.left + view.width > dungeon.width) {
-        view.left = dungeon.width - view.width;
+    if (view.left + view.width > area.width) {
+        view.left = area.width - view.width;
     }
     if (view.top < 0) {
         view.top = 0;
     }
-    if (view.top + view.height > dungeon.height) {
-        view.top = dungeon.height - view.height;
+    if (view.top + view.height > area.height) {
+        view.top = area.height - view.height;
     }
 
-    const visibleCells = fieldOfView(dungeon, { x: player.x, y: player.y }, 1, player.sight)
-        .map((coord) => dungeon.cells[coord.x][coord.y]);
+    const visibleCells = fieldOfView(area, { x: player.x, y: player.y }, 1, player.sight)
+        .map((coord) => area.cells[coord.x][coord.y]);
 
     visibleCells.forEach((cell) => {
         cell.discovered = true;
@@ -47,24 +48,25 @@ export function draw(ev?: UIEvent) {
     if (game.ignoreFov) {
         for (let x = view.left; x < view.left + view.width; x++) {
             for (let y = view.top; y < view.top + view.height; y++) {
-                if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height
-                    && visibleCells.indexOf(dungeon.cells[x][y]) === -1) {
-                    visibleCells.push(dungeon.cells[x][y]);
+                if (x >= 0 && x < area.width && y >= 0 && y < area.height
+                    && visibleCells.indexOf(area.cells[x][y]) === -1) {
+                    visibleCells.push(area.cells[x][y]);
                 }
             }
         }
     }
 
-    if (dungeon.litRooms) {
-        dungeon.rooms.forEach((room) => {
+    const level = area as Level;
+    if (level.litRooms) {
+        level.rooms.forEach((room) => {
             if (isInside({ x: player.x, y: player.y }, room)) {
                 for (let x = room.left - 1; x < room.left + room.width + 1; x++) {
                     for (let y = room.top - 1; y < room.top + room.height + 1; y++) {
-                        if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
-                            dungeon.cells[x][y].discovered = true;
+                        if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+                            area.cells[x][y].discovered = true;
 
-                            if (visibleCells.indexOf(dungeon.cells[x][y]) === -1) {
-                                visibleCells.push(dungeon.cells[x][y]);
+                            if (visibleCells.indexOf(area.cells[x][y]) === -1) {
+                                visibleCells.push(area.cells[x][y]);
                             }
                         }
                     }
@@ -78,7 +80,7 @@ export function draw(ev?: UIEvent) {
 
     for (let x = view.left; x < view.left + view.width; x++) {
         for (let y = view.top; y < view.top + view.height; y++) {
-            if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
+            if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
                 const screen = { x: (x - view.left) * game.fontSize, y: (y - view.top + 1) * game.fontSize };
 
                 if (ui.mode === UIMode.Target) {
@@ -98,8 +100,8 @@ export function draw(ev?: UIEvent) {
                     }
                 }
 
-                if (visibleCells.indexOf(dungeon.cells[x][y]) > -1) {
-                    if (dungeon.entities.some((entity) => {
+                if (visibleCells.indexOf(area.cells[x][y]) > -1) {
+                    if (area.entities.some((entity) => {
                         if (entity.x === x && entity.y === y) {
                             ctx.fillStyle = entity.color;
                             ctx.globalAlpha = entity.alpha;
@@ -111,7 +113,7 @@ export function draw(ev?: UIEvent) {
                         continue;
                     }
 
-                    if (dungeon.chests.some((chest) => {
+                    if (area.chests.some((chest) => {
                         if (chest.x === x && chest.y === y) {
                             ctx.fillStyle = chest.color;
                             ctx.globalAlpha = chest.alpha;
@@ -123,7 +125,7 @@ export function draw(ev?: UIEvent) {
                         continue;
                     }
 
-                    if (dungeon.items.sort((a, b) => {
+                    if (area.items.sort((a, b) => {
                         return 0;
                     }).some((item) => {
                         if (item.x === x && item.y === y) {
@@ -138,10 +140,10 @@ export function draw(ev?: UIEvent) {
                     }
                 }
 
-                const cellInfo = game.cellInfo[dungeon.cells[x][y].type];
+                const cellInfo = game.cellInfo[area.cells[x][y].type];
                 ctx.fillStyle = cellInfo.color;
-                ctx.globalAlpha = visibleCells.indexOf(dungeon.cells[x][y]) > -1 ? 1
-                    : dungeon.cells[x][y].discovered ? 0.25
+                ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
+                    : area.cells[x][y].discovered ? 0.25
                         : 0;
                 ctx.fillText(cellInfo.char, screen.x, screen.y);
             }
@@ -155,7 +157,7 @@ export function draw(ev?: UIEvent) {
     });
 
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(`Level: ${getLevel(player)} Turn: ${game.turn}`, 0, canvas.height);
+    ctx.fillText(`Level: ${"getLevel(player)"} Turn: ${game.turn}`, 0, canvas.height);
 
     if (ui.mode === UIMode.Inventory
         || ui.mode === UIMode.InventoryDrop

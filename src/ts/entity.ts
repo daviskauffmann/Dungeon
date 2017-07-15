@@ -2,7 +2,7 @@ import { aStar, lineOfSight } from "./algorithms";
 import { createLevel } from "./dungeon";
 import { game, log } from "./game";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Area, CellInfo, CellType, Class, Coord, Corpse, Disposition, Dungeon, Entity, Item, Level, Stats } from "./types";
+import { Area, CellInfo, CellType, Class, Context, Coord, Corpse, Disposition, Dungeon, Entity, Item, Level, Stats } from "./types";
 
 export function calcStats(entity: Entity) {
     const stats: Stats = {
@@ -24,22 +24,31 @@ export function calcStats(entity: Entity) {
     return stats;
 }
 
-export function changeArea(entity: Entity, from: Area, to: Area, calcSpawnCoord: (newArea: Area) => Coord) {
-    log(from, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${"levelNumber"}`);
+export function changeLevel(entity: Entity, levelIndex: number, calcSpawnCoord: (newLevel: Level) => Coord, context: Context) {
+    const dungeon = context.dungeon;
+    const level = context.level;
 
-    /*while (levelNumber >= dungeon.levels.length) {
+    log(level, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
+
+    while (levelIndex >= dungeon.levels.length) {
         dungeon.levels.push(createLevel(50, 50, 20, 5, 15, false, false, 0.5, 3, 20, 5));
-    }*/
+    }
 
-    from.entities.splice(from.entities.indexOf(entity), 1);
-    to.entities.push(entity);
+    const newLevel = dungeon.levels[levelIndex];
 
-    const spawn = calcSpawnCoord(to);
+    level.entities.splice(level.entities.indexOf(entity), 1);
+    newLevel.entities.push(entity);
+
+    const spawn = calcSpawnCoord(newLevel);
     entity.x = spawn.x;
     entity.y = spawn.y;
 }
 
-export function getArea(entity: Entity) {
+export function changeChunk() {
+    throw new Error("Not Implemented");
+}
+
+export function getContext(entity: Entity): Context {
     // tslint:disable-next-line:prefer-for-of
     for (let x = 0; x < game.chunks.length; x++) {
         // tslint:disable-next-line:prefer-for-of
@@ -49,20 +58,22 @@ export function getArea(entity: Entity) {
             // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < chunk.entities.length; i++) {
                 if (chunk.entities[i] === entity) {
-                    return chunk as Area;
+                    return { chunk };
                 }
             }
 
             // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < chunk.dungeons.length; i++) {
+                const dungeon = chunk.dungeons[i];
+
                 // tslint:disable-next-line:prefer-for-of
-                for (let j = 0; j < chunk.dungeons[i].levels.length; j++) {
-                    const level = chunk.dungeons[i].levels[j];
+                for (let j = 0; j < dungeon.levels.length; j++) {
+                    const level = dungeon.levels[j];
 
                     // tslint:disable-next-line:prefer-for-of
                     for (let k = 0; k < level.entities.length; k++) {
                         if (level.entities[k] === entity) {
-                            return level as Area;
+                            return { chunk, dungeon, level };
                         }
                     }
                 }
@@ -107,7 +118,9 @@ export function getInventoryChar(entity: Entity, item: Item) {
     return String.fromCharCode(97 + entity.inventory.indexOf(item));
 }
 
-export function move(entity: Entity, area: Area, coord: Coord) {
+export function move(entity: Entity, coord: Coord, context: Context) {
+    const area = context.level || context.chunk;
+
     if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
         const cell = area.cells[coord.x][coord.y];
 
@@ -127,29 +140,37 @@ export function move(entity: Entity, area: Area, coord: Coord) {
             case CellType.StairsUp:
                 log(area, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
 
-                changeArea(entity, area, area, (newDungeon) => {
-                    for (let x = 0; x < newDungeon.width; x++) {
-                        for (let y = 0; y < newDungeon.height; y++) {
-                            if (newDungeon.cells[x][y].type === CellType.StairsDown) {
+                changeLevel(entity, 0, (newLevel) => {
+                    for (let x = 0; x < newLevel.width; x++) {
+                        for (let y = 0; y < newLevel.height; y++) {
+                            if (newLevel.cells[x][y].type === CellType.StairsDown) {
                                 return { x, y };
                             }
                         }
                     }
-                });
+                }, context);
 
                 return;
             case CellType.StairsDown:
                 log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
 
-                changeArea(entity, area, area, (newDungeon) => {
-                    for (let x = 0; x < newDungeon.width; x++) {
-                        for (let y = 0; y < newDungeon.height; y++) {
-                            if (newDungeon.cells[x][y].type === CellType.StairsUp) {
+                // if in a chunk, we have to figure out what dungeon we are at
+                // then we can move to that dungeon at a certain level (usually 0)
+
+                // if in a level, we simply move to the current index + 1
+
+                // its almost as if stairs should not be cells anymore
+                // they will need to hold information about where they lead
+
+                changeLevel(entity, 1, (newLevel) => {
+                    for (let x = 0; x < newLevel.width; x++) {
+                        for (let y = 0; y < newLevel.height; y++) {
+                            if (newLevel.cells[x][y].type === CellType.StairsUp) {
                                 return { x, y };
                             }
                         }
                     }
-                });
+                }, context);
 
                 return;
         }
@@ -241,7 +262,9 @@ export function move(entity: Entity, area: Area, coord: Coord) {
     }
 }
 
-export function tick(entity: Entity, area: Area) {
+export function tick(entity: Entity, context: Context) {
+    const area = context.level || context.chunk;
+
     {
         const items = area.items.filter((item) => item.x === entity.x && item.y === entity.y
             && randomFloat(0, 1) < 0.5);
@@ -327,7 +350,7 @@ export function tick(entity: Entity, area: Area) {
                     if (path && path.length) {
                         const next = path.pop();
 
-                        move(entity, area, { x: next.x, y: next.y });
+                        move(entity, { x: next.x, y: next.y }, context);
 
                         return;
                     }
@@ -358,12 +381,12 @@ export function tick(entity: Entity, area: Area) {
 
     const roll = randomFloat(0, 1);
     if (roll < 0.25) {
-        move(entity, area, { x: entity.x, y: entity.y - 1 });
+        move(entity, { x: entity.x, y: entity.y - 1 }, context);
     } else if (roll < 0.5) {
-        move(entity, area, { x: entity.x + 1, y: entity.y });
+        move(entity, { x: entity.x + 1, y: entity.y }, context);
     } else if (roll < 0.75) {
-        move(entity, area, { x: entity.x, y: entity.y + 1 });
+        move(entity, { x: entity.x, y: entity.y + 1 }, context);
     } else {
-        move(entity, area, { x: entity.x - 1, y: entity.y });
+        move(entity, { x: entity.x - 1, y: entity.y }, context);
     }
 }

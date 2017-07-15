@@ -1,5 +1,5 @@
 import { lineOfSight } from "./algorithms";
-import { getArea, getEntity, getInventoryChar, move } from "./entity";
+import { getContext, getEntity, getInventoryChar, move } from "./entity";
 import { game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
@@ -7,31 +7,32 @@ import { CellType, Corpse, Entity, UIMode } from "./types";
 
 export function input(ev: KeyboardEvent) {
     const player = getEntity(0);
-    const dungeon = getArea(player);
+    const context = getContext(player);
+    const area = context.level || context.chunk;
 
     switch (ui.mode) {
         case UIMode.Default:
             switch (ev.key) {
                 case "ArrowUp":
-                    move(dungeon, player, { x: player.x, y: player.y - 1 });
+                    move(player, { x: player.x, y: player.y - 1 }, context);
 
                     tick();
 
                     break;
                 case "ArrowRight":
-                    move(dungeon, player, { x: player.x + 1, y: player.y });
+                    move(player, { x: player.x + 1, y: player.y }, context);
 
                     tick();
 
                     break;
                 case "ArrowDown":
-                    move(dungeon, player, { x: player.x, y: player.y + 1 });
+                    move(player, { x: player.x, y: player.y + 1 }, context);
 
                     tick();
 
                     break;
                 case "ArrowLeft":
-                    move(dungeon, player, { x: player.x - 1, y: player.y });
+                    move(player, { x: player.x - 1, y: player.y }, context);
 
                     tick();
 
@@ -41,12 +42,12 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "g":
-                    dungeon.items.forEach((item, index) => {
+                    area.items.forEach((item, index) => {
                         if (item.x === player.x && item.y === player.y) {
-                            log(dungeon, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
+                            log(area, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
 
                             player.inventory.push(item);
-                            dungeon.items.splice(index, 1);
+                            area.items.splice(index, 1);
                         }
                     });
 
@@ -54,22 +55,22 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "s":
-                    const targets = dungeon.entities.filter((target) => target !== player
+                    const targets = area.entities.filter((target) => target !== player
                         && target.factions.some((faction) => player.hostileFactions.indexOf(faction) > -1)
-                        && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), player.sight)
+                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), player.sight)
                             .some((coord) => coord.x === target.x && coord.y === target.y));
 
                     if (targets.length) {
-                        log(dungeon, { x: player.x, y: player.y },
+                        log(area, { x: player.x, y: player.y },
                             `${player.name} spots ${targets.map((target) => target.name).join(", ")}`);
                     } else {
-                        log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn"t see anything`);
+                        log(area, { x: player.x, y: player.y }, `${player.name} doesn"t see anything`);
                     }
 
                     break;
                 case "r":
-                    dungeon.items.filter((item) => "originalChar" in item
-                        && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), player.sight)
+                    area.items.filter((item) => "originalChar" in item
+                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), player.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
                         .forEach((corpse) => {
@@ -91,20 +92,20 @@ export function input(ev: KeyboardEvent) {
                                 y: corpse.y,
                             };
 
-                            log(dungeon, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
+                            log(area, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
 
-                            dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
-                            dungeon.entities.push(newEntity);
+                            area.items.splice(area.items.indexOf(corpse), 1);
+                            area.entities.push(newEntity);
                         });
 
                     tick();
 
                     break;
                 case "c":
-                    if (dungeon.cells[player.x][player.y].type === CellType.DoorOpen) {
-                        log(dungeon, { x: player.x, y: player.y }, `${player.name} closes the door`);
+                    if (area.cells[player.x][player.y].type === CellType.DoorOpen) {
+                        log(area, { x: player.x, y: player.y }, `${player.name} closes the door`);
 
-                        dungeon.cells[player.x][player.y].type = CellType.DoorClosed;
+                        area.cells[player.x][player.y].type = CellType.DoorClosed;
                     }
 
                     tick();
@@ -161,29 +162,29 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "d":
-                    log(dungeon, { x: player.x, y: player.y }, "select item to drop");
-                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, { x: player.x, y: player.y }, "select item to drop");
+                    log(area, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventoryDrop;
 
                     break;
                 case "e":
-                    log(dungeon, { x: player.x, y: player.y }, "select item to equip");
-                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, { x: player.x, y: player.y }, "select item to equip");
+                    log(area, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventoryEquip;
 
                     break;
                 case "u":
-                    log(dungeon, { x: player.x, y: player.y }, "select item to unequip");
-                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, { x: player.x, y: player.y }, "select item to unequip");
+                    log(area, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventoryUnequip;
 
                     break;
                 case "s":
-                    log(dungeon, { x: player.x, y: player.y }, "select first item to swap");
-                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, { x: player.x, y: player.y }, "select first item to swap");
+                    log(area, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventorySwapFirst;
 
@@ -194,13 +195,13 @@ export function input(ev: KeyboardEvent) {
         case UIMode.InventoryDrop:
             player.inventory.forEach((item, index) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(dungeon, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
+                    log(area, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
 
                     item.x = player.x;
                     item.y = player.y;
 
                     player.inventory.splice(index, 1);
-                    dungeon.items.push(item);
+                    area.items.push(item);
 
                     ui.mode = UIMode.Default;
                 }
@@ -217,7 +218,7 @@ export function input(ev: KeyboardEvent) {
         case UIMode.InventoryEquip:
             player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(dungeon, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
+                    log(area, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
 
                     item.equipped = true;
 
@@ -236,7 +237,7 @@ export function input(ev: KeyboardEvent) {
         case UIMode.InventoryUnequip:
             player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(dungeon, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
+                    log(area, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
 
                     item.equipped = false;
 
@@ -257,8 +258,8 @@ export function input(ev: KeyboardEvent) {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapFirst = index;
 
-                    log(dungeon, { x: player.x, y: player.y }, "select second item to swap");
-                    log(dungeon, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, { x: player.x, y: player.y }, "select second item to swap");
+                    log(area, { x: player.x, y: player.y }, "press space to cancel");
 
                     ui.mode = UIMode.InventorySwapSecond;
                 }
@@ -277,7 +278,7 @@ export function input(ev: KeyboardEvent) {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapSecond = index;
 
-                    log(dungeon, { x: player.x, y: player.y }, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
+                    log(area, { x: player.x, y: player.y }, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
 
                     const t = player.inventory[ui.inventorySwapFirst];
                     player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
@@ -308,13 +309,13 @@ export function input(ev: KeyboardEvent) {
 
     switch (ev.key) {
         case "[":
-            log(dungeon, { x: player.x, y: player.y }, "game saved");
+            log(area, { x: player.x, y: player.y }, "game saved");
 
             save();
 
             break;
         case "]":
-            log(dungeon, { x: player.x, y: player.y }, "game loaded");
+            log(area, { x: player.x, y: player.y }, "game loaded");
 
             load();
 
