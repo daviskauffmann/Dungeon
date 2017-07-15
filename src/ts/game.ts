@@ -33,7 +33,7 @@ export function log(dungeon: Dungeon, location: Coord, message: string) {
     const player = getEntity(0);
 
     if (dungeon === getDungeon(player)
-        && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, location))
+        && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 

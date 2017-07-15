@@ -1,5 +1,5 @@
 import { game } from './game';
-import { distanceBetweenSquared, toRadians } from './math';
+import {distanceBetweenSquared, toRadians } from './math';
 import { Coord, Dungeon } from './types';
 
 export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
@@ -102,19 +102,20 @@ export function aStar(dungeon: Dungeon, start: Coord, goal: Coord) {
     return undefined;
 }
 
-export function fieldOfView(dungeon: Dungeon, origin: Coord, range: number, accuracy: number) {
+export function fieldOfView(dungeon: Dungeon, origin: Coord, accuracy: number, range: number) {
     const coords: Coord[] = [];
 
     for (let degrees = 0; degrees < 360; degrees += accuracy) {
-        coords.push(...lineOfSight(dungeon, origin, range, toRadians(degrees)).filter((coord) => {
-            return !coords.some((c) => c.x === coord.x && c.y === coord.y);
-        }));
+        coords.push(...lineOfSight(dungeon, origin, toRadians(degrees), range)
+            .filter((coord) => {
+                return !coords.some((c) => c.x === coord.x && c.y === coord.y);
+            }));
     }
 
     return coords;
 }
 
-export function lineOfSight(dungeon: Dungeon, origin: Coord, range: number, radians: number) {
+export function lineOfSight(dungeon: Dungeon, origin: Coord, radians: number, range: number) {
     const coords: Coord[] = [];
 
     const dx = Math.cos(radians);

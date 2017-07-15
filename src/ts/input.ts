@@ -56,7 +56,7 @@ export function input(ev: KeyboardEvent) {
                 case 's':
                     const targets = dungeon.entities.filter((target) => target !== player
                         && target.factions.some((faction) => player.hostileFactions.indexOf(faction) > -1)
-                        && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }))
+                        && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), player.sight)
                             .some((coord) => coord.x === target.x && coord.y === target.y));
 
                     if (targets.length) {
@@ -69,7 +69,7 @@ export function input(ev: KeyboardEvent) {
                     break;
                 case 'r':
                     dungeon.items.filter((item) => 'originalChar' in item
-                        && lineOfSight(dungeon, { x: player.x, y: player.y }, player.sight, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }))
+                        && lineOfSight(dungeon, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), player.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
                         .forEach((corpse) => {

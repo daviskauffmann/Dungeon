@@ -7,11 +7,11 @@ const tslint = require('gulp-tslint');
 const gutil = require('gulp-util');
 const webpack = require('webpack');
 
-const srcDir = './src';
-const outDir = './www';
+const SRC_DIR = './src';
+const OUT_DIR = './www';
 
 gulp.task('watch', ['build'], () => {
-    gulp.watch(`${srcDir}/*/**`, ['build']);
+    gulp.watch(`${SRC_DIR}/*/**`, ['build']);
 });
 
 gulp.task('build', callback => {
@@ -19,7 +19,7 @@ gulp.task('build', callback => {
 });
 
 gulp.task('tslint', () => {
-    return gulp.src("src/**/*.ts")
+    return gulp.src(`${SRC_DIR}/**/*.ts`)
         .pipe(tslint({
             formatter: 'stylish'
         }))
@@ -29,15 +29,15 @@ gulp.task('tslint', () => {
 });
 
 gulp.task('clean', () => {
-    return gulp.src(outDir)
+    return gulp.src(OUT_DIR)
         .pipe(clean());
 });
 
 gulp.task('webpack', callback => {
     webpack({
-        entry: `${srcDir}/ts/main.ts`,
+        entry: `${SRC_DIR}/ts/main.ts`,
         output: {
-            filename: `${outDir}/js/main.js`
+            filename: `${OUT_DIR}/js/main.js`
         },
         resolve: {
             extensions: ['.ts']
@@ -58,16 +58,19 @@ gulp.task('webpack', callback => {
 });
 
 gulp.task('sass', () => {
-    return gulp.src(`${srcDir}/sass/**/*.scss`)
+    return gulp.src(`${SRC_DIR}/sass/**/*.scss`)
         .pipe(sass())
-        .pipe(gulp.dest(`${outDir}/css`));
+        .pipe(gulp.dest(`${OUT_DIR}/css`));
 });
 
 gulp.task('inject', () => {
-    return gulp.src(`${srcDir}/index.html`)
+    return gulp.src(`${SRC_DIR}/index.html`)
         .pipe(inject(gulp.src([
-            `${outDir}/js/**/*.js`,
-            `${outDir}/css/**/*.css`
-        ]), { relative: true, ignorePath: `.${outDir}` }))
-        .pipe(gulp.dest(outDir));
+            `${OUT_DIR}/js/**/*.js`,
+            `${OUT_DIR}/css/**/*.css`
+        ]), {
+            relative: true,
+            ignorePath: `.${OUT_DIR}`
+        }))
+        .pipe(gulp.dest(OUT_DIR));
 });

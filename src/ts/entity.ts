@@ -79,23 +79,13 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
                 log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
 
                 changeLevel(dungeon, entity, getLevel(entity) - 1, (newDungeon) => {
-                    const spawn: Coord = {
-                        x: 0,
-                        y: 0,
-                    };
-
                     for (let x = 0; x < newDungeon.width; x++) {
                         for (let y = 0; y < newDungeon.height; y++) {
                             if (newDungeon.cells[x][y].type === CellType.StairsDown) {
-                                spawn.x = x;
-                                spawn.y = y;
-
-                                break;
+                                return { x, y };
                             }
                         }
                     }
-
-                    return spawn;
                 });
 
                 return;
@@ -103,23 +93,13 @@ export function move(dungeon: Dungeon, entity: Entity, coord: Coord) {
                 log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} descends`);
 
                 changeLevel(dungeon, entity, getLevel(entity) + 1, (newDungeon) => {
-                    const spawn: Coord = {
-                        x: 0,
-                        y: 0,
-                    };
-
                     for (let x = 0; x < newDungeon.width; x++) {
                         for (let y = 0; y < newDungeon.height; y++) {
                             if (newDungeon.cells[x][y].type === CellType.StairsUp) {
-                                spawn.x = x;
-                                spawn.y = y;
-
-                                break;
+                                return { x, y };
                             }
                         }
                     }
-
-                    return spawn;
                 });
 
                 return;
@@ -236,7 +216,7 @@ export function tick(dungeon: Dungeon, entity: Entity) {
             if (randomFloat(0, 1) < 0.5) {
                 const corpses = dungeon.items.filter((item) => 'originalChar' in item
                     && (item as Corpse).factions.every((faction) => entity.hostileFactions.indexOf(faction) === -1)
-                    && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }))
+                    && lineOfSight(dungeon, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }), entity.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))
                     .map((item) => item as Corpse);
 
@@ -285,7 +265,7 @@ export function tick(dungeon: Dungeon, entity: Entity) {
                 const targets = dungeon.entities.filter((target) => target !== entity
                     && target.factions
                         .some((faction) => entity.hostileFactions.indexOf(faction) > -1)
-                    && lineOfSight(dungeon, { x: entity.x, y: entity.y }, entity.sight, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y }))
+                    && lineOfSight(dungeon, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y }), entity.sight)
                         .some((coord) => coord.x === target.x && coord.y === target.y));
 
                 if (targets.length) {
