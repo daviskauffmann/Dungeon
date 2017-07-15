@@ -3,39 +3,14 @@ import { getDungeon, getEntity, getInventoryChar, move } from './entity';
 import { game, load, log, save, tick, ui } from './game';
 import { radiansBetween } from './math';
 import { draw } from './renderer';
-import { CellType, Corpse, Entity } from './types';
+import { CellType, Corpse, Entity, UIMode } from './types';
 
 export function input(ev: KeyboardEvent) {
     const player = getEntity(0);
     const dungeon = getDungeon(player);
 
     switch (ui.mode) {
-        case 'target':
-            switch (ev.key) {
-                case 'ArrowUp':
-                    ui.target.y--;
-
-                    break;
-                case 'ArrowRight':
-                    ui.target.x++;
-
-                    break;
-                case 'ArrowDown':
-                    ui.target.y++;
-
-                    break;
-                case 'ArrowLeft':
-                    ui.target.x--;
-
-                    break;
-                case 't':
-                    ui.mode = '';
-
-                    break;
-            }
-
-            break;
-        case '':
+        case UIMode.Default:
             switch (ev.key) {
                 case 'ArrowUp':
                     move(player, { x: player.x, y: player.y - 1 });
@@ -86,7 +61,7 @@ export function input(ev: KeyboardEvent) {
 
                     if (targets.length) {
                         log(dungeon, { x: player.x, y: player.y },
-                            `${player.name} spots a ${targets.map((target) => target.name).join(', ')}`);
+                            `${player.name} spots ${targets.map((target) => target.name).join(', ')}`);
                     } else {
                         log(dungeon, { x: player.x, y: player.y }, `${player.name} doesn't see anything`);
                     }
@@ -136,66 +111,87 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case 't':
-                    ui.mode = 'target';
+                    ui.mode = UIMode.Target;
                     ui.target.x = player.x;
                     ui.target.y = player.y;
 
                     break;
                 case 'i':
                     if (player.inventory.length > 0) {
-                        ui.mode = 'inventory';
+                        ui.mode = UIMode.Inventory;
                     }
 
                     break;
                 case 'o':
-                    ui.mode = 'character';
+                    ui.mode = UIMode.Character;
 
                     break;
-                /*case 'i':
-					ui.mode = 'spellbook';
-
-					break;*/
             }
 
             break;
-        case 'inventory':
+        case UIMode.Target:
+            switch (ev.key) {
+                case 'ArrowUp':
+                    ui.target.y--;
+
+                    break;
+                case 'ArrowRight':
+                    ui.target.x++;
+
+                    break;
+                case 'ArrowDown':
+                    ui.target.y++;
+
+                    break;
+                case 'ArrowLeft':
+                    ui.target.x--;
+
+                    break;
+                case 't':
+                    ui.mode = UIMode.Default;
+
+                    break;
+            }
+
+            break;
+        case UIMode.Inventory:
             switch (ev.key) {
                 case 'i':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
                 case 'd':
                     log(dungeon, { x: player.x, y: player.y }, 'select item to drop');
                     log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
-                    ui.mode = 'inventory_drop';
+                    ui.mode = UIMode.InventoryDrop;
 
                     break;
                 case 'e':
                     log(dungeon, { x: player.x, y: player.y }, 'select item to equip');
                     log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
-                    ui.mode = 'inventory_equip';
+                    ui.mode = UIMode.InventoryEquip;
 
                     break;
                 case 'u':
                     log(dungeon, { x: player.x, y: player.y }, 'select item to unequip');
                     log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
-                    ui.mode = 'inventory_unequip';
+                    ui.mode = UIMode.InventoryUnequip;
 
                     break;
                 case 's':
                     log(dungeon, { x: player.x, y: player.y }, 'select first item to swap');
                     log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
-                    ui.mode = 'inventory_swapFirst';
+                    ui.mode = UIMode.InventorySwapFirst;
 
                     break;
             }
 
             break;
-        case 'inventory_drop':
+        case UIMode.InventoryDrop:
             player.inventory.forEach((item, index) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     log(dungeon, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
@@ -206,57 +202,57 @@ export function input(ev: KeyboardEvent) {
                     player.inventory.splice(index, 1);
                     dungeon.items.push(item);
 
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
                 }
             });
 
             switch (ev.key) {
                 case ' ':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
             }
 
             break;
-        case 'inventory_equip':
+        case UIMode.InventoryEquip:
             player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     log(dungeon, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
 
                     item.equipped = true;
 
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
                 }
             });
 
             switch (ev.key) {
                 case ' ':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
             }
 
             break;
-        case 'inventory_unequip':
+        case UIMode.InventoryUnequip:
             player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     log(dungeon, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
 
                     item.equipped = false;
 
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
                 }
             });
 
             switch (ev.key) {
                 case ' ':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
             }
 
             break;
-        case 'inventory_swapFirst':
+        case UIMode.InventorySwapFirst:
             player.inventory.forEach((item, index) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapFirst = index;
@@ -264,19 +260,19 @@ export function input(ev: KeyboardEvent) {
                     log(dungeon, { x: player.x, y: player.y }, 'select second item to swap');
                     log(dungeon, { x: player.x, y: player.y }, 'press space to cancel');
 
-                    ui.mode = 'inventory_swapSecond';
+                    ui.mode = UIMode.InventorySwapSecond;
                 }
             });
 
             switch (ev.key) {
                 case ' ':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
             }
 
             break;
-        case 'inventory_swapSecond':
+        case UIMode.InventorySwapSecond:
             player.inventory.forEach((item, index) => {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapSecond = index;
@@ -287,22 +283,22 @@ export function input(ev: KeyboardEvent) {
                     player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
                     player.inventory[ui.inventorySwapSecond] = t;
 
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
                 }
             });
 
             switch (ev.key) {
                 case ' ':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
             }
 
             break;
-        case 'character':
+        case UIMode.Character:
             switch (ev.key) {
                 case 'o':
-                    ui.mode = '';
+                    ui.mode = UIMode.Default;
 
                     break;
             }

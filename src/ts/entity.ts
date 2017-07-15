@@ -74,31 +74,31 @@ export function tick(entity: Entity) {
                 if (corpses.length) {
                     const corpse = corpses[0];
 
-                    const newEntity: Entity = {
-                        alpha: corpse.alpha,
-                        char: corpse.originalChar,
-                        class: corpse.class,
-                        color: corpse.color,
-                        disposition: corpse.disposition,
-                        factions: corpse.factions,
-                        hostileEntityIds: corpse.hostileEntityIds,
-                        hostileFactions: corpse.hostileFactions,
-                        id: corpse.id,
-                        inventory: corpse.inventory,
-                        level: corpse.level,
-                        name: corpse.name.replace(' corpse', ''),
-                        sight: corpse.sight,
-                        x: corpse.x,
-                        y: corpse.y,
-                    };
-
                     if (randomFloat(0, 1) < 0.5) {
+                        const newEntity: Entity = {
+                            alpha: corpse.alpha,
+                            char: corpse.originalChar,
+                            class: corpse.class,
+                            color: corpse.color,
+                            disposition: corpse.disposition,
+                            factions: corpse.factions,
+                            hostileEntityIds: corpse.hostileEntityIds,
+                            hostileFactions: corpse.hostileFactions,
+                            id: corpse.id,
+                            inventory: corpse.inventory,
+                            level: corpse.level,
+                            name: corpse.name.replace(' corpse', ''),
+                            sight: corpse.sight,
+                            x: corpse.x,
+                            y: corpse.y,
+                        };
+
                         log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} ressurects ${newEntity.name}`);
 
                         dungeon.items.splice(dungeon.items.indexOf(corpse), 1);
                         dungeon.entities.push(newEntity);
                     } else {
-                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${newEntity.name}`);
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${corpse.name}`);
                     }
 
                     return;
@@ -122,7 +122,7 @@ export function tick(entity: Entity) {
                 if (targets.length) {
                     const target = targets[0];
 
-                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots a ${target.name}`);
+                    log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} spots ${target.name}`);
 
                     const path = aStar(dungeon, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
 
@@ -145,6 +145,9 @@ export function tick(entity: Entity) {
         if (item.name.includes('corpse')
             && randomFloat(0, 1) < 0.5) {
             log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
+
+            item.x = entity.x;
+            item.y = entity.y;
 
             entity.inventory.splice(index, 1);
             dungeon.items.push(item);
@@ -242,23 +245,20 @@ export function move(entity: Entity, coord: Coord) {
                 if (target.factions.some((faction) => entity.hostileFactions.indexOf(faction) > -1)) {
                     if (randomFloat(0, 1) < 0.5) {
                         if (target.id === 0 && game.godMode) {
-                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill the ${target.name}`);
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} cannot kill ${target.name}`);
                         } else {
-                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills the ${target.name}`);
+                            log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} kills ${target.name}`);
 
                             if (target.inventory.length) {
                                 log(dungeon, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(', ')}`);
 
                                 target.inventory.forEach((item, itemIndex) => {
-                                    const droppedItem: Item = {
-                                        ...item,
-                                        equipped: false,
-                                        x: target.x,
-                                        y: target.y,
-                                    };
+                                    item.x = target.x;
+                                    item.y = target.y;
+                                    item.equipped = false;
 
                                     target.inventory.splice(itemIndex, 1);
-                                    dungeon.items.push(droppedItem);
+                                    dungeon.items.push(item);
                                 });
                             }
 
@@ -274,7 +274,7 @@ export function move(entity: Entity, coord: Coord) {
                             dungeon.items.push(corpse);
                         }
                     } else {
-                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses the ${target.name}`);
+                        log(dungeon, { x: entity.x, y: entity.y }, `${entity.name} misses ${target.name}`);
                     }
                 }
 

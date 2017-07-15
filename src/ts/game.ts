@@ -1,7 +1,7 @@
 import { lineOfSight } from './algorithms';
 import { getDungeon, getEntity, tick as entity_tick } from './entity';
 import { radiansBetween } from './math';
-import { Coord, Dungeon, Game, UI } from './types';
+import { Coord, Dungeon, Game, UI, UIMode } from './types';
 
 export let game: Game = {
     cellInfo: [
@@ -28,7 +28,7 @@ export const ui: UI = {
     inventorySwapFirst: -1,
     inventorySwapSecond: -1,
     maxMessages: 10,
-    mode: '',
+    mode: UIMode.Default,
     target: { x: 0, y: 0 },
 };
 

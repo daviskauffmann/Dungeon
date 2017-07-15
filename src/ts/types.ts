@@ -124,9 +124,21 @@ export interface Stats {
 }
 
 export interface UI {
-    mode: string;
+    mode: UIMode;
     maxMessages: number;
     inventorySwapFirst: number;
     inventorySwapSecond: number;
     target: Coord;
+}
+
+export enum UIMode {
+    Default,
+    Target,
+    Inventory,
+    InventoryDrop,
+    InventoryEquip,
+    InventoryUnequip,
+    InventorySwapFirst,
+    InventorySwapSecond,
+    Character,
 }

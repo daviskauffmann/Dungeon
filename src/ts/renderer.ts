@@ -2,7 +2,7 @@ import { fieldOfView } from './algorithms';
 import { calcStats, getDungeon, getEntity, getInventoryChar, getLevel } from './entity';
 import { game, ui } from './game';
 import { isInside } from './math';
-import { Rect } from './types';
+import { Rect, UIMode } from './types';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d');
@@ -81,7 +81,7 @@ export function draw(ev?: UIEvent) {
             if (x >= 0 && x < dungeon.width && y >= 0 && y < dungeon.height) {
                 const screen = { x: (x - view.left) * game.fontSize, y: (y - view.top + 1) * game.fontSize };
 
-                if (ui.mode === 'target') {
+                if (ui.mode === UIMode.Target) {
                     if (ui.target.x + 1 === x && ui.target.y === y) {
                         ctx.fillStyle = '#ffffff';
                         ctx.globalAlpha = 1;
@@ -157,14 +157,19 @@ export function draw(ev?: UIEvent) {
     ctx.fillStyle = '#ffffff';
     ctx.fillText(`Level: ${getLevel(player)} Turn: ${game.turn}`, 0, canvas.height);
 
-    if (ui.mode.includes('inventory')) {
+    if (ui.mode === UIMode.Inventory
+        || ui.mode === UIMode.InventoryDrop
+        || ui.mode === UIMode.InventoryEquip
+        || ui.mode === UIMode.InventorySwapFirst
+        || ui.mode === UIMode.InventorySwapSecond
+        || ui.mode === UIMode.InventoryUnequip) {
         ctx.fillStyle = '#ffffff';
         player.inventory.forEach((item, index) => {
             ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? ' (equipped)' : ''}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }
 
-    if (ui.mode === 'character') {
+    if (ui.mode === UIMode.Character) {
         ctx.fillStyle = '#ffffff';
         ctx.fillText(`Health: ${calcStats(player).health}`, canvas.width - (game.fontSize * 10), game.fontSize);
         ctx.fillText(`Mana: ${calcStats(player).mana}`, canvas.width - (game.fontSize * 10), game.fontSize * 2);
