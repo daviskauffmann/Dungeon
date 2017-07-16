@@ -1,5 +1,5 @@
 import { lineOfSight } from "./algorithms";
-import { getContext, getEntity, tick as entity_tick } from "./entity";
+import { findEntity, tick as entity_tick } from "./entity";
 import { radiansBetween } from "./math";
 import { Area, Coord, Game, Level, UI, UIMode } from "./types";
 
@@ -11,13 +11,12 @@ export let game: Game = {
         { name: "wall", char: "#", color: "#ffffff", solid: true },
         { name: "doorOpen", char: "-", color: "#ffffff", solid: false },
         { name: "doorClosed", char: "+", color: "#ffffff", solid: true },
-        { name: "stairsUp", char: "<", color: "#ffffff", solid: false },
-        { name: "stairsDown", char: ">", color: "#ffffff", solid: false },
     ],
     chunks: [
         [],
     ],
-    currentId: 0,
+    currentEntityId: 0,
+    currentStairId: 0,
     fontSize: 24,
     godMode: true,
     ignoreFov: false,
@@ -32,9 +31,10 @@ export function load() {
 }
 
 export function log(area: Area, location: Coord, message: string) {
-    const player = getEntity(0);
+    const context = findEntity(0);
+    const player = context.entity;
 
-    if ((area === getContext(player).level || area === getContext(player).chunk)
+    if ((area === context.level || area === context.chunk)
         && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
@@ -56,7 +56,7 @@ export function tick() {
             col.forEach((chunk) => {
                 chunk.entities.forEach((entity) => {
                     if (entity.id !== 0) {
-                        entity_tick(entity, { chunk });
+                        entity_tick({ chunk, entity });
                     }
                 });
 
@@ -64,7 +64,7 @@ export function tick() {
                     dungeon.levels.forEach((level) => {
                         level.entities.forEach((entity) => {
                             if (entity.id !== 0) {
-                                entity_tick(entity, { chunk, dungeon, level });
+                                entity_tick({ chunk, dungeon, entity, level });
                             }
                         });
                     });

@@ -1,5 +1,5 @@
 import { fieldOfView } from "./algorithms";
-import { calcStats, getContext, getEntity, getInventoryChar } from "./entity";
+import { calcStats, findEntity, getInventoryChar } from "./entity";
 import { game, ui } from "./game";
 import { isInside } from "./math";
 import { Level, Rect, UIMode } from "./types";
@@ -8,9 +8,12 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
 export function draw(ev?: UIEvent) {
-    const player = getEntity(0);
-    const context = getContext(player);
-    const area = context.level || context.chunk;
+    const playerContext = findEntity(0);
+    const player = playerContext.entity;
+    const chunk = playerContext.chunk;
+    const dungeon = playerContext.dungeon;
+    const level = playerContext.level;
+    const area = level || chunk;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -38,7 +41,7 @@ export function draw(ev?: UIEvent) {
         view.top = area.height - view.height;
     }
 
-    const visibleCells = fieldOfView(area, { x: player.x, y: player.y }, 1, player.sight)
+    const visibleCells = fieldOfView(area, { x: player.x, y: player.y }, 0.5, player.sight)
         .map((coord) => area.cells[coord.x][coord.y]);
 
     visibleCells.forEach((cell) => {
@@ -56,8 +59,7 @@ export function draw(ev?: UIEvent) {
         }
     }
 
-    const level = area as Level;
-    if (level.litRooms) {
+    if (level && level.litRooms) {
         level.rooms.forEach((room) => {
             if (isInside({ x: player.x, y: player.y }, room)) {
                 for (let x = room.left - 1; x < room.left + room.width + 1; x++) {
@@ -132,6 +134,41 @@ export function draw(ev?: UIEvent) {
                             ctx.fillStyle = item.color;
                             ctx.globalAlpha = item.alpha;
                             ctx.fillText(item.char, screen.x, screen.y);
+
+                            return true;
+                        }
+                    })) {
+                        continue;
+                    }
+                }
+
+                if (level) {
+                    if (level.stairDown.x === x && level.stairDown.y === y) {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
+                            : area.cells[x][y].discovered ? 0.25
+                                : 0;
+                        ctx.fillText(">", screen.x, screen.y);
+
+                        continue;
+                    }
+                    if (level.stairUp.x === x && level.stairUp.y === y) {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
+                            : area.cells[x][y].discovered ? 0.25
+                                : 0;
+                        ctx.fillText("<", screen.x, screen.y);
+
+                        continue;
+                    }
+                } else {
+                    if (chunk.stairsDown.some((stairDown) => {
+                        if (stairDown.x === x && stairDown.y === y) {
+                            ctx.fillStyle = "#ffffff";
+                            ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
+                                : area.cells[x][y].discovered ? 0.25
+                                    : 0;
+                            ctx.fillText(">", screen.x, screen.y);
 
                             return true;
                         }

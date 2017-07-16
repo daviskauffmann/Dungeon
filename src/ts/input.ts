@@ -1,38 +1,41 @@
 import { lineOfSight } from "./algorithms";
-import { getContext, getEntity, getInventoryChar, move } from "./entity";
+import { findEntity, getInventoryChar, move } from "./entity";
 import { game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
 import { CellType, Corpse, Entity, UIMode } from "./types";
 
 export function input(ev: KeyboardEvent) {
-    const player = getEntity(0);
-    const context = getContext(player);
-    const area = context.level || context.chunk;
+    const playerContext = findEntity(0);
+    const player = playerContext.entity;
+    const chunk = playerContext.chunk;
+    const dungeon = playerContext.dungeon;
+    const level = playerContext.level;
+    const area = level || chunk;
 
     switch (ui.mode) {
         case UIMode.Default:
             switch (ev.key) {
                 case "ArrowUp":
-                    move(player, { x: player.x, y: player.y - 1 }, context);
+                    move(playerContext, { x: player.x, y: player.y - 1 });
 
                     tick();
 
                     break;
                 case "ArrowRight":
-                    move(player, { x: player.x + 1, y: player.y }, context);
+                    move(playerContext, { x: player.x + 1, y: player.y });
 
                     tick();
 
                     break;
                 case "ArrowDown":
-                    move(player, { x: player.x, y: player.y + 1 }, context);
+                    move(playerContext, { x: player.x, y: player.y + 1 });
 
                     tick();
 
                     break;
                 case "ArrowLeft":
-                    move(player, { x: player.x - 1, y: player.y }, context);
+                    move(playerContext, { x: player.x - 1, y: player.y });
 
                     tick();
 

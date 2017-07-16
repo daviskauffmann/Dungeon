@@ -19,8 +19,6 @@ export enum CellType {
     Wall,
     DoorOpen,
     DoorClosed,
-    StairsUp,
-    StairsDown,
 }
 
 export interface CellInfo {
@@ -36,6 +34,13 @@ export interface Chest extends Coord, Glyph {
 
 export interface Chunk extends Area {
     dungeons: Dungeon[];
+    stairsDown: Stair[];
+}
+
+export interface ChunkOptions {
+    width?: number;
+    height?: number;
+    dungeonAmount?: number;
 }
 
 export enum Class {
@@ -71,6 +76,21 @@ export interface Dungeon {
 export interface Level extends Area {
     rooms: Rect[];
     litRooms: boolean;
+    stairDown: Stair;
+    stairUp: Stair;
+}
+
+export interface LevelOptions {
+    width?: number;
+    height?: number;
+    roomAttempts?: number;
+    minRoomSize?: number;
+    maxRoomSize?: number;
+    preventOverlap?: boolean;
+    litRooms?: boolean;
+    doorChance?: number;
+    monsterAmount?: number;
+    chestAmount?: number;
 }
 
 export interface Entity extends Coord, Glyph {
@@ -86,6 +106,10 @@ export interface Entity extends Coord, Glyph {
     disposition: Disposition;
 }
 
+export interface EntityContext extends Context {
+    entity: Entity;
+}
+
 export enum Faction {
     Player,
     Monster,
@@ -95,7 +119,8 @@ export enum Faction {
 
 export interface Game {
     chunks: Chunk[][];
-    currentId: number;
+    currentEntityId: number;
+    currentStairId: number;
     turn: number;
     fontSize: number;
     cellInfo: CellInfo[];
@@ -121,6 +146,20 @@ export interface Rect {
     top: number;
     width: number;
     height: number;
+}
+
+export interface Stair extends Coord {
+    id: number;
+    direction: StairDirection;
+}
+
+export interface StairContext extends Context {
+    stairs: Stair;
+}
+
+export enum StairDirection {
+    Down,
+    Up,
 }
 
 export interface Stats {

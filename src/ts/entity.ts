@@ -2,10 +2,10 @@ import { aStar, lineOfSight } from "./algorithms";
 import { createLevel } from "./dungeon";
 import { game, log } from "./game";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Area, CellInfo, CellType, Class, Context, Coord, Corpse, Disposition, Dungeon, Entity, Item, Level, Stats } from "./types";
+import { Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Entity, EntityContext, Item, Level, StairContext, StairDirection, Stats } from "./types";
 
-export function calcStats(entity: Entity) {
-    const stats: Stats = {
+export function calcStats(entity: Entity): Stats {
+    return {
         attunement: entity.level,
         avoidance: entity.level,
         charisma: entity.level,
@@ -20,11 +20,9 @@ export function calcStats(entity: Entity) {
         stamina: entity.level,
         strength: entity.level,
     };
-
-    return stats;
 }
 
-export function getContext(entity: Entity): Context {
+export function findEntity(id: number): EntityContext {
     // tslint:disable-next-line:prefer-for-of
     for (let x = 0; x < game.chunks.length; x++) {
         // tslint:disable-next-line:prefer-for-of
@@ -33,8 +31,10 @@ export function getContext(entity: Entity): Context {
 
             // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < chunk.entities.length; i++) {
-                if (chunk.entities[i] === entity) {
-                    return { chunk };
+                const entity = chunk.entities[i];
+
+                if (entity.id === id) {
+                    return { chunk, entity };
                 }
             }
 
@@ -48,8 +48,10 @@ export function getContext(entity: Entity): Context {
 
                     // tslint:disable-next-line:prefer-for-of
                     for (let k = 0; k < level.entities.length; k++) {
-                        if (level.entities[k] === entity) {
-                            return { chunk, dungeon, level };
+                        const entity = level.entities[k];
+
+                        if (entity.id === id) {
+                            return { chunk, dungeon, entity, level };
                         }
                     }
                 }
@@ -58,30 +60,43 @@ export function getContext(entity: Entity): Context {
     }
 }
 
-export function getEntity(id: number) {
+export function findStair(id: number, direction: StairDirection): StairContext {
     // tslint:disable-next-line:prefer-for-of
     for (let x = 0; x < game.chunks.length; x++) {
         // tslint:disable-next-line:prefer-for-of
         for (let y = 0; y < game.chunks[x].length; y++) {
             const chunk = game.chunks[x][y];
 
-            // tslint:disable-next-line:prefer-for-of
-            for (let i = 0; i < chunk.entities.length; i++) {
-                if (chunk.entities[i].id === id) {
-                    return chunk.entities[i];
+            if (direction === StairDirection.Down) {
+                // tslint:disable-next-line:prefer-for-of
+                for (let i = 0; i < chunk.stairsDown.length; i++) {
+                    const stairs = chunk.stairsDown[i];
+
+                    if (stairs.id === id) {
+                        return { chunk, stairs };
+                    }
                 }
             }
 
             // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < chunk.dungeons.length; i++) {
+                const dungeon = chunk.dungeons[i];
+
                 // tslint:disable-next-line:prefer-for-of
                 for (let j = 0; j < chunk.dungeons[i].levels.length; j++) {
                     const level = chunk.dungeons[i].levels[j];
 
-                    // tslint:disable-next-line:prefer-for-of
-                    for (let k = 0; k < level.entities.length; k++) {
-                        if (level.entities[k].id === id) {
-                            return level.entities[k];
+                    if (direction === StairDirection.Down) {
+                        if (level.stairDown.id === id) {
+                            const stairs = level.stairDown;
+
+                            return { chunk, dungeon, level, stairs };
+                        }
+                    } else if (direction === StairDirection.Up) {
+                        if (level.stairUp.id === id) {
+                            const stairs = level.stairUp;
+
+                            return { chunk, dungeon, level, stairs };
                         }
                     }
                 }
@@ -94,13 +109,15 @@ export function getInventoryChar(entity: Entity, item: Item) {
     return String.fromCharCode(97 + entity.inventory.indexOf(item));
 }
 
-export function move(entity: Entity, coord: Coord, context: Context) {
-    const area = context.level || context.chunk;
-    const dungeon = context.dungeon;
+export function move(entityContext: EntityContext, coord: Coord) {
+    const entity = entityContext.entity;
+    const chunk = entityContext.chunk;
+    const dungeon = entityContext.dungeon;
+    const level = entityContext.level;
+    const area: Area = level || chunk;
 
     if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
         const cell = area.cells[coord.x][coord.y];
-        let levelIndex: number;
 
         switch (cell.type) {
             case CellType.Wall:
@@ -111,90 +128,7 @@ export function move(entity: Entity, coord: Coord, context: Context) {
 
                     cell.type = CellType.DoorOpen;
                 } else {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} can"t open the door`);
-                }
-
-                return;
-            case CellType.StairsUp:
-                log(area, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
-
-                levelIndex = dungeon.levels.indexOf(context.level) - 1;
-
-                if (levelIndex === -1) {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
-
-                    area.entities.splice(area.entities.indexOf(entity), 1);
-                    context.chunk.entities.push(entity);
-
-                    for (let x = 0; x < context.chunk.width; x++) {
-                        for (let y = 0; y < context.chunk.height; y++) {
-                            if (context.chunk.cells[x][y].type === CellType.StairsDown) {
-                                entity.x = x;
-                                entity.y = y;
-                            }
-                        }
-                    }
-                } else {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
-
-                    area.entities.splice(area.entities.indexOf(entity), 1);
-                    dungeon.levels[levelIndex].entities.push(entity);
-
-                    for (let x = 0; x < dungeon.levels[levelIndex].width; x++) {
-                        for (let y = 0; y < dungeon.levels[levelIndex].height; y++) {
-                            if (dungeon.levels[levelIndex].cells[x][y].type === CellType.StairsDown) {
-                                entity.x = x;
-                                entity.y = y;
-                            }
-                        }
-                    }
-                }
-
-                return;
-            case CellType.StairsDown:
-                log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
-
-                if (context.level) {
-                    levelIndex = dungeon.levels.indexOf(context.level) + 1;
-
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
-
-                    while (levelIndex >= dungeon.levels.length) {
-                        dungeon.levels.push(createLevel(50, 50, 20, 5, 15, false, false, 0.5, 3, 5, 5));
-                    }
-
-                    area.entities.splice(area.entities.indexOf(entity), 1);
-                    dungeon.levels[levelIndex].entities.push(entity);
-
-                    for (let x = 0; x < dungeon.levels[levelIndex].width; x++) {
-                        for (let y = 0; y < dungeon.levels[levelIndex].height; y++) {
-                            if (dungeon.levels[levelIndex].cells[x][y].type === CellType.StairsUp) {
-                                entity.x = x;
-                                entity.y = y;
-                            }
-                        }
-                    }
-                } else {
-                    const newDungeon = context.chunk.dungeons[0];
-                    levelIndex = 0;
-
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
-
-                    while (levelIndex >= newDungeon.levels.length) {
-                        newDungeon.levels.push(createLevel(50, 50, 20, 5, 15, false, false, 0.5, 3, 5, 5));
-                    }
-
-                    area.entities.splice(area.entities.indexOf(entity), 1);
-                    newDungeon.levels[levelIndex].entities.push(entity);
-
-                    for (let x = 0; x < newDungeon.levels[levelIndex].width; x++) {
-                        for (let y = 0; y < newDungeon.levels[levelIndex].height; y++) {
-                            if (newDungeon.levels[levelIndex].cells[x][y].type === CellType.StairsUp) {
-                                entity.x = x;
-                                entity.y = y;
-                            }
-                        }
-                    }
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
                 }
 
                 return;
@@ -223,16 +157,14 @@ export function move(entity: Entity, coord: Coord, context: Context) {
                                 });
                             }
 
-                            const corpse: Corpse = {
+                            area.entities.splice(targetIndex, 1);
+                            area.items.push({
                                 ...target,
                                 char: "%",
                                 equipped: false,
                                 name: target.name + " corpse",
                                 originalChar: target.char,
-                            };
-
-                            area.entities.splice(targetIndex, 1);
-                            area.items.push(corpse);
+                            } as Corpse);
                         }
                     } else {
                         log(area, { x: entity.x, y: entity.y }, `${entity.name} misses ${target.name}`);
@@ -258,19 +190,101 @@ export function move(entity: Entity, coord: Coord, context: Context) {
 
                             entity.inventory.push(chest.loot);
                         } else {
-                            log(area, { x: entity.x, y: entity.y }, `${entity.name}"s inventory is full`);
+                            log(area, { x: entity.x, y: entity.y }, `${entity.name}'s inventory is full`);
                         }
                     } else {
                         log(area, { x: entity.x, y: entity.y }, `${entity.name} sees nothing inside`);
                     }
                 } else {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} can"t open the chest`);
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} can't open the chest`);
                 }
 
                 return true;
             }
         })) {
             return;
+        }
+
+        if (level) {
+            if (level.stairDown.x === coord.x && level.stairDown.y === coord.y) {
+                log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
+
+                const stairContext = findStair(level.stairDown.id, StairDirection.Up);
+
+                if (stairContext) {
+                    const newLevel = stairContext.level;
+
+                    area.entities.splice(area.entities.indexOf(entity), 1);
+                    newLevel.entities.push(entity);
+
+                    entity.x = newLevel.stairUp.x;
+                    entity.y = newLevel.stairUp.y;
+                } else {
+                    const newLevel = createLevel(level.stairDown.id);
+
+                    dungeon.levels.push(newLevel);
+
+                    area.entities.splice(area.entities.indexOf(entity), 1);
+                    newLevel.entities.push(entity);
+
+                    entity.x = newLevel.stairUp.x;
+                    entity.y = newLevel.stairUp.y;
+                }
+
+                return;
+            }
+            if (level.stairUp.x === coord.x && level.stairUp.y === coord.y) {
+                log(area, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
+
+                const context = findStair(level.stairUp.id, StairDirection.Down);
+                const newLevel = context.level || context.chunk;
+
+                area.entities.splice(area.entities.indexOf(entity), 1);
+                newLevel.entities.push(entity);
+
+                entity.x = context.stairs.x;
+                entity.y = context.stairs.y;
+
+                return;
+            }
+        } else {
+            if (chunk.stairsDown.some((stairDown) => {
+                if (stairDown.x === coord.x && stairDown.y === coord.y) {
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
+
+                    const stairContext = findStair(stairDown.id, StairDirection.Up);
+
+                    if (stairContext) {
+                        const newLevel = stairContext.level;
+
+                        area.entities.splice(area.entities.indexOf(entity), 1);
+                        newLevel.entities.push(entity);
+
+                        entity.x = newLevel.stairUp.x;
+                        entity.y = newLevel.stairUp.y;
+                    } else {
+                        const newDungeon: Dungeon = {
+                            levels: [],
+                        };
+
+                        chunk.dungeons.push(newDungeon);
+
+                        const newLevel = createLevel(stairDown.id);
+
+                        newDungeon.levels.push(newLevel);
+
+                        area.entities.splice(area.entities.indexOf(entity), 1);
+                        newLevel.entities.push(entity);
+
+                        entity.x = newLevel.stairUp.x;
+                        entity.y = newLevel.stairUp.y;
+                    }
+
+                    return true;
+                }
+            })) {
+                return;
+            }
         }
 
         {
@@ -287,8 +301,12 @@ export function move(entity: Entity, coord: Coord, context: Context) {
     }
 }
 
-export function tick(entity: Entity, context: Context) {
-    const area = context.level || context.chunk;
+export function tick(entityContext: EntityContext) {
+    const entity = entityContext.entity;
+    const chunk = entityContext.chunk;
+    const dungeon = entityContext.dungeon;
+    const level = entityContext.level;
+    const area: Area = level || chunk;
 
     {
         const items = area.items.filter((item) => item.x === entity.x && item.y === entity.y
@@ -375,7 +393,7 @@ export function tick(entity: Entity, context: Context) {
                     if (path && path.length) {
                         const next = path.pop();
 
-                        move(entity, { x: next.x, y: next.y }, context);
+                        move(entityContext, { x: next.x, y: next.y });
 
                         return;
                     }
@@ -406,12 +424,12 @@ export function tick(entity: Entity, context: Context) {
 
     const roll = randomFloat(0, 1);
     if (roll < 0.25) {
-        move(entity, { x: entity.x, y: entity.y - 1 }, context);
+        move(entityContext, { x: entity.x, y: entity.y - 1 });
     } else if (roll < 0.5) {
-        move(entity, { x: entity.x + 1, y: entity.y }, context);
+        move(entityContext, { x: entity.x + 1, y: entity.y });
     } else if (roll < 0.75) {
-        move(entity, { x: entity.x, y: entity.y + 1 }, context);
+        move(entityContext, { x: entity.x, y: entity.y + 1 });
     } else {
-        move(entity, { x: entity.x - 1, y: entity.y }, context);
+        move(entityContext, { x: entity.x - 1, y: entity.y });
     }
 }

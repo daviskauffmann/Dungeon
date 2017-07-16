@@ -1,8 +1,57 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { CellType, Chunk, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, Rect } from "./types";
+import { CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, LevelOptions, Rect, Stair, StairDirection } from "./types";
 
-export function createLevel(width: number, height: number, roomAttempts: number, minRoomSize: number, maxRoomSize: number, preventOverlap: boolean, litRooms: boolean, doorChance: number, trapAmount: number, monsterAmount: number, chestAmount: number) {
+export function createChunk(opts?: ChunkOptions) {
+    const width = opts && opts.width || 50;
+    const height = opts && opts.height || 50;
+    const dungeonAmount = opts && opts.dungeonAmount || 3;
+
+    const chunk: Chunk = {
+        cells: [],
+        chests: [],
+        dungeons: [],
+        entities: [],
+        height,
+        items: [],
+        stairsDown: [],
+        width,
+    };
+
+    for (let x = 0; x < chunk.width; x++) {
+        chunk.cells[x] = [];
+        for (let y = 0; y < chunk.height; y++) {
+            chunk.cells[x][y] = {
+                discovered: false,
+                type: CellType.Grass,
+            };
+        }
+    }
+
+    for (let i = 0; i < dungeonAmount; i++) {
+        chunk.stairsDown.push({
+            direction: StairDirection.Down,
+            id: game.currentStairId++,
+            x: randomInt(0, chunk.width),
+            y: randomInt(0, chunk.height),
+        });
+    }
+
+    return chunk;
+}
+
+export function createLevel(stairDownId: number, opts?: LevelOptions) {
+    const width = opts && opts.width || 50;
+    const height = opts && opts.height || 50;
+    const roomAttempts = opts && opts.roomAttempts || 20;
+    const minRoomSize = opts && opts.minRoomSize || 5;
+    const maxRoomSize = opts && opts.maxRoomSize || 15;
+    const preventOverlap = opts && opts.preventOverlap || false;
+    const litRooms = opts && opts.litRooms || false;
+    const doorChance = opts && opts.doorChance || 0.5;
+    const monsterAmount = opts && opts.monsterAmount || 5;
+    const chestAmount = opts && opts.chestAmount || 5;
+
     const level: Level = {
         cells: [],
         chests: [],
@@ -11,6 +60,8 @@ export function createLevel(width: number, height: number, roomAttempts: number,
         items: [],
         litRooms,
         rooms: [],
+        stairDown: undefined,
+        stairUp: undefined,
         width,
     };
 
@@ -168,28 +219,22 @@ export function createLevel(width: number, height: number, roomAttempts: number,
         }
     }
 
-    {
-        const coord: Coord = {
-            x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
-            y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
-        };
-        level.cells[coord.x][coord.y].type = CellType.StairsUp;
-    }
+    level.stairDown = {
+        direction: StairDirection.Down,
+        id: game.currentStairId++,
+        x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
+        y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
+    };
 
-    {
-        const coord: Coord = {
-            x: randomInt(level.rooms[level.rooms.length - 1].left, level.rooms[level.rooms.length - 1].left + level.rooms[level.rooms.length - 1].width),
-            y: randomInt(level.rooms[level.rooms.length - 1].top, level.rooms[level.rooms.length - 1].top + level.rooms[level.rooms.length - 1].height),
-        };
-        level.cells[coord.x][coord.y].type = CellType.StairsDown;
-    }
+    level.stairUp = {
+        direction: StairDirection.Up,
+        id: stairDownId,
+        x: randomInt(level.rooms[level.rooms.length - 1].left, level.rooms[level.rooms.length - 1].left + level.rooms[level.rooms.length - 1].width),
+        y: randomInt(level.rooms[level.rooms.length - 1].top, level.rooms[level.rooms.length - 1].top + level.rooms[level.rooms.length - 1].height),
+    };
 
     for (let i = 0; i < monsterAmount; i++) {
         const roomIndex = randomInt(1, level.rooms.length);
-        const coord: Coord = {
-            x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
-            y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
-        };
 
         const monster: Entity = {
             alpha: 1,
@@ -200,13 +245,13 @@ export function createLevel(width: number, height: number, roomAttempts: number,
             factions: [],
             hostileEntityIds: [],
             hostileFactions: [],
-            id: game.currentId++,
+            id: game.currentEntityId++,
             inventory: [],
             level: 1,
             name: "",
             sight: 10,
-            x: coord.x,
-            y: coord.y,
+            x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
+            y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         };
 
         const roll = randomFloat(0, 1);
@@ -264,10 +309,6 @@ export function createLevel(width: number, height: number, roomAttempts: number,
 
     for (let i = 0; i < chestAmount; i++) {
         const roomIndex = randomInt(0, level.rooms.length);
-        const coord: Coord = {
-            x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
-            y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
-        };
 
         level.chests.push({
             alpha: 1,
@@ -302,78 +343,34 @@ export function createLevel(width: number, height: number, roomAttempts: number,
                     return item;
                 }
             })(),
-            x: coord.x,
-            y: coord.y,
+            x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
+            y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         });
     }
 
     return level;
 }
 
-export function createTown() {
-    const town: Chunk = {
-        cells: [],
-        chests: [],
-        dungeons: [],
-        entities: [],
-        height: 25,
-        items: [],
-        width: 25,
-    };
-
-    for (let x = 0; x < town.width; x++) {
-        town.cells[x] = [];
-        for (let y = 0; y < town.height; y++) {
-            town.cells[x][y] = {
-                discovered: false,
-                type: CellType.Grass,
-            };
-        }
-    }
-
-    for (let i = 0; i < 3; i++) {
-        const dungeon: Dungeon = {
-            levels: [],
-        };
-
-        town.dungeons.push(dungeon);
-
-        const x = Math.round(town.width / 2) + i;
-        const y = Math.round(town.height / 2) - 5;
-
-        town.cells[x][y].type = CellType.StairsDown;
-    }
-
-    {
-        const coord: Coord = {
-            x: Math.round(town.width / 2),
-            y: Math.round(town.height / 2),
-        };
-
-        const player: Entity = {
-            alpha: 1,
-            char: "@",
-            class: Class.Warrior,
-            color: "#ffffff",
-            disposition: Disposition.Aggressive,
-            factions: [
-                Faction.Player,
-            ],
-            hostileEntityIds: [],
-            hostileFactions: [
-                Faction.Monster,
-            ],
-            id: game.currentId++,
-            inventory: [],
-            level: 1,
-            name: "player",
-            sight: 5,
-            x: coord.x,
-            y: coord.y,
-        };
-
-        town.entities.push(player);
-    }
-
-    return town;
+export function spawnPlayer(chunk: Chunk) {
+    chunk.entities.push({
+        alpha: 1,
+        char: "@",
+        class: Class.Warrior,
+        color: "#ffffff",
+        disposition: Disposition.Aggressive,
+        factions: [
+            Faction.Player,
+        ],
+        hostileEntityIds: [],
+        hostileFactions: [
+            Faction.Monster,
+        ],
+        id: game.currentEntityId++,
+        inventory: [],
+        level: 1,
+        name: "player",
+        sight: 5,
+        x: Math.round(chunk.width / 2),
+        y: Math.round(chunk.height / 2),
+    });
 }
