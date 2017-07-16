@@ -24,30 +24,6 @@ export function calcStats(entity: Entity) {
     return stats;
 }
 
-export function changeLevel(entity: Entity, levelIndex: number, calcSpawnCoord: (newLevel: Level) => Coord, context: Context) {
-    const dungeon = context.dungeon;
-    const level = context.level;
-
-    log(level, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
-
-    while (levelIndex >= dungeon.levels.length) {
-        dungeon.levels.push(createLevel(50, 50, 20, 5, 15, false, false, 0.5, 3, 20, 5));
-    }
-
-    const newLevel = dungeon.levels[levelIndex];
-
-    level.entities.splice(level.entities.indexOf(entity), 1);
-    newLevel.entities.push(entity);
-
-    const spawn = calcSpawnCoord(newLevel);
-    entity.x = spawn.x;
-    entity.y = spawn.y;
-}
-
-export function changeChunk() {
-    throw new Error("Not Implemented");
-}
-
 export function getContext(entity: Entity): Context {
     // tslint:disable-next-line:prefer-for-of
     for (let x = 0; x < game.chunks.length; x++) {
@@ -105,7 +81,7 @@ export function getEntity(id: number) {
                     // tslint:disable-next-line:prefer-for-of
                     for (let k = 0; k < level.entities.length; k++) {
                         if (level.entities[k].id === id) {
-                            return level.entities[i];
+                            return level.entities[k];
                         }
                     }
                 }
@@ -120,9 +96,11 @@ export function getInventoryChar(entity: Entity, item: Item) {
 
 export function move(entity: Entity, coord: Coord, context: Context) {
     const area = context.level || context.chunk;
+    const dungeon = context.dungeon;
 
     if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
         const cell = area.cells[coord.x][coord.y];
+        let levelIndex: number;
 
         switch (cell.type) {
             case CellType.Wall:
@@ -140,37 +118,84 @@ export function move(entity: Entity, coord: Coord, context: Context) {
             case CellType.StairsUp:
                 log(area, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
 
-                changeLevel(entity, 0, (newLevel) => {
-                    for (let x = 0; x < newLevel.width; x++) {
-                        for (let y = 0; y < newLevel.height; y++) {
-                            if (newLevel.cells[x][y].type === CellType.StairsDown) {
-                                return { x, y };
+                levelIndex = dungeon.levels.indexOf(context.level) - 1;
+
+                if (levelIndex === -1) {
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
+
+                    area.entities.splice(area.entities.indexOf(entity), 1);
+                    context.chunk.entities.push(entity);
+
+                    for (let x = 0; x < context.chunk.width; x++) {
+                        for (let y = 0; y < context.chunk.height; y++) {
+                            if (context.chunk.cells[x][y].type === CellType.StairsDown) {
+                                entity.x = x;
+                                entity.y = y;
                             }
                         }
                     }
-                }, context);
+                } else {
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
+
+                    area.entities.splice(area.entities.indexOf(entity), 1);
+                    dungeon.levels[levelIndex].entities.push(entity);
+
+                    for (let x = 0; x < dungeon.levels[levelIndex].width; x++) {
+                        for (let y = 0; y < dungeon.levels[levelIndex].height; y++) {
+                            if (dungeon.levels[levelIndex].cells[x][y].type === CellType.StairsDown) {
+                                entity.x = x;
+                                entity.y = y;
+                            }
+                        }
+                    }
+                }
 
                 return;
             case CellType.StairsDown:
                 log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
 
-                // if in a chunk, we have to figure out what dungeon we are at
-                // then we can move to that dungeon at a certain level (usually 0)
+                if (context.level) {
+                    levelIndex = dungeon.levels.indexOf(context.level) + 1;
 
-                // if in a level, we simply move to the current index + 1
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
 
-                // its almost as if stairs should not be cells anymore
-                // they will need to hold information about where they lead
+                    while (levelIndex >= dungeon.levels.length) {
+                        dungeon.levels.push(createLevel(50, 50, 20, 5, 15, false, false, 0.5, 3, 5, 5));
+                    }
 
-                changeLevel(entity, 1, (newLevel) => {
-                    for (let x = 0; x < newLevel.width; x++) {
-                        for (let y = 0; y < newLevel.height; y++) {
-                            if (newLevel.cells[x][y].type === CellType.StairsUp) {
-                                return { x, y };
+                    area.entities.splice(area.entities.indexOf(entity), 1);
+                    dungeon.levels[levelIndex].entities.push(entity);
+
+                    for (let x = 0; x < dungeon.levels[levelIndex].width; x++) {
+                        for (let y = 0; y < dungeon.levels[levelIndex].height; y++) {
+                            if (dungeon.levels[levelIndex].cells[x][y].type === CellType.StairsUp) {
+                                entity.x = x;
+                                entity.y = y;
                             }
                         }
                     }
-                }, context);
+                } else {
+                    const newDungeon = context.chunk.dungeons[0];
+                    levelIndex = 0;
+
+                    log(area, { x: entity.x, y: entity.y }, `${entity.name} has moved to level ${levelIndex}`);
+
+                    while (levelIndex >= newDungeon.levels.length) {
+                        newDungeon.levels.push(createLevel(50, 50, 20, 5, 15, false, false, 0.5, 3, 5, 5));
+                    }
+
+                    area.entities.splice(area.entities.indexOf(entity), 1);
+                    newDungeon.levels[levelIndex].entities.push(entity);
+
+                    for (let x = 0; x < newDungeon.levels[levelIndex].width; x++) {
+                        for (let y = 0; y < newDungeon.levels[levelIndex].height; y++) {
+                            if (newDungeon.levels[levelIndex].cells[x][y].type === CellType.StairsUp) {
+                                entity.x = x;
+                                entity.y = y;
+                            }
+                        }
+                    }
+                }
 
                 return;
         }

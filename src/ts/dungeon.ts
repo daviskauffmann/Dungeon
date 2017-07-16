@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { CellType, Chunk, Class, Coord, Disposition, Entity, Faction, Item, Level, Rect } from "./types";
+import { CellType, Chunk, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, Rect } from "./types";
 
 export function createLevel(width: number, height: number, roomAttempts: number, minRoomSize: number, maxRoomSize: number, preventOverlap: boolean, litRooms: boolean, doorChance: number, trapAmount: number, monsterAmount: number, chestAmount: number) {
     const level: Level = {
@@ -331,13 +331,24 @@ export function createTown() {
         }
     }
 
+    for (let i = 0; i < 3; i++) {
+        const dungeon: Dungeon = {
+            levels: [],
+        };
+
+        town.dungeons.push(dungeon);
+
+        const x = Math.round(town.width / 2) + i;
+        const y = Math.round(town.height / 2) - 5;
+
+        town.cells[x][y].type = CellType.StairsDown;
+    }
+
     {
         const coord: Coord = {
             x: Math.round(town.width / 2),
             y: Math.round(town.height / 2),
         };
-
-        town.cells[coord.x][coord.y].type = CellType.StairsDown;
 
         const player: Entity = {
             alpha: 1,

@@ -34,6 +34,10 @@ export interface Chest extends Coord, Glyph {
     loot: Item;
 }
 
+export interface Chunk extends Area {
+    dungeons: Dungeon[];
+}
+
 export enum Class {
     Warrior,
     Shaman,
@@ -110,10 +114,6 @@ export interface Glyph {
 export interface Item extends Coord, Glyph {
     name: string;
     equipped: boolean;
-}
-
-export interface Chunk extends Area {
-    dungeons: Dungeon[];
 }
 
 export interface Rect {
