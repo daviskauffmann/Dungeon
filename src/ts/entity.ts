@@ -154,14 +154,14 @@ export function move(entityContext: EntityContext, coord: Coord) {
             if (level.stairUp.x === coord.x && level.stairUp.y === coord.y) {
                 log(area, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
 
-                const context = findStair(level.stairUp.id, StairDirection.Down);
-                const newLevel = context.level || context.chunk;
+                const stairContext = findStair(level.stairUp.id, StairDirection.Down);
+                const newLevel = stairContext.level || stairContext.chunk;
 
                 area.entities.splice(area.entities.indexOf(entity), 1);
                 newLevel.entities.push(entity);
 
-                entity.x = context.stairs.x;
-                entity.y = context.stairs.y;
+                entity.x = stairContext.stair.x;
+                entity.y = stairContext.stair.y;
 
                 return;
             }

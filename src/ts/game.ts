@@ -51,8 +51,8 @@ export function save() {
 
 export function tick() {
     if (!game.stopTime) {
-        game.world.chunks.forEach((col) => {
-            col.forEach((chunk) => {
+        game.world.chunks.forEach((chunks) => {
+            chunks.forEach((chunk) => {
                 chunk.entities.forEach((entity) => {
                     if (entity.id !== 0) {
                         entity_tick({ chunk, entity });

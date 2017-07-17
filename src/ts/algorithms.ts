@@ -118,12 +118,14 @@ export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: 
 export function lineOfSight(area: Area, origin: Coord, radians: number, range: number) {
     const coords: Coord[] = [];
 
-    const dx = Math.cos(radians);
-    const dy = Math.sin(radians);
-
     const current: Coord = {
         x: origin.x + 0.5,
         y: origin.y + 0.5,
+    };
+
+    const delta: Coord = {
+        x: Math.cos(radians),
+        y: Math.sin(radians),
     };
 
     for (let i = 0; i < range; i++) {
@@ -142,8 +144,8 @@ export function lineOfSight(area: Area, origin: Coord, radians: number, range: n
                 break;
             }
 
-            current.x += dx;
-            current.y += dy;
+            current.x += delta.x;
+            current.y += delta.y;
         }
     }
 

@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World } from "./types";
+import { CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 50;
@@ -351,9 +351,9 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     return level;
 }
 
-export function createWorld(opts?: any) {
-    const width = opts && opts.width || 50;
-    const height = opts && opts.height || 50;
+export function createWorld(opts?: WorldOptions) {
+    const width = opts && opts.width || 10;
+    const height = opts && opts.height || 10;
 
     const world: World = {
         chunks: [[]],
@@ -362,19 +362,27 @@ export function createWorld(opts?: any) {
     };
 
     for (let x = 0; x < world.width; x++) {
-        world.chunks[x] = [];
+        // world.chunks[x] = [];
         for (let y = 0; y < world.height; y++) {
-            world.chunks[x][y] = createChunk();
+            // world.chunks[x][y] = {};
         }
     }
 
-    spawnPlayer(world.chunks[Math.round(world.width / 2)][Math.round(world.height / 2)]);
+    {
+        const player = spawnPlayer();
+        const playerChunk = world.chunks[0][0] = createChunk();
+
+        playerChunk.entities.push(player);
+
+        player.x = Math.round(playerChunk.width / 2);
+        player.y = Math.round(playerChunk.height / 2);
+    }
 
     return world;
 }
 
-export function spawnPlayer(chunk: Chunk) {
-    chunk.entities.push({
+export function spawnPlayer(): Entity {
+    return {
         alpha: 1,
         char: "@",
         class: Class.Warrior,
@@ -392,7 +400,7 @@ export function spawnPlayer(chunk: Chunk) {
         level: 1,
         name: "player",
         sight: 5,
-        x: Math.round(chunk.width / 2),
-        y: Math.round(chunk.height / 2),
-    });
+        x: 0,
+        y: 0,
+    };
 }

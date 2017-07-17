@@ -154,7 +154,7 @@ export interface Stair extends Coord {
 }
 
 export interface StairContext extends Context {
-    stairs: Stair;
+    stair: Stair;
 }
 
 export enum StairDirection {
@@ -203,4 +203,9 @@ export interface World {
     width: number;
     height: number;
     chunks: Chunk[][];
+}
+
+export interface WorldOptions {
+    width: number;
+    height: number;
 }
