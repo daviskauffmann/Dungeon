@@ -179,20 +179,23 @@ export interface StairInfo {
 }
 
 export interface Stats {
-    health: number;
-    energy: number;
-    mana: number;
+    health: number; // max health
+    energy: number; // max energy
+    mana: number; // max mana
 
-    stamina: number;
-    endurance: number;
-    attunement: number;
-    resistance: number;
-    strength: number;
-    intellect: number;
-    avoidance: number;
-    precision: number;
-    charisma: number;
-    luck: number;
+    stamina: number; // health
+    endurance: number; // energy
+    attunement: number; // mana
+    resistance: number; // % damage resist
+    strength: number; // physical damage
+    intellect: number; // magic damage
+    avoidance: number; // % chance to avoid damage
+    precision: number; // % chance to crit
+    charisma: number; // RP
+    luck: number; // all stats, item find
+
+    armor: number; // % physical damage resist
+    encumbrance: number; // max weight carried
 }
 
 export interface UI {

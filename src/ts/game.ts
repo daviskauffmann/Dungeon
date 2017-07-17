@@ -1,7 +1,7 @@
 import { tick as actor_tick } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { radiansBetween } from "./math";
-import { Area, Config, Coord, Game, Level, UI, UIMode } from "./types";
+import { ActorContext, Area, Config, Coord, Game, Level, UI, UIMode } from "./types";
 import { findActor } from "./utils";
 
 export const config: Config = {
@@ -61,7 +61,12 @@ export function tick() {
             chunks.forEach((chunk) => {
                 chunk.actors.forEach((actor) => {
                     if (actor.id !== 0) {
-                        actor_tick({ chunk, actor });
+                        const actorContext: ActorContext = {
+                            actor,
+                            chunk,
+                        };
+
+                        actor_tick(actorContext);
                     }
                 });
 
@@ -69,7 +74,14 @@ export function tick() {
                     dungeon.levels.forEach((level) => {
                         level.actors.forEach((actor) => {
                             if (actor.id !== 0) {
-                                actor_tick({ chunk, dungeon, actor, level });
+                                const actorContext: ActorContext = {
+                                    actor,
+                                    chunk,
+                                    dungeon,
+                                    level,
+                                };
+
+                                actor_tick(actorContext);
                             }
                         });
                     });

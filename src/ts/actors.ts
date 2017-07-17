@@ -6,21 +6,25 @@ import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Cor
 import { findStair } from "./utils";
 
 export function calcStats(actor: Actor) {
-    return {
+    const stats: Stats = {
+        armor: actor.level,
         attunement: actor.level,
         avoidance: actor.level,
         charisma: actor.level,
+        encumbrance: actor.level,
         endurance: actor.level,
-        energy: actor.level * 100,
-        health: actor.level * 100,
+        energy: actor.level,
+        health: actor.level,
         intellect: actor.level,
         luck: actor.level,
-        mana: actor.level * 100,
+        mana: actor.level,
         precision: actor.level,
         resistance: actor.level,
         stamina: actor.level,
         strength: actor.level,
-    } as Stats;
+    };
+
+    return stats;
 }
 
 export function getInventoryChar(actor: Actor, item: Item) {
