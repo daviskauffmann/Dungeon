@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, LevelOptions, Rect, Stair, StairDirection } from "./types";
+import { CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 50;
@@ -8,7 +8,7 @@ export function createChunk(opts?: ChunkOptions) {
     const dungeonAmount = opts && opts.dungeonAmount || 3;
 
     const chunk: Chunk = {
-        cells: [],
+        cells: [[]],
         chests: [],
         dungeons: [],
         entities: [],
@@ -53,7 +53,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     const chestAmount = opts && opts.chestAmount || 5;
 
     const level: Level = {
-        cells: [],
+        cells: [[]],
         chests: [],
         entities: [],
         height,
@@ -349,6 +349,28 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     }
 
     return level;
+}
+
+export function createWorld(opts?: any) {
+    const width = opts && opts.width || 50;
+    const height = opts && opts.height || 50;
+
+    const world: World = {
+        chunks: [[]],
+        height,
+        width,
+    };
+
+    for (let x = 0; x < world.width; x++) {
+        world.chunks[x] = [];
+        for (let y = 0; y < world.height; y++) {
+            world.chunks[x][y] = createChunk();
+        }
+    }
+
+    spawnPlayer(world.chunks[Math.round(world.width / 2)][Math.round(world.height / 2)]);
+
+    return world;
 }
 
 export function spawnPlayer(chunk: Chunk) {

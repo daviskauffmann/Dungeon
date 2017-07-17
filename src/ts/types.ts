@@ -118,7 +118,7 @@ export enum Faction {
 }
 
 export interface Game {
-    chunks: Chunk[][];
+    world: World;
     currentEntityId: number;
     currentStairId: number;
     turn: number;
@@ -197,4 +197,10 @@ export enum UIMode {
     InventorySwapFirst,
     InventorySwapSecond,
     Character,
+}
+
+export interface World {
+    width: number;
+    height: number;
+    chunks: Chunk[][];
 }

@@ -1,7 +1,8 @@
 import { lineOfSight } from "./algorithms";
-import { findEntity, tick as entity_tick } from "./entity";
+import { tick as entity_tick } from "./entity";
 import { radiansBetween } from "./math";
 import { Area, Coord, Game, Level, UI, UIMode } from "./types";
+import { findEntity } from "./utils";
 
 export let game: Game = {
     cellInfo: [
@@ -12,9 +13,6 @@ export let game: Game = {
         { name: "doorOpen", char: "-", color: "#ffffff", solid: false },
         { name: "doorClosed", char: "+", color: "#ffffff", solid: true },
     ],
-    chunks: [
-        [],
-    ],
     currentEntityId: 0,
     currentStairId: 0,
     fontSize: 24,
@@ -23,6 +21,7 @@ export let game: Game = {
     messages: [],
     stopTime: false,
     turn: 0,
+    world: undefined,
 };
 
 export function load() {
@@ -31,10 +30,10 @@ export function load() {
 }
 
 export function log(area: Area, location: Coord, message: string) {
-    const context = findEntity(0);
-    const player = context.entity;
+    const playerContext = findEntity(0);
+    const player = playerContext.entity;
 
-    if ((area === context.level || area === context.chunk)
+    if ((area === playerContext.level || area === playerContext.chunk)
         && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
@@ -52,7 +51,7 @@ export function save() {
 
 export function tick() {
     if (!game.stopTime) {
-        game.chunks.forEach((col) => {
+        game.world.chunks.forEach((col) => {
             col.forEach((chunk) => {
                 chunk.entities.forEach((entity) => {
                     if (entity.id !== 0) {

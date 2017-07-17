@@ -1,8 +1,9 @@
 import { fieldOfView } from "./algorithms";
-import { calcStats, findEntity, getInventoryChar } from "./entity";
+import { calcStats, getInventoryChar } from "./entity";
 import { game, ui } from "./game";
 import { isInside } from "./math";
 import { Level, Rect, UIMode } from "./types";
+import { findEntity } from "./utils";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");

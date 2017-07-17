@@ -1,9 +1,10 @@
 import { lineOfSight } from "./algorithms";
-import { findEntity, getInventoryChar, move } from "./entity";
+import { getInventoryChar, move } from "./entity";
 import { game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
 import { CellType, Corpse, Entity, UIMode } from "./types";
+import { findEntity } from "./utils";
 
 export function input(ev: KeyboardEvent) {
     const playerContext = findEntity(0);
