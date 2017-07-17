@@ -1,14 +1,14 @@
+import { getInventoryChar, move } from "./actors";
 import { lineOfSight } from "./algorithms";
-import { getInventoryChar, move } from "./entity";
 import { game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
-import { CellType, Corpse, Entity, UIMode } from "./types";
-import { findEntity } from "./utils";
+import { Actor, CellType, Corpse, UIMode } from "./types";
+import { findActor } from "./utils";
 
 export function input(ev: KeyboardEvent) {
-    const playerContext = findEntity(0);
-    const player = playerContext.entity;
+    const playerContext = findActor(0);
+    const player = playerContext.actor;
     const chunk = playerContext.chunk;
     const dungeon = playerContext.dungeon;
     const level = playerContext.level;
@@ -59,7 +59,7 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "s":
-                    const targets = area.entities.filter((target) => target !== player
+                    const targets = area.actors.filter((target) => target !== player
                         && target.factions.some((faction) => player.hostileFactions.indexOf(faction) > -1)
                         && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), player.sight)
                             .some((coord) => coord.x === target.x && coord.y === target.y));
@@ -78,14 +78,14 @@ export function input(ev: KeyboardEvent) {
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
                         .forEach((corpse) => {
-                            const newEntity: Entity = {
+                            const newActor: Actor = {
                                 alpha: corpse.alpha,
                                 char: corpse.originalChar,
                                 class: corpse.class,
                                 color: corpse.color,
                                 disposition: corpse.disposition,
                                 factions: corpse.factions,
-                                hostileEntityIds: corpse.hostileEntityIds,
+                                hostileActorIds: corpse.hostileActorIds,
                                 hostileFactions: corpse.hostileFactions,
                                 id: corpse.id,
                                 inventory: corpse.inventory,
@@ -96,10 +96,10 @@ export function input(ev: KeyboardEvent) {
                                 y: corpse.y,
                             };
 
-                            log(area, { x: player.x, y: player.y }, `${player.name} ressurects ${newEntity.name}`);
+                            log(area, { x: player.x, y: player.y }, `${player.name} ressurects ${newActor.name}`);
 
                             area.items.splice(area.items.indexOf(corpse), 1);
-                            area.entities.push(newEntity);
+                            area.actors.push(newActor);
                         });
 
                     tick();

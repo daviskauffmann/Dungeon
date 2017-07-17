@@ -2,36 +2,36 @@ import { aStar, lineOfSight } from "./algorithms";
 import { game, log } from "./game";
 import { createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Entity, EntityContext, Item, Level, StairDirection, Stats } from "./types";
+import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Item, Level, StairDirection, Stats } from "./types";
 import { findStair } from "./utils";
 
-export function calcStats(entity: Entity): Stats {
+export function calcStats(actor: Actor): Stats {
     return {
-        attunement: entity.level,
-        avoidance: entity.level,
-        charisma: entity.level,
-        endurance: entity.level,
-        energy: entity.level * 100,
-        health: entity.level * 100,
-        intellect: entity.level,
-        luck: entity.level,
-        mana: entity.level * 100,
-        precision: entity.level,
-        resistance: entity.level,
-        stamina: entity.level,
-        strength: entity.level,
+        attunement: actor.level,
+        avoidance: actor.level,
+        charisma: actor.level,
+        endurance: actor.level,
+        energy: actor.level * 100,
+        health: actor.level * 100,
+        intellect: actor.level,
+        luck: actor.level,
+        mana: actor.level * 100,
+        precision: actor.level,
+        resistance: actor.level,
+        stamina: actor.level,
+        strength: actor.level,
     };
 }
 
-export function getInventoryChar(entity: Entity, item: Item) {
-    return String.fromCharCode(97 + entity.inventory.indexOf(item));
+export function getInventoryChar(actor: Actor, item: Item) {
+    return String.fromCharCode(97 + actor.inventory.indexOf(item));
 }
 
-export function move(entityContext: EntityContext, coord: Coord) {
-    const entity = entityContext.entity;
-    const chunk = entityContext.chunk;
-    const dungeon = entityContext.dungeon;
-    const level = entityContext.level;
+export function move(actorContext: ActorContext, coord: Coord) {
+    const actor = actorContext.actor;
+    const chunk = actorContext.chunk;
+    const dungeon = actorContext.dungeon;
+    const level = actorContext.level;
     const area: Area = level || chunk;
 
     if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
@@ -42,28 +42,28 @@ export function move(entityContext: EntityContext, coord: Coord) {
                 return;
             case CellType.DoorClosed:
                 if (randomFloat(0, 1) < 0.5) {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} opens the door`);
+                    log(area, { x: actor.x, y: actor.y }, `${actor.name} opens the door`);
 
                     cell.type = CellType.DoorOpen;
                 } else {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} can't open the door`);
+                    log(area, { x: actor.x, y: actor.y }, `${actor.name} can't open the door`);
                 }
 
                 return;
         }
 
-        if (area.entities.some((target, targetIndex) => {
-            if (target !== entity
+        if (area.actors.some((target, targetIndex) => {
+            if (target !== actor
                 && target.x === coord.x && target.y === coord.y) {
-                if (target.factions.some((faction) => entity.hostileFactions.indexOf(faction) > -1)) {
+                if (target.factions.some((faction) => actor.hostileFactions.indexOf(faction) > -1)) {
                     if (randomFloat(0, 1) < 0.5) {
                         if (target.id === 0 && game.godMode) {
-                            log(area, { x: entity.x, y: entity.y }, `${entity.name} cannot kill ${target.name}`);
+                            log(area, { x: actor.x, y: actor.y }, `${actor.name} cannot kill ${target.name}`);
                         } else {
-                            log(area, { x: entity.x, y: entity.y }, `${entity.name} kills ${target.name}`);
+                            log(area, { x: actor.x, y: actor.y }, `${actor.name} kills ${target.name}`);
 
                             if (target.inventory.length) {
-                                log(area, { x: entity.x, y: entity.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(", ")}`);
+                                log(area, { x: actor.x, y: actor.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(", ")}`);
 
                                 target.inventory.forEach((item, itemIndex) => {
                                     item.x = target.x;
@@ -75,7 +75,7 @@ export function move(entityContext: EntityContext, coord: Coord) {
                                 });
                             }
 
-                            area.entities.splice(targetIndex, 1);
+                            area.actors.splice(targetIndex, 1);
                             area.items.push({
                                 ...target,
                                 char: "%",
@@ -85,7 +85,7 @@ export function move(entityContext: EntityContext, coord: Coord) {
                             } as Corpse);
                         }
                     } else {
-                        log(area, { x: entity.x, y: entity.y }, `${entity.name} misses ${target.name}`);
+                        log(area, { x: actor.x, y: actor.y }, `${actor.name} misses ${target.name}`);
                     }
                 }
 
@@ -98,23 +98,23 @@ export function move(entityContext: EntityContext, coord: Coord) {
         if (area.chests.some((chest, index) => {
             if (chest.x === coord.x && chest.y === coord.y) {
                 if (randomFloat(0, 1) < 0.5) {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} opens the chest`);
+                    log(area, { x: actor.x, y: actor.y }, `${actor.name} opens the chest`);
 
                     area.chests.splice(index, 1);
 
                     if (chest.loot) {
-                        if (entity.inventory.length < 26) {
-                            log(area, { x: entity.x, y: entity.y }, `${entity.name} loots a ${chest.loot.name}`);
+                        if (actor.inventory.length < 26) {
+                            log(area, { x: actor.x, y: actor.y }, `${actor.name} loots a ${chest.loot.name}`);
 
-                            entity.inventory.push(chest.loot);
+                            actor.inventory.push(chest.loot);
                         } else {
-                            log(area, { x: entity.x, y: entity.y }, `${entity.name}'s inventory is full`);
+                            log(area, { x: actor.x, y: actor.y }, `${actor.name}'s inventory is full`);
                         }
                     } else {
-                        log(area, { x: entity.x, y: entity.y }, `${entity.name} sees nothing inside`);
+                        log(area, { x: actor.x, y: actor.y }, `${actor.name} sees nothing inside`);
                     }
                 } else {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} can't open the chest`);
+                    log(area, { x: actor.x, y: actor.y }, `${actor.name} can't open the chest`);
                 }
 
                 return true;
@@ -125,61 +125,61 @@ export function move(entityContext: EntityContext, coord: Coord) {
 
         if (level) {
             if (level.stairDown.x === coord.x && level.stairDown.y === coord.y) {
-                log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
+                log(area, { x: actor.x, y: actor.y }, `${actor.name} descends`);
 
                 const stairContext = findStair(level.stairDown.id, StairDirection.Up);
 
                 if (stairContext) {
                     const newLevel = stairContext.level;
 
-                    area.entities.splice(area.entities.indexOf(entity), 1);
-                    newLevel.entities.push(entity);
+                    area.actors.splice(area.actors.indexOf(actor), 1);
+                    newLevel.actors.push(actor);
 
-                    entity.x = newLevel.stairUp.x;
-                    entity.y = newLevel.stairUp.y;
+                    actor.x = newLevel.stairUp.x;
+                    actor.y = newLevel.stairUp.y;
                 } else {
                     const newLevel = createLevel(level.stairDown.id);
 
                     dungeon.levels.push(newLevel);
 
-                    area.entities.splice(area.entities.indexOf(entity), 1);
-                    newLevel.entities.push(entity);
+                    area.actors.splice(area.actors.indexOf(actor), 1);
+                    newLevel.actors.push(actor);
 
-                    entity.x = newLevel.stairUp.x;
-                    entity.y = newLevel.stairUp.y;
+                    actor.x = newLevel.stairUp.x;
+                    actor.y = newLevel.stairUp.y;
                 }
 
                 return;
             }
             if (level.stairUp.x === coord.x && level.stairUp.y === coord.y) {
-                log(area, { x: entity.x, y: entity.y }, `${entity.name} ascends`);
+                log(area, { x: actor.x, y: actor.y }, `${actor.name} ascends`);
 
                 const stairContext = findStair(level.stairUp.id, StairDirection.Down);
                 const newLevel = stairContext.level || stairContext.chunk;
 
-                area.entities.splice(area.entities.indexOf(entity), 1);
-                newLevel.entities.push(entity);
+                area.actors.splice(area.actors.indexOf(actor), 1);
+                newLevel.actors.push(actor);
 
-                entity.x = stairContext.stair.x;
-                entity.y = stairContext.stair.y;
+                actor.x = stairContext.stair.x;
+                actor.y = stairContext.stair.y;
 
                 return;
             }
         } else {
             if (chunk.stairsDown.some((stairDown) => {
                 if (stairDown.x === coord.x && stairDown.y === coord.y) {
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} descends`);
+                    log(area, { x: actor.x, y: actor.y }, `${actor.name} descends`);
 
                     const stairContext = findStair(stairDown.id, StairDirection.Up);
 
                     if (stairContext) {
                         const newLevel = stairContext.level;
 
-                        area.entities.splice(area.entities.indexOf(entity), 1);
-                        newLevel.entities.push(entity);
+                        area.actors.splice(area.actors.indexOf(actor), 1);
+                        newLevel.actors.push(actor);
 
-                        entity.x = newLevel.stairUp.x;
-                        entity.y = newLevel.stairUp.y;
+                        actor.x = newLevel.stairUp.x;
+                        actor.y = newLevel.stairUp.y;
                     } else {
                         const newDungeon: Dungeon = {
                             levels: [],
@@ -191,11 +191,11 @@ export function move(entityContext: EntityContext, coord: Coord) {
 
                         newDungeon.levels.push(newLevel);
 
-                        area.entities.splice(area.entities.indexOf(entity), 1);
-                        newLevel.entities.push(entity);
+                        area.actors.splice(area.actors.indexOf(actor), 1);
+                        newLevel.actors.push(actor);
 
-                        entity.x = newLevel.stairUp.x;
-                        entity.y = newLevel.stairUp.y;
+                        actor.x = newLevel.stairUp.x;
+                        actor.y = newLevel.stairUp.y;
                     }
 
                     return true;
@@ -210,30 +210,30 @@ export function move(entityContext: EntityContext, coord: Coord) {
                 .map((item) => item.name).join(", ");
 
             if (itemNames) {
-                log(area, { x: entity.x, y: entity.y }, `${entity.name} sees ${itemNames}`);
+                log(area, { x: actor.x, y: actor.y }, `${actor.name} sees ${itemNames}`);
             }
         }
 
-        entity.x = coord.x;
-        entity.y = coord.y;
+        actor.x = coord.x;
+        actor.y = coord.y;
     }
 }
 
-export function tick(entityContext: EntityContext) {
-    const entity = entityContext.entity;
-    const chunk = entityContext.chunk;
-    const dungeon = entityContext.dungeon;
-    const level = entityContext.level;
+export function tick(actorContext: ActorContext) {
+    const actor = actorContext.actor;
+    const chunk = actorContext.chunk;
+    const dungeon = actorContext.dungeon;
+    const level = actorContext.level;
     const area: Area = level || chunk;
 
-    switch (entity.class) {
+    switch (actor.class) {
         case Class.Warrior:
             break;
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
                 const corpses = area.items.filter((item) => "originalChar" in item
-                    && (item as Corpse).factions.every((faction) => entity.hostileFactions.indexOf(faction) === -1)
-                    && lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }), entity.sight)
+                    && (item as Corpse).factions.every((faction) => actor.hostileFactions.indexOf(faction) === -1)
+                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actor.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))
                     .map((item) => item as Corpse);
 
@@ -241,14 +241,14 @@ export function tick(entityContext: EntityContext) {
                     const corpse = corpses[0];
 
                     if (randomFloat(0, 1) < 0.5) {
-                        const newEntity: Entity = {
+                        const newActor: Actor = {
                             alpha: corpse.alpha,
                             char: corpse.originalChar,
                             class: corpse.class,
                             color: corpse.color,
                             disposition: corpse.disposition,
                             factions: corpse.factions,
-                            hostileEntityIds: corpse.hostileEntityIds,
+                            hostileActorIds: corpse.hostileActorIds,
                             hostileFactions: corpse.hostileFactions,
                             id: corpse.id,
                             inventory: corpse.inventory,
@@ -259,12 +259,12 @@ export function tick(entityContext: EntityContext) {
                             y: corpse.y,
                         };
 
-                        log(area, { x: entity.x, y: entity.y }, `${entity.name} ressurects ${newEntity.name}`);
+                        log(area, { x: actor.x, y: actor.y }, `${actor.name} ressurects ${newActor.name}`);
 
                         area.items.splice(area.items.indexOf(corpse), 1);
-                        area.entities.push(newEntity);
+                        area.actors.push(newActor);
                     } else {
-                        log(area, { x: entity.x, y: entity.y }, `${entity.name} fails to ressurect ${corpse.name}`);
+                        log(area, { x: actor.x, y: actor.y }, `${actor.name} fails to ressurect ${corpse.name}`);
                     }
 
                     return;
@@ -274,28 +274,28 @@ export function tick(entityContext: EntityContext) {
             break;
     }
 
-    switch (entity.disposition) {
+    switch (actor.disposition) {
         case Disposition.Passive:
             break;
         case Disposition.Aggressive:
             if (randomFloat(0, 1) < 0.5) {
-                const targets: Entity[] = area.entities.filter((target) => target !== entity
+                const targets: Actor[] = area.actors.filter((target) => target !== actor
                     && target.factions
-                        .some((faction) => entity.hostileFactions.indexOf(faction) > -1)
-                    && lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y }), entity.sight)
+                        .some((faction) => actor.hostileFactions.indexOf(faction) > -1)
+                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: target.x, y: target.y }), actor.sight)
                         .some((coord) => coord.x === target.x && coord.y === target.y));
 
                 if (targets.length) {
                     const target = targets[0];
 
-                    log(area, { x: entity.x, y: entity.y }, `${entity.name} spots ${target.name}`);
+                    log(area, { x: actor.x, y: actor.y }, `${actor.name} spots ${target.name}`);
 
-                    const path = aStar(area, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+                    const path = aStar(area, { x: actor.x, y: actor.y }, { x: target.x, y: target.y });
 
                     if (path && path.length) {
                         const next = path.pop();
 
-                        move(entityContext, { x: next.x, y: next.y });
+                        move(actorContext, { x: next.x, y: next.y });
 
                         return;
                     }
@@ -309,24 +309,24 @@ export function tick(entityContext: EntityContext) {
 
     if (randomFloat(0, 1) < 0.5) {
         const targets: Array<{ x: number, y: number, name: string }> = area.chests.filter((chest) =>
-            lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: chest.x, y: chest.y }), entity.sight)
+            lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: chest.x, y: chest.y }), actor.sight)
                 .some((coord) => coord.x === chest.x && coord.y === chest.y))
             .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
             || area.items.filter((item) => !("originalChar" in item)
-                && lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }), entity.sight)
+                && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actor.sight)
                     .some((coord) => coord.x === item.x && coord.y === item.y));
 
         if (targets.length) {
             const target = targets[0];
 
-            log(area, { x: entity.x, y: entity.y }, `${entity.name} spots ${target.name}`);
+            log(area, { x: actor.x, y: actor.y }, `${actor.name} spots ${target.name}`);
 
-            const path = aStar(area, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+            const path = aStar(area, { x: actor.x, y: actor.y }, { x: target.x, y: target.y });
 
             if (path && path.length) {
                 const next = path.pop();
 
-                move(entityContext, { x: next.x, y: next.y });
+                move(actorContext, { x: next.x, y: next.y });
 
                 return;
             }
@@ -334,11 +334,11 @@ export function tick(entityContext: EntityContext) {
     }
 
     if (randomFloat(0, 1) < 0.5 && area.items.some((item, index) => {
-        if (item.x === entity.x && item.y === entity.y) {
-            log(area, { x: entity.x, y: entity.y }, `${entity.name} picks up ${item.name}`);
+        if (item.x === actor.x && item.y === actor.y) {
+            log(area, { x: actor.x, y: actor.y }, `${actor.name} picks up ${item.name}`);
 
             area.items.splice(index, 1);
-            entity.inventory.push(item);
+            actor.inventory.push(item);
 
             return true;
         }
@@ -346,14 +346,14 @@ export function tick(entityContext: EntityContext) {
         return;
     }
 
-    if (randomFloat(0, 1) < 0.5 && entity.inventory.some((item, index) => {
+    if (randomFloat(0, 1) < 0.5 && actor.inventory.some((item, index) => {
         if (item.name.includes("corpse")) {
-            log(area, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
+            log(area, { x: actor.x, y: actor.y }, `${actor.name} drops a ${item.name}`);
 
-            item.x = entity.x;
-            item.y = entity.y;
+            item.x = actor.x;
+            item.y = actor.y;
 
-            entity.inventory.splice(index, 1);
+            actor.inventory.splice(index, 1);
             area.items.push(item);
 
             return true;
@@ -365,13 +365,13 @@ export function tick(entityContext: EntityContext) {
     if (randomFloat(0, 1) < 0.5) {
         const roll = randomFloat(0, 1);
         if (roll < 0.25) {
-            move(entityContext, { x: entity.x, y: entity.y - 1 });
+            move(actorContext, { x: actor.x, y: actor.y - 1 });
         } else if (roll < 0.5) {
-            move(entityContext, { x: entity.x + 1, y: entity.y });
+            move(actorContext, { x: actor.x + 1, y: actor.y });
         } else if (roll < 0.75) {
-            move(entityContext, { x: entity.x, y: entity.y + 1 });
+            move(actorContext, { x: actor.x, y: actor.y + 1 });
         } else {
-            move(entityContext, { x: entity.x - 1, y: entity.y });
+            move(actorContext, { x: actor.x - 1, y: actor.y });
         }
     }
 }

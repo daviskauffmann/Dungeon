@@ -73,8 +73,8 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
         }
 
         neighbors.filter((neighbor) => !game.cellInfo[area.cells[neighbor.x][neighbor.y].type].solid
-            && !area.entities.some((entity) => entity.x === neighbor.x && entity.y === neighbor.y
-                && entity.x !== goal.x && entity.y !== goal.y)
+            && !area.actors.some((actor) => actor.x === neighbor.x && actor.y === neighbor.y
+                && actor.x !== goal.x && actor.y !== goal.y)
             && !area.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y
                 && chest.x !== goal.x && chest.y !== goal.y))
             .forEach((neighbor) => {

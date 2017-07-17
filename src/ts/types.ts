@@ -1,8 +1,25 @@
+export interface Actor extends Coord, Glyph {
+    id: number;
+    name: string;
+    level: number;
+    class: Class;
+    sight: number;
+    inventory: Item[];
+    factions: Faction[];
+    hostileFactions: Faction[];
+    hostileActorIds: number[];
+    disposition: Disposition;
+}
+
+export interface ActorContext extends Context {
+    actor: Actor;
+}
+
 export interface Area {
     width: number;
     height: number;
     cells: Cell[][];
-    entities: Entity[];
+    actors: Actor[];
     chests: Chest[];
     items: Item[];
 }
@@ -59,7 +76,7 @@ export interface Coord {
     y: number;
 }
 
-export interface Corpse extends Entity, Item {
+export interface Corpse extends Actor, Item {
     originalChar: string;
 }
 
@@ -93,23 +110,6 @@ export interface LevelOptions {
     chestAmount?: number;
 }
 
-export interface Entity extends Coord, Glyph {
-    id: number;
-    name: string;
-    level: number;
-    class: Class;
-    sight: number;
-    inventory: Item[];
-    factions: Faction[];
-    hostileFactions: Faction[];
-    hostileEntityIds: number[];
-    disposition: Disposition;
-}
-
-export interface EntityContext extends Context {
-    entity: Entity;
-}
-
 export enum Faction {
     Player,
     Monster,
@@ -119,7 +119,7 @@ export enum Faction {
 
 export interface Game {
     world: World;
-    currentEntityId: number;
+    currentActorId: number;
     currentStairId: number;
     turn: number;
     fontSize: number;

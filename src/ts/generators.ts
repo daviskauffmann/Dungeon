@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Entity, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
+import { Actor, CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 50;
@@ -8,10 +8,10 @@ export function createChunk(opts?: ChunkOptions) {
     const dungeonAmount = opts && opts.dungeonAmount || 3;
 
     const chunk: Chunk = {
+        actors: [],
         cells: [[]],
         chests: [],
         dungeons: [],
-        entities: [],
         height,
         items: [],
         stairsDown: [],
@@ -53,9 +53,9 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     const chestAmount = opts && opts.chestAmount || 5;
 
     const level: Level = {
+        actors: [],
         cells: [[]],
         chests: [],
-        entities: [],
         height,
         items: [],
         litRooms,
@@ -236,16 +236,16 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     for (let i = 0; i < monsterAmount; i++) {
         const roomIndex = randomInt(1, level.rooms.length);
 
-        const monster: Entity = {
+        const monster: Actor = {
             alpha: 1,
             char: "",
             class: Class.Warrior,
             color: "#ffffff",
             disposition: Disposition.Aggressive,
             factions: [],
-            hostileEntityIds: [],
+            hostileActorIds: [],
             hostileFactions: [],
-            id: game.currentEntityId++,
+            id: game.currentActorId++,
             inventory: [],
             level: 1,
             name: "",
@@ -304,7 +304,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
             }
         }
 
-        level.entities.push(monster);
+        level.actors.push(monster);
     }
 
     for (let i = 0; i < chestAmount; i++) {
@@ -372,7 +372,7 @@ export function createWorld(opts?: WorldOptions) {
         const player = spawnPlayer();
         const playerChunk = world.chunks[0][0] = createChunk();
 
-        playerChunk.entities.push(player);
+        playerChunk.actors.push(player);
 
         player.x = Math.round(playerChunk.width / 2);
         player.y = Math.round(playerChunk.height / 2);
@@ -381,7 +381,7 @@ export function createWorld(opts?: WorldOptions) {
     return world;
 }
 
-export function spawnPlayer(): Entity {
+export function spawnPlayer(): Actor {
     return {
         alpha: 1,
         char: "@",
@@ -391,11 +391,11 @@ export function spawnPlayer(): Entity {
         factions: [
             Faction.Player,
         ],
-        hostileEntityIds: [],
+        hostileActorIds: [],
         hostileFactions: [
             Faction.Monster,
         ],
-        id: game.currentEntityId++,
+        id: game.currentActorId++,
         inventory: [],
         level: 1,
         name: "player",

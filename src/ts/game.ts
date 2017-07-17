@@ -1,8 +1,8 @@
+import { tick as actor_tick } from "./actors";
 import { lineOfSight } from "./algorithms";
-import { tick as entity_tick } from "./entity";
 import { radiansBetween } from "./math";
 import { Area, Coord, Game, Level, UI, UIMode } from "./types";
-import { findEntity } from "./utils";
+import { findActor } from "./utils";
 
 export let game: Game = {
     cellInfo: [
@@ -13,7 +13,7 @@ export let game: Game = {
         { name: "doorOpen", char: "-", color: "#ffffff", solid: false },
         { name: "doorClosed", char: "+", color: "#ffffff", solid: true },
     ],
-    currentEntityId: 0,
+    currentActorId: 0,
     currentStairId: 0,
     fontSize: 24,
     godMode: true,
@@ -30,8 +30,8 @@ export function load() {
 }
 
 export function log(area: Area, location: Coord, message: string) {
-    const playerContext = findEntity(0);
-    const player = playerContext.entity;
+    const playerContext = findActor(0);
+    const player = playerContext.actor;
 
     if ((area === playerContext.level || area === playerContext.chunk)
         && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
@@ -53,17 +53,17 @@ export function tick() {
     if (!game.stopTime) {
         game.world.chunks.forEach((chunks) => {
             chunks.forEach((chunk) => {
-                chunk.entities.forEach((entity) => {
-                    if (entity.id !== 0) {
-                        entity_tick({ chunk, entity });
+                chunk.actors.forEach((actor) => {
+                    if (actor.id !== 0) {
+                        actor_tick({ chunk, actor });
                     }
                 });
 
                 chunk.dungeons.forEach((dungeon) => {
                     dungeon.levels.forEach((level) => {
-                        level.entities.forEach((entity) => {
-                            if (entity.id !== 0) {
-                                entity_tick({ chunk, dungeon, entity, level });
+                        level.actors.forEach((actor) => {
+                            if (actor.id !== 0) {
+                                actor_tick({ chunk, dungeon, actor, level });
                             }
                         });
                     });

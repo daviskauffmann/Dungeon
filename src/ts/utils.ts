@@ -1,20 +1,20 @@
 import { game } from "./game";
-import { EntityContext, StairContext, StairDirection } from "./types";
+import { ActorContext, StairContext, StairDirection } from "./types";
 
-export function findEntity(id: number): EntityContext {
+export function findActor(id: number): ActorContext {
     for (const chunks of game.world.chunks) {
         for (const chunk of chunks) {
-            for (const entity of chunk.entities) {
-                if (entity.id === id) {
-                    return { chunk, entity };
+            for (const actor of chunk.actors) {
+                if (actor.id === id) {
+                    return { chunk, actor };
                 }
             }
 
             for (const dungeon of chunk.dungeons) {
                 for (const level of dungeon.levels) {
-                    for (const entity of level.entities) {
-                        if (entity.id === id) {
-                            return { chunk, dungeon, entity, level };
+                    for (const actor of level.actors) {
+                        if (actor.id === id) {
+                            return { chunk, dungeon, actor, level };
                         }
                     }
                 }

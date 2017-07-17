@@ -1,16 +1,16 @@
+import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
-import { calcStats, getInventoryChar } from "./entity";
 import { game, ui } from "./game";
 import { isInside } from "./math";
 import { Level, Rect, UIMode } from "./types";
-import { findEntity } from "./utils";
+import { findActor } from "./utils";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
 export function draw(ev?: UIEvent) {
-    const playerContext = findEntity(0);
-    const player = playerContext.entity;
+    const playerContext = findActor(0);
+    const player = playerContext.actor;
     const chunk = playerContext.chunk;
     const dungeon = playerContext.dungeon;
     const level = playerContext.level;
@@ -104,11 +104,11 @@ export function draw(ev?: UIEvent) {
                 }
 
                 if (visibleCells.indexOf(area.cells[x][y]) > -1) {
-                    if (area.entities.some((entity) => {
-                        if (entity.x === x && entity.y === y) {
-                            ctx.fillStyle = entity.color;
-                            ctx.globalAlpha = entity.alpha;
-                            ctx.fillText(entity.char, screen.x, screen.y);
+                    if (area.actors.some((actor) => {
+                        if (actor.x === x && actor.y === y) {
+                            ctx.fillStyle = actor.color;
+                            ctx.globalAlpha = actor.alpha;
+                            ctx.fillText(actor.char, screen.x, screen.y);
 
                             return true;
                         }
