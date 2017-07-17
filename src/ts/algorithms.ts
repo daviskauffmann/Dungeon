@@ -1,4 +1,4 @@
-import { game } from "./game";
+import { config, game } from "./game";
 import { distanceBetweenSquared, toRadians } from "./math";
 import { Area, Coord } from "./types";
 
@@ -72,7 +72,7 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
             neighbors.push(coords[current.x - 1][current.y]);
         }
 
-        neighbors.filter((neighbor) => !game.cellInfo[area.cells[neighbor.x][neighbor.y].type].solid
+        neighbors.filter((neighbor) => !config.cellInfo[area.cells[neighbor.x][neighbor.y].type].solid
             && !area.actors.some((actor) => actor.x === neighbor.x && actor.y === neighbor.y
                 && actor.x !== goal.x && actor.y !== goal.y)
             && !area.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y
@@ -140,7 +140,7 @@ export function lineOfSight(area: Area, origin: Coord, radians: number, range: n
                 coords.push(coord);
             }
 
-            if (game.cellInfo[area.cells[coord.x][coord.y].type].solid) {
+            if (config.cellInfo[area.cells[coord.x][coord.y].type].solid) {
                 break;
             }
 

@@ -1,6 +1,4 @@
-export interface Actor extends Coord, Glyph {
-    id: number;
-    name: string;
+export interface Actor extends Entity {
     level: number;
     class: Class;
     sight: number;
@@ -29,6 +27,12 @@ export interface Cell {
     discovered: boolean;
 }
 
+export interface CellInfo {
+    char: string;
+    color: string;
+    solid: boolean;
+}
+
 export enum CellType {
     Empty,
     Floor,
@@ -38,14 +42,7 @@ export enum CellType {
     DoorClosed,
 }
 
-export interface CellInfo {
-    name: string;
-    char: string;
-    color: string;
-    solid: boolean;
-}
-
-export interface Chest extends Coord, Glyph {
+export interface Chest extends Entity {
     loot: Item;
 }
 
@@ -63,6 +60,11 @@ export interface ChunkOptions {
 export enum Class {
     Warrior,
     Shaman,
+}
+
+export interface Config {
+    cellInfo: CellInfo[];
+    stairInfo: StairInfo[];
 }
 
 export interface Context {
@@ -87,7 +89,19 @@ export enum Disposition {
 }
 
 export interface Dungeon {
+    name: string;
     levels: Level[];
+    maxLevels: number;
+}
+
+export interface DungeonOptions {
+    name?: string;
+    maxLevels?: number;
+}
+
+export interface Entity extends Coord, Glyph {
+    id: number;
+    name: string;
 }
 
 export interface Level extends Area {
@@ -119,11 +133,9 @@ export enum Faction {
 
 export interface Game {
     world: World;
-    currentActorId: number;
-    currentStairId: number;
+    currentEntityId: number;
     turn: number;
     fontSize: number;
-    cellInfo: CellInfo[];
     messages: string[];
     godMode: boolean;
     stopTime: boolean;
@@ -136,8 +148,7 @@ export interface Glyph {
     alpha: number;
 }
 
-export interface Item extends Coord, Glyph {
-    name: string;
+export interface Item extends Entity {
     equipped: boolean;
 }
 
@@ -160,6 +171,11 @@ export interface StairContext extends Context {
 export enum StairDirection {
     Down,
     Up,
+}
+
+export interface StairInfo {
+    char: string;
+    color: string;
 }
 
 export interface Stats {
@@ -206,6 +222,6 @@ export interface World {
 }
 
 export interface WorldOptions {
-    width: number;
-    height: number;
+    width?: number;
+    height?: number;
 }

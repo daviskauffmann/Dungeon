@@ -1,11 +1,11 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { Actor, CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
+import { Actor, CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, DungeonOptions, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
-    const width = opts && opts.width || 50;
-    const height = opts && opts.height || 50;
-    const dungeonAmount = opts && opts.dungeonAmount || 3;
+    const width = opts && opts.width || 100;
+    const height = opts && opts.height || 100;
+    const dungeonAmount = opts && opts.dungeonAmount || 100;
 
     const chunk: Chunk = {
         actors: [],
@@ -31,7 +31,7 @@ export function createChunk(opts?: ChunkOptions) {
     for (let i = 0; i < dungeonAmount; i++) {
         chunk.stairsDown.push({
             direction: StairDirection.Down,
-            id: game.currentStairId++,
+            id: game.currentEntityId++,
             x: randomInt(0, chunk.width),
             y: randomInt(0, chunk.height),
         });
@@ -40,7 +40,33 @@ export function createChunk(opts?: ChunkOptions) {
     return chunk;
 }
 
-export function createLevel(stairDownId: number, opts?: LevelOptions) {
+export function createDungeon(opts?: DungeonOptions) {
+    const name = opts && opts.name;
+    const maxLevels = opts && opts.maxLevels || 5;
+
+    const dungeon: Dungeon = {
+        levels: [],
+        maxLevels,
+        name,
+    };
+
+    if (!dungeon.name) {
+        const roll = randomFloat(0, 1);
+        if (roll < 0.25) {
+            dungeon.name = "cool dungeon";
+        } else if (roll < 0.5) {
+            dungeon.name = "awesome dungeon";
+        } else if (roll < 0.75) {
+            dungeon.name = "terrible dungeon";
+        } else {
+            dungeon.name = "low effort dungeon";
+        }
+    }
+
+    return dungeon;
+}
+
+export function createLevel(stairDownId: number, finalLevel: boolean, opts?: LevelOptions) {
     const width = opts && opts.width || 50;
     const height = opts && opts.height || 50;
     const roomAttempts = opts && opts.roomAttempts || 20;
@@ -219,12 +245,14 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
         }
     }
 
-    level.stairDown = {
-        direction: StairDirection.Down,
-        id: game.currentStairId++,
-        x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
-        y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
-    };
+    if (!finalLevel) {
+        level.stairDown = {
+            direction: StairDirection.Down,
+            id: game.currentEntityId++,
+            x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
+            y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
+        };
+    }
 
     level.stairUp = {
         direction: StairDirection.Up,
@@ -245,7 +273,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
             factions: [],
             hostileActorIds: [],
             hostileFactions: [],
-            id: game.currentActorId++,
+            id: game.currentEntityId++,
             inventory: [],
             level: 1,
             name: "",
@@ -314,6 +342,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
             alpha: 1,
             char: "~",
             color: "#ffffff",
+            id: game.currentEntityId++,
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
                     const item: Item = {
@@ -321,6 +350,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                         char: "",
                         color: "#ffffff",
                         equipped: false,
+                        id: game.currentEntityId++,
                         name: "",
                         x: -1, y: -1,
                     };
@@ -343,6 +373,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                     return item;
                 }
             })(),
+            name: "chest",
             x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
             y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         });
@@ -364,7 +395,7 @@ export function createWorld(opts?: WorldOptions) {
     for (let x = 0; x < world.width; x++) {
         // world.chunks[x] = [];
         for (let y = 0; y < world.height; y++) {
-            // world.chunks[x][y] = {};
+            // world.chunks[x][y] = createChunk();
         }
     }
 
@@ -395,7 +426,7 @@ export function spawnPlayer(): Actor {
         hostileFactions: [
             Faction.Monster,
         ],
-        id: game.currentActorId++,
+        id: 0,
         inventory: [],
         level: 1,
         name: "player",

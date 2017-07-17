@@ -1,11 +1,11 @@
 import { aStar, lineOfSight } from "./algorithms";
 import { game, log } from "./game";
-import { createLevel } from "./generators";
+import { createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Item, Level, StairDirection, Stats } from "./types";
+import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Entity, Item, Level, StairDirection, Stats } from "./types";
 import { findStair } from "./utils";
 
-export function calcStats(actor: Actor): Stats {
+export function calcStats(actor: Actor) {
     return {
         attunement: actor.level,
         avoidance: actor.level,
@@ -20,7 +20,7 @@ export function calcStats(actor: Actor): Stats {
         resistance: actor.level,
         stamina: actor.level,
         strength: actor.level,
-    };
+    } as Stats;
 }
 
 export function getInventoryChar(actor: Actor, item: Item) {
@@ -124,7 +124,8 @@ export function move(actorContext: ActorContext, coord: Coord) {
         }
 
         if (level) {
-            if (level.stairDown.x === coord.x && level.stairDown.y === coord.y) {
+            if (level.stairDown
+                && level.stairDown.x === coord.x && level.stairDown.y === coord.y) {
                 log(area, { x: actor.x, y: actor.y }, `${actor.name} descends`);
 
                 const stairContext = findStair(level.stairDown.id, StairDirection.Up);
@@ -138,8 +139,7 @@ export function move(actorContext: ActorContext, coord: Coord) {
                     actor.x = newLevel.stairUp.x;
                     actor.y = newLevel.stairUp.y;
                 } else {
-                    const newLevel = createLevel(level.stairDown.id);
-
+                    const newLevel = createLevel(level.stairDown.id, dungeon.levels.length >= dungeon.maxLevels);
                     dungeon.levels.push(newLevel);
 
                     area.actors.splice(area.actors.indexOf(actor), 1);
@@ -181,14 +181,10 @@ export function move(actorContext: ActorContext, coord: Coord) {
                         actor.x = newLevel.stairUp.x;
                         actor.y = newLevel.stairUp.y;
                     } else {
-                        const newDungeon: Dungeon = {
-                            levels: [],
-                        };
-
+                        const newDungeon = createDungeon();
                         chunk.dungeons.push(newDungeon);
 
-                        const newLevel = createLevel(stairDown.id);
-
+                        const newLevel = createLevel(stairDown.id, newDungeon.levels.length >= newDungeon.maxLevels);
                         newDungeon.levels.push(newLevel);
 
                         area.actors.splice(area.actors.indexOf(actor), 1);
@@ -308,10 +304,9 @@ export function tick(actorContext: ActorContext) {
     }
 
     if (randomFloat(0, 1) < 0.5) {
-        const targets: Array<{ x: number, y: number, name: string }> = area.chests.filter((chest) =>
+        const targets: Entity[] = area.chests.filter((chest) =>
             lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: chest.x, y: chest.y }), actor.sight)
                 .some((coord) => coord.x === chest.x && coord.y === chest.y))
-            .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
             || area.items.filter((item) => !("originalChar" in item)
                 && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actor.sight)
                     .some((coord) => coord.x === item.x && coord.y === item.y));

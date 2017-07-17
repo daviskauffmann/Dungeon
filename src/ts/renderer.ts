@@ -1,8 +1,8 @@
 import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
-import { game, ui } from "./game";
+import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { Level, Rect, UIMode } from "./types";
+import { Level, Rect, Stair, UIMode } from "./types";
 import { findActor } from "./utils";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -143,42 +143,40 @@ export function draw(ev?: UIEvent) {
                     }
                 }
 
-                if (level) {
-                    if (level.stairDown.x === x && level.stairDown.y === y) {
-                        ctx.fillStyle = "#ffffff";
-                        ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
-                            : area.cells[x][y].discovered ? 0.25
-                                : 0;
-                        ctx.fillText(">", screen.x, screen.y);
+                {
+                    let stair: Stair;
 
-                        continue;
-                    }
-                    if (level.stairUp.x === x && level.stairUp.y === y) {
-                        ctx.fillStyle = "#ffffff";
-                        ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
-                            : area.cells[x][y].discovered ? 0.25
-                                : 0;
-                        ctx.fillText("<", screen.x, screen.y);
-
-                        continue;
-                    }
-                } else {
-                    if (chunk.stairsDown.some((stairDown) => {
-                        if (stairDown.x === x && stairDown.y === y) {
-                            ctx.fillStyle = "#ffffff";
-                            ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
-                                : area.cells[x][y].discovered ? 0.25
-                                    : 0;
-                            ctx.fillText(">", screen.x, screen.y);
-
-                            return true;
+                    if (level) {
+                        if (level.stairDown
+                            && level.stairDown.x === x && level.stairDown.y === y) {
+                            stair = level.stairDown;
                         }
-                    })) {
+                        if (level.stairUp.x === x && level.stairUp.y === y) {
+                            stair = level.stairUp;
+                        }
+                    } else {
+                        chunk.stairsDown.forEach((stairDown) => {
+                            if (stairDown.x === x && stairDown.y === y) {
+                                stair = stairDown;
+
+                                return;
+                            }
+                        });
+                    }
+
+                    if (stair) {
+                        const stairInfo = config.stairInfo[stair.direction];
+                        ctx.fillStyle = stairInfo.color;
+                        ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
+                            : area.cells[x][y].discovered ? 0.25
+                                : 0;
+                        ctx.fillText(stairInfo.char, screen.x, screen.y);
+
                         continue;
                     }
                 }
 
-                const cellInfo = game.cellInfo[area.cells[x][y].type];
+                const cellInfo = config.cellInfo[area.cells[x][y].type];
                 ctx.fillStyle = cellInfo.color;
                 ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
                     : area.cells[x][y].discovered ? 0.25
@@ -195,7 +193,8 @@ export function draw(ev?: UIEvent) {
     });
 
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(`Level: ${"getLevel(player)"} Turn: ${game.turn}`, 0, canvas.height);
+    ctx.globalAlpha = 1;
+    ctx.fillText(`Dungeon: ${dungeon ? chunk.dungeons.indexOf(dungeon) : "N/A"} Level: ${dungeon && level ? dungeon.levels.indexOf(level) : "N/A"} Turn: ${game.turn}`, 0, canvas.height);
 
     if (ui.mode === UIMode.Inventory
         || ui.mode === UIMode.InventoryDrop
@@ -204,14 +203,18 @@ export function draw(ev?: UIEvent) {
         || ui.mode === UIMode.InventorySwapSecond
         || ui.mode === UIMode.InventoryUnequip) {
         ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = 1;
         player.inventory.forEach((item, index) => {
             ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }
 
     if (ui.mode === UIMode.Character) {
+        const stats = calcStats(player);
+
         ctx.fillStyle = "#ffffff";
-        ctx.fillText(`Health: ${calcStats(player).health}`, canvas.width - (game.fontSize * 10), game.fontSize);
-        ctx.fillText(`Mana: ${calcStats(player).mana}`, canvas.width - (game.fontSize * 10), game.fontSize * 2);
+        ctx.globalAlpha = 1;
+        ctx.fillText(`Health: ${stats.health}`, canvas.width - (game.fontSize * 10), game.fontSize);
+        ctx.fillText(`Mana: ${stats.mana}`, canvas.width - (game.fontSize * 10), game.fontSize * 2);
     }
 }

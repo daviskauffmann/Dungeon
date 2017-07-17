@@ -1,20 +1,26 @@
 import { tick as actor_tick } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { radiansBetween } from "./math";
-import { Area, Coord, Game, Level, UI, UIMode } from "./types";
+import { Area, Config, Coord, Game, Level, UI, UIMode } from "./types";
 import { findActor } from "./utils";
 
-export let game: Game = {
+export const config: Config = {
     cellInfo: [
-        { name: "empty", char: " ", color: "#ffffff", solid: false },
-        { name: "floor", char: ".", color: "#ffffff", solid: false },
-        { name: "grass", char: "^", color: "#50ff50", solid: false },
-        { name: "wall", char: "#", color: "#ffffff", solid: true },
-        { name: "doorOpen", char: "-", color: "#ffffff", solid: false },
-        { name: "doorClosed", char: "+", color: "#ffffff", solid: true },
+        { char: " ", color: "#ffffff", solid: false },
+        { char: ".", color: "#ffffff", solid: false },
+        { char: "^", color: "#50ff50", solid: false },
+        { char: "#", color: "#ffffff", solid: true },
+        { char: "-", color: "#ffffff", solid: false },
+        { char: "+", color: "#ffffff", solid: true },
     ],
-    currentActorId: 0,
-    currentStairId: 0,
+    stairInfo: [
+        { char: ">", color: "#ffffff" },
+        { char: "<", color: "#ffffff" },
+    ],
+};
+
+export let game: Game = {
+    currentEntityId: 1,
     fontSize: 24,
     godMode: true,
     ignoreFov: false,
