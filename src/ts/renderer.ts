@@ -8,8 +8,8 @@ import { findActor } from "./utils";
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
-export function draw(ev?: UIEvent, playerContext?: ActorContext) {
-    playerContext = playerContext || findActor(0);
+export function draw(ev?: UIEvent) {
+    const playerContext = findActor(0);
     const player = playerContext.actor;
     const chunk = playerContext.chunk;
     const dungeon = playerContext.dungeon;
