@@ -226,22 +226,6 @@ export function tick(entityContext: EntityContext) {
     const level = entityContext.level;
     const area: Area = level || chunk;
 
-    {
-        const items = area.items.filter((item) => item.x === entity.x && item.y === entity.y
-            && randomFloat(0, 1) < 0.5);
-
-        if (items.length) {
-            log(area, { x: entity.x, y: entity.y }, `${entity.name} picks up ${items.map((item) => item.name).join(", ")}`);
-
-            items.forEach((item) => {
-                area.items.splice(area.items.indexOf(item), 1);
-                entity.inventory.push(item);
-            });
-
-            return;
-        }
-    }
-
     switch (entity.class) {
         case Class.Warrior:
             break;
@@ -295,7 +279,7 @@ export function tick(entityContext: EntityContext) {
             break;
         case Disposition.Aggressive:
             if (randomFloat(0, 1) < 0.5) {
-                const targets = area.entities.filter((target) => target !== entity
+                const targets: Entity[] = area.entities.filter((target) => target !== entity
                     && target.factions
                         .some((faction) => entity.hostileFactions.indexOf(faction) > -1)
                     && lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: target.x, y: target.y }), entity.sight)
@@ -323,9 +307,47 @@ export function tick(entityContext: EntityContext) {
             break;
     }
 
-    if (entity.inventory.some((item, index) => {
-        if (item.name.includes("corpse")
-            && randomFloat(0, 1) < 0.5) {
+    if (randomFloat(0, 1) < 0.5) {
+        const targets: Array<{ x: number, y: number, name: string }> = area.chests.filter((chest) =>
+            lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: chest.x, y: chest.y }), entity.sight)
+                .some((coord) => coord.x === chest.x && coord.y === chest.y))
+            .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
+            || area.items.filter((item) => !("originalChar" in item)
+                && lineOfSight(area, { x: entity.x, y: entity.y }, radiansBetween({ x: entity.x, y: entity.y }, { x: item.x, y: item.y }), entity.sight)
+                    .some((coord) => coord.x === item.x && coord.y === item.y));
+
+        if (targets.length) {
+            const target = targets[0];
+
+            log(area, { x: entity.x, y: entity.y }, `${entity.name} spots ${target.name}`);
+
+            const path = aStar(area, { x: entity.x, y: entity.y }, { x: target.x, y: target.y });
+
+            if (path && path.length) {
+                const next = path.pop();
+
+                move(entityContext, { x: next.x, y: next.y });
+
+                return;
+            }
+        }
+    }
+
+    if (randomFloat(0, 1) < 0.5 && area.items.some((item, index) => {
+        if (item.x === entity.x && item.y === entity.y) {
+            log(area, { x: entity.x, y: entity.y }, `${entity.name} picks up ${item.name}`);
+
+            area.items.splice(index, 1);
+            entity.inventory.push(item);
+
+            return true;
+        }
+    })) {
+        return;
+    }
+
+    if (randomFloat(0, 1) < 0.5 && entity.inventory.some((item, index) => {
+        if (item.name.includes("corpse")) {
             log(area, { x: entity.x, y: entity.y }, `${entity.name} drops a ${item.name}`);
 
             item.x = entity.x;
@@ -340,14 +362,16 @@ export function tick(entityContext: EntityContext) {
         return;
     }
 
-    const roll = randomFloat(0, 1);
-    if (roll < 0.25) {
-        move(entityContext, { x: entity.x, y: entity.y - 1 });
-    } else if (roll < 0.5) {
-        move(entityContext, { x: entity.x + 1, y: entity.y });
-    } else if (roll < 0.75) {
-        move(entityContext, { x: entity.x, y: entity.y + 1 });
-    } else {
-        move(entityContext, { x: entity.x - 1, y: entity.y });
+    if (randomFloat(0, 1) < 0.5) {
+        const roll = randomFloat(0, 1);
+        if (roll < 0.25) {
+            move(entityContext, { x: entity.x, y: entity.y - 1 });
+        } else if (roll < 0.5) {
+            move(entityContext, { x: entity.x + 1, y: entity.y });
+        } else if (roll < 0.75) {
+            move(entityContext, { x: entity.x, y: entity.y + 1 });
+        } else {
+            move(entityContext, { x: entity.x - 1, y: entity.y });
+        }
     }
 }
