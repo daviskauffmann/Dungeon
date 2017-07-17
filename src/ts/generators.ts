@@ -383,8 +383,8 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
 }
 
 export function createWorld(opts?: WorldOptions) {
-    const width = opts && opts.width || 10;
-    const height = opts && opts.height || 10;
+    const width = opts && opts.width || 0;
+    const height = opts && opts.height || 0;
 
     const world: World = {
         chunks: [[]],
@@ -412,8 +412,8 @@ export function createWorld(opts?: WorldOptions) {
     return world;
 }
 
-export function spawnPlayer(): Actor {
-    return {
+export function spawnPlayer() {
+    const player: Actor = {
         alpha: 1,
         char: "@",
         class: Class.Warrior,
@@ -434,4 +434,6 @@ export function spawnPlayer(): Actor {
         x: 0,
         y: 0,
     };
+
+    return player;
 }

@@ -2,14 +2,14 @@ import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
 import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { Level, Rect, Stair, UIMode } from "./types";
+import { Actor, ActorContext, Chunk, Dungeon, Level, Rect, Stair, UIMode } from "./types";
 import { findActor } from "./utils";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
-export function draw(ev?: UIEvent) {
-    const playerContext = findActor(0);
+export function draw(ev?: UIEvent, playerContext?: ActorContext) {
+    playerContext = playerContext || findActor(0);
     const player = playerContext.actor;
     const chunk = playerContext.chunk;
     const dungeon = playerContext.dungeon;

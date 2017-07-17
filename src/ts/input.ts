@@ -350,5 +350,5 @@ export function input(ev: KeyboardEvent) {
             break;
     }
 
-    draw();
+    draw(undefined, playerContext);
 }
