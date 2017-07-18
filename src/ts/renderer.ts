@@ -2,7 +2,7 @@ import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
 import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { Actor, ActorContext, Chunk, Dungeon, Level, Rect, Stair, UIMode } from "./types";
+import { Actor, ActorContext, Chunk, Corpse, Dungeon, Level, Rect, Stair, UIMode } from "./types";
 import { findActor } from "./utils";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -138,7 +138,7 @@ export function draw(ev?: UIEvent) {
                         if (item.x === x && item.y === y) {
                             const itemInfo = config.itemInfo[item.itemType];
 
-                            ctx.fillStyle = "#ffffff";
+                            ctx.fillStyle = ("class" in item) ? config.classInfo[(item as Corpse).class].color : "#ffffff";
                             ctx.globalAlpha = 1;
                             ctx.fillText(itemInfo.char, screen.x, screen.y);
 

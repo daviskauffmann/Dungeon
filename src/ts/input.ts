@@ -74,7 +74,7 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "r":
-                    area.items.filter((item) => "originalChar" in item
+                    area.items.filter((item) => "id" in item
                         && lineOfSight(area, player, radiansBetween(player, item), playerInfo.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))

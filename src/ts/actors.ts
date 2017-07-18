@@ -283,7 +283,7 @@ export function tick(actor: Actor, context: Context) {
             break;
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
-                const corpses = area.items.filter((item) => "originalChar" in item
+                const corpses = area.items.filter((item) => "id" in item
                     && config.actorInfo[(item as Corpse).actorType].factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1)
                     && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))
@@ -333,7 +333,7 @@ export function tick(actor: Actor, context: Context) {
             lineOfSight(area, actor, radiansBetween(actor, chest), actorInfo.sight)
                 .some((coord) => coord.x === chest.x && coord.y === chest.y))
             .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
-            || area.items.filter((item) => !("originalChar" in item)
+            || area.items.filter((item) => !("id" in item)
                 && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                     .some((coord) => coord.x === item.x && coord.y === item.y));
 
