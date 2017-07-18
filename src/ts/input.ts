@@ -1,4 +1,4 @@
-import { getInventoryChar, move } from "./actors";
+import { getInventoryChar, moveToCell, resurrect } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { config, game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
@@ -19,25 +19,25 @@ export function input(ev: KeyboardEvent) {
         case UIMode.Default:
             switch (ev.key) {
                 case "ArrowUp":
-                    move(player, playerContext, { x: player.x, y: player.y - 1 });
+                    moveToCell(player, playerContext, { x: player.x, y: player.y - 1 });
 
                     tick();
 
                     break;
                 case "ArrowRight":
-                    move(player, playerContext, { x: player.x + 1, y: player.y });
+                    moveToCell(player, playerContext, { x: player.x + 1, y: player.y });
 
                     tick();
 
                     break;
                 case "ArrowDown":
-                    move(player, playerContext, { x: player.x, y: player.y + 1 });
+                    moveToCell(player, playerContext, { x: player.x, y: player.y + 1 });
 
                     tick();
 
                     break;
                 case "ArrowLeft":
-                    move(player, playerContext, { x: player.x - 1, y: player.y });
+                    moveToCell(player, playerContext, { x: player.x - 1, y: player.y });
 
                     tick();
 
@@ -49,7 +49,7 @@ export function input(ev: KeyboardEvent) {
                 case "g":
                     area.items.forEach((item, index) => {
                         if (item.x === player.x && item.y === player.y) {
-                            log(area, { x: player.x, y: player.y }, `${player.name} picks up a ${item.name}`);
+                            log(area, player, `${player.name} picks up a ${item.name}`);
 
                             player.inventory.push(item);
                             area.items.splice(index, 1);
@@ -62,48 +62,30 @@ export function input(ev: KeyboardEvent) {
                 case "s":
                     const targets = area.actors.filter((target) => target !== player
                         && config.actorInfo[target.actorType].factions.some((faction) => playerInfo.hostileFactions.indexOf(faction) > -1)
-                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), playerInfo.sight)
+                        && lineOfSight(area, player, radiansBetween(player, target), playerInfo.sight)
                             .some((coord) => coord.x === target.x && coord.y === target.y));
 
                     if (targets.length) {
-                        log(area, { x: player.x, y: player.y },
+                        log(area, player,
                             `${player.name} spots ${targets.map((target) => target.name).join(", ")}`);
                     } else {
-                        log(area, { x: player.x, y: player.y }, `${player.name} doesn"t see anything`);
+                        log(area, player, `${player.name} doesn"t see anything`);
                     }
 
                     break;
                 case "r":
                     area.items.filter((item) => "originalChar" in item
-                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), playerInfo.sight)
+                        && lineOfSight(area, player, radiansBetween(player, item), playerInfo.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
-                        .forEach((corpse) => {
-                            const newActor: Actor = {
-                                actorType: corpse.actorType,
-                                class: corpse.class,
-                                experience: corpse.experience,
-                                hostileActorIds: corpse.hostileActorIds,
-                                id: corpse.id,
-                                inventory: corpse.inventory,
-                                level: corpse.level,
-                                name: corpse.name.replace(" corpse", ""),
-                                x: corpse.x,
-                                y: corpse.y,
-                            };
-
-                            log(area, { x: player.x, y: player.y }, `${player.name} ressurects ${newActor.name}`);
-
-                            area.items.splice(area.items.indexOf(corpse), 1);
-                            area.actors.push(newActor);
-                        });
+                        .forEach((corpse) => resurrect(player, playerContext, corpse));
 
                     tick();
 
                     break;
                 case "c":
                     if (area.cells[player.x][player.y].type === CellType.DoorOpen) {
-                        log(area, { x: player.x, y: player.y }, `${player.name} closes the door`);
+                        log(area, player, `${player.name} closes the door`);
 
                         area.cells[player.x][player.y].type = CellType.DoorClosed;
                     }
@@ -162,29 +144,29 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "d":
-                    log(area, { x: player.x, y: player.y }, "select item to drop");
-                    log(area, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, player, "select item to drop");
+                    log(area, player, "press space to cancel");
 
                     ui.mode = UIMode.InventoryDrop;
 
                     break;
                 case "e":
-                    log(area, { x: player.x, y: player.y }, "select item to equip");
-                    log(area, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, player, "select item to equip");
+                    log(area, player, "press space to cancel");
 
                     ui.mode = UIMode.InventoryEquip;
 
                     break;
                 case "u":
-                    log(area, { x: player.x, y: player.y }, "select item to unequip");
-                    log(area, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, player, "select item to unequip");
+                    log(area, player, "press space to cancel");
 
                     ui.mode = UIMode.InventoryUnequip;
 
                     break;
                 case "s":
-                    log(area, { x: player.x, y: player.y }, "select first item to swap");
-                    log(area, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, player, "select first item to swap");
+                    log(area, player, "press space to cancel");
 
                     ui.mode = UIMode.InventorySwapFirst;
 
@@ -195,7 +177,7 @@ export function input(ev: KeyboardEvent) {
         case UIMode.InventoryDrop:
             player.inventory.forEach((item, index) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(area, { x: player.x, y: player.y }, `${player.name} drops a ${item.name}`);
+                    log(area, player, `${player.name} drops a ${item.name}`);
 
                     item.x = player.x;
                     item.y = player.y;
@@ -218,7 +200,7 @@ export function input(ev: KeyboardEvent) {
         case UIMode.InventoryEquip:
             player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(area, { x: player.x, y: player.y }, `${player.name} equips a ${item.name}`);
+                    log(area, player, `${player.name} equips a ${item.name}`);
 
                     item.equipped = true;
 
@@ -237,7 +219,7 @@ export function input(ev: KeyboardEvent) {
         case UIMode.InventoryUnequip:
             player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(area, { x: player.x, y: player.y }, `${player.name} unequips a ${item.name}`);
+                    log(area, player, `${player.name} unequips a ${item.name}`);
 
                     item.equipped = false;
 
@@ -258,8 +240,8 @@ export function input(ev: KeyboardEvent) {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapFirst = index;
 
-                    log(area, { x: player.x, y: player.y }, "select second item to swap");
-                    log(area, { x: player.x, y: player.y }, "press space to cancel");
+                    log(area, player, "select second item to swap");
+                    log(area, player, "press space to cancel");
 
                     ui.mode = UIMode.InventorySwapSecond;
                 }
@@ -278,7 +260,7 @@ export function input(ev: KeyboardEvent) {
                 if (ev.key === getInventoryChar(player, item)) {
                     ui.inventorySwapSecond = index;
 
-                    log(area, { x: player.x, y: player.y }, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
+                    log(area, player, `${player.name} swaps the ${player.inventory[ui.inventorySwapFirst].name} with the ${player.inventory[ui.inventorySwapSecond].name}`);
 
                     const t = player.inventory[ui.inventorySwapFirst];
                     player.inventory[ui.inventorySwapFirst] = player.inventory[ui.inventorySwapSecond];
@@ -309,13 +291,13 @@ export function input(ev: KeyboardEvent) {
 
     switch (ev.key) {
         case "[":
-            log(area, { x: player.x, y: player.y }, "game saved");
+            log(area, player, "game saved");
 
             save();
 
             break;
         case "]":
-            log(area, { x: player.x, y: player.y }, "game loaded");
+            log(area, player, "game loaded");
 
             load();
 

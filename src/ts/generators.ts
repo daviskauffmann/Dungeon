@@ -42,7 +42,7 @@ export function createChunk(opts?: ChunkOptions) {
 
 export function createDungeon(opts?: DungeonOptions) {
     const name = opts && opts.name;
-    const maxLevels = opts && opts.maxLevels || 5;
+    const maxLevels = opts && opts.maxLevels || 1;
 
     const dungeon: Dungeon = {
         levels: [],
@@ -66,7 +66,7 @@ export function createDungeon(opts?: DungeonOptions) {
     return dungeon;
 }
 
-export function createLevel(stairDownId: number, finalLevel: boolean, opts?: LevelOptions) {
+export function createLevel(stairDownId: number, opts?: LevelOptions) {
     const width = opts && opts.width || 50;
     const height = opts && opts.height || 50;
     const roomAttempts = opts && opts.roomAttempts || 20;
@@ -245,14 +245,12 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
         }
     }
 
-    if (!finalLevel) {
-        level.stairDown = {
-            direction: StairDirection.Down,
-            id: game.currentStairId++,
-            x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
-            y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
-        };
-    }
+    level.stairDown = {
+        direction: StairDirection.Down,
+        id: game.currentStairId++,
+        x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
+        y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
+    };
 
     level.stairUp = {
         direction: StairDirection.Up,

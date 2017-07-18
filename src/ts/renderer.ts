@@ -43,7 +43,7 @@ export function draw(ev?: UIEvent) {
         view.top = area.height - view.height;
     }
 
-    const visibleCells = fieldOfView(area, { x: player.x, y: player.y }, 0.5, playerInfo.sight)
+    const visibleCells = fieldOfView(area, player, 0.5, playerInfo.sight)
         .map((coord) => area.cells[coord.x][coord.y]);
 
     visibleCells.forEach((cell) => {

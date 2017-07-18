@@ -107,9 +107,7 @@ export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: 
 
     for (let degrees = 0; degrees < 360; degrees += accuracy) {
         coords.push(...lineOfSight(area, origin, toRadians(degrees), range)
-            .filter((coord) => {
-                return !coords.some((c) => c.x === coord.x && c.y === coord.y);
-            }));
+            .filter((coord) => !coords.some((c) => c.x === coord.x && c.y === coord.y)));
     }
 
     return coords;

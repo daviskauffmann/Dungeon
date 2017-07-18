@@ -156,7 +156,7 @@ export function log(area: Area, location: Coord, message: string) {
     const player = playerContext.actor;
 
     if ((area === playerContext.level || area === playerContext.chunk)
-        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), config.actorInfo[player.actorType].sight)
+        && lineOfSight(area, player, radiansBetween(player, location), config.actorInfo[player.actorType].sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 

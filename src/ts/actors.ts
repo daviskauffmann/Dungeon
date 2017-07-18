@@ -2,8 +2,62 @@ import { aStar, lineOfSight } from "./algorithms";
 import { config, game, log } from "./game";
 import { createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Actor, Area, CellInfo, CellType, Chunk, Class, Context, Coord, Corpse, Disposition, Dungeon, Item, ItemType, Level, StairDirection, Stats } from "./types";
+import { Actor, Area, CellInfo, CellType, Chest, Chunk, Class, Context, Coord, Corpse, Disposition, Dungeon, Item, ItemType, Level, Stair, StairDirection, Stats } from "./types";
 import { findStair } from "./utils";
+
+export function ascend(actor: Actor, context: Context, stair: Stair) {
+    const chunk = context.chunk;
+    const level = context.level;
+    const area: Area = level || chunk;
+
+    log(area, actor, `${actor.name} ascends`);
+
+    const stairContext = findStair(stair.id, StairDirection.Down);
+    const newArea = stairContext.level || stairContext.chunk;
+
+    moveToArea(actor, area, newArea, stairContext.stair);
+}
+
+export function attack(actor: Actor, context: Context, target: Actor) {
+    const actorInfo = config.actorInfo[actor.actorType];
+    const chunk = context.chunk;
+    const dungeon = context.dungeon;
+    const level = context.level;
+    const area: Area = level || chunk;
+
+    if (randomFloat(0, 1) < 0.5) {
+        if (target.id === 0 && game.godMode) {
+            log(area, actor, `${actor.name} cannot kill ${target.name}`);
+        } else {
+            log(area, actor, `${actor.name} kills ${target.name}`);
+
+            if (target.inventory.length) {
+                log(area, actor, `${target.name} drops a ${target.inventory.map((item) => item.name).join(", ")}`);
+
+                target.inventory.forEach((item, index) => {
+                    item.x = target.x;
+                    item.y = target.y;
+                    item.equipped = false;
+
+                    target.inventory.splice(index, 1);
+                    area.items.push(item);
+                });
+            }
+
+            const corpse: Corpse = {
+                ...target,
+                equipped: false,
+                itemType: ItemType.Corpse,
+                name: target.name + " corpse",
+            };
+
+            area.actors.splice(area.actors.indexOf(target), 1);
+            area.items.push(corpse);
+        }
+    } else {
+        log(area, actor, `${actor.name} misses ${target.name}`);
+    }
+}
 
 export function calcStats(actor: Actor) {
     const stats: Stats = {
@@ -27,11 +81,39 @@ export function calcStats(actor: Actor) {
     return stats;
 }
 
+export function descend(actor: Actor, context: Context, stair: Stair) {
+    const chunk = context.chunk;
+    const dungeon = context.dungeon;
+    const level = context.level;
+    const area: Area = level || chunk;
+
+    log(area, actor, `${actor.name} descends`);
+
+    const stairContext = findStair(stair.id, StairDirection.Up);
+
+    if (stairContext) {
+        moveToArea(actor, area, stairContext.level, stairContext.level.stairUp);
+    } else {
+        let newDungeon;
+        if (dungeon) {
+            newDungeon = dungeon;
+        } else {
+            newDungeon = createDungeon();
+            chunk.dungeons.push(newDungeon);
+        }
+
+        const newLevel = createLevel(stair.id);
+        newDungeon.levels.push(newLevel);
+
+        moveToArea(actor, area, newLevel, newLevel.stairUp);
+    }
+}
+
 export function getInventoryChar(actor: Actor, item: Item) {
     return String.fromCharCode(97 + actor.inventory.indexOf(item));
 }
 
-export function move(actor: Actor, context: Context, coord: Coord) {
+export function moveToCell(actor: Actor, context: Context, coord: Coord) {
     const actorInfo = config.actorInfo[actor.actorType];
     const chunk = context.chunk;
     const dungeon = context.dungeon;
@@ -46,52 +128,21 @@ export function move(actor: Actor, context: Context, coord: Coord) {
                 return;
             case CellType.DoorClosed:
                 if (randomFloat(0, 1) < 0.5) {
-                    log(area, { x: actor.x, y: actor.y }, `${actor.name} opens the door`);
+                    log(area, actor, `${actor.name} opens the door`);
 
                     cell.type = CellType.DoorOpen;
                 } else {
-                    log(area, { x: actor.x, y: actor.y }, `${actor.name} can't open the door`);
+                    log(area, actor, `${actor.name} can't open the door`);
                 }
 
                 return;
         }
 
-        if (area.actors.some((target, targetIndex) => {
+        if (area.actors.some((target) => {
             if (target !== actor
                 && target.x === coord.x && target.y === coord.y) {
                 if (config.actorInfo[target.actorType].factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)) {
-                    if (randomFloat(0, 1) < 0.5) {
-                        if (target.id === 0 && game.godMode) {
-                            log(area, { x: actor.x, y: actor.y }, `${actor.name} cannot kill ${target.name}`);
-                        } else {
-                            log(area, { x: actor.x, y: actor.y }, `${actor.name} kills ${target.name}`);
-
-                            if (target.inventory.length) {
-                                log(area, { x: actor.x, y: actor.y }, `${target.name} drops a ${target.inventory.map((item) => item.name).join(", ")}`);
-
-                                target.inventory.forEach((item, itemIndex) => {
-                                    item.x = target.x;
-                                    item.y = target.y;
-                                    item.equipped = false;
-
-                                    target.inventory.splice(itemIndex, 1);
-                                    area.items.push(item);
-                                });
-                            }
-
-                            const corpse: Corpse = {
-                                ...target,
-                                equipped: false,
-                                itemType: ItemType.Corpse,
-                                name: target.name + " corpse",
-                            };
-
-                            area.actors.splice(targetIndex, 1);
-                            area.items.push(corpse);
-                        }
-                    } else {
-                        log(area, { x: actor.x, y: actor.y }, `${actor.name} misses ${target.name}`);
-                    }
+                    attack(actor, context, target);
                 }
 
                 return true;
@@ -100,27 +151,9 @@ export function move(actor: Actor, context: Context, coord: Coord) {
             return;
         }
 
-        if (area.chests.some((chest, index) => {
+        if (area.chests.some((chest) => {
             if (chest.x === coord.x && chest.y === coord.y) {
-                if (randomFloat(0, 1) < 0.5) {
-                    log(area, { x: actor.x, y: actor.y }, `${actor.name} opens the chest`);
-
-                    area.chests.splice(index, 1);
-
-                    if (chest.loot) {
-                        if (actor.inventory.length < 26) {
-                            log(area, { x: actor.x, y: actor.y }, `${actor.name} loots a ${chest.loot.name}`);
-
-                            actor.inventory.push(chest.loot);
-                        } else {
-                            log(area, { x: actor.x, y: actor.y }, `${actor.name}'s inventory is full`);
-                        }
-                    } else {
-                        log(area, { x: actor.x, y: actor.y }, `${actor.name} sees nothing inside`);
-                    }
-                } else {
-                    log(area, { x: actor.x, y: actor.y }, `${actor.name} can't open the chest`);
-                }
+                openChest(actor, context, chest);
 
                 return true;
             }
@@ -131,73 +164,19 @@ export function move(actor: Actor, context: Context, coord: Coord) {
         if (level) {
             if (level.stairDown
                 && level.stairDown.x === coord.x && level.stairDown.y === coord.y) {
-                log(area, { x: actor.x, y: actor.y }, `${actor.name} descends`);
-
-                const stairContext = findStair(level.stairDown.id, StairDirection.Up);
-
-                if (stairContext) {
-                    const newLevel = stairContext.level;
-
-                    area.actors.splice(area.actors.indexOf(actor), 1);
-                    newLevel.actors.push(actor);
-
-                    actor.x = newLevel.stairUp.x;
-                    actor.y = newLevel.stairUp.y;
-                } else {
-                    const newLevel = createLevel(level.stairDown.id, dungeon.levels.length >= dungeon.maxLevels);
-                    dungeon.levels.push(newLevel);
-
-                    area.actors.splice(area.actors.indexOf(actor), 1);
-                    newLevel.actors.push(actor);
-
-                    actor.x = newLevel.stairUp.x;
-                    actor.y = newLevel.stairUp.y;
-                }
+                descend(actor, context, level.stairDown);
 
                 return;
             }
             if (level.stairUp.x === coord.x && level.stairUp.y === coord.y) {
-                log(area, { x: actor.x, y: actor.y }, `${actor.name} ascends`);
-
-                const stairContext = findStair(level.stairUp.id, StairDirection.Down);
-                const newLevel = stairContext.level || stairContext.chunk;
-
-                area.actors.splice(area.actors.indexOf(actor), 1);
-                newLevel.actors.push(actor);
-
-                actor.x = stairContext.stair.x;
-                actor.y = stairContext.stair.y;
+                ascend(actor, context, level.stairUp);
 
                 return;
             }
         } else {
             if (chunk.stairsDown.some((stairDown) => {
                 if (stairDown.x === coord.x && stairDown.y === coord.y) {
-                    log(area, { x: actor.x, y: actor.y }, `${actor.name} descends`);
-
-                    const stairContext = findStair(stairDown.id, StairDirection.Up);
-
-                    if (stairContext) {
-                        const newLevel = stairContext.level;
-
-                        area.actors.splice(area.actors.indexOf(actor), 1);
-                        newLevel.actors.push(actor);
-
-                        actor.x = newLevel.stairUp.x;
-                        actor.y = newLevel.stairUp.y;
-                    } else {
-                        const newDungeon = createDungeon();
-                        chunk.dungeons.push(newDungeon);
-
-                        const newLevel = createLevel(stairDown.id, newDungeon.levels.length >= newDungeon.maxLevels);
-                        newDungeon.levels.push(newLevel);
-
-                        area.actors.splice(area.actors.indexOf(actor), 1);
-                        newLevel.actors.push(actor);
-
-                        actor.x = newLevel.stairUp.x;
-                        actor.y = newLevel.stairUp.y;
-                    }
+                    descend(actor, context, stairDown);
 
                     return true;
                 }
@@ -211,13 +190,85 @@ export function move(actor: Actor, context: Context, coord: Coord) {
                 .map((item) => item.name).join(", ");
 
             if (itemNames) {
-                log(area, { x: actor.x, y: actor.y }, `${actor.name} sees ${itemNames}`);
+                log(area, actor, `${actor.name} sees ${itemNames}`);
             }
         }
 
         actor.x = coord.x;
         actor.y = coord.y;
     }
+}
+
+export function moveToArea(actor: Actor, area: Area, newArea: Area, coord: Coord) {
+    area.actors.splice(area.actors.indexOf(actor), 1);
+    newArea.actors.push(actor);
+
+    actor.x = coord.x;
+    actor.y = coord.y;
+}
+
+export function openChest(actor: Actor, context: Context, chest: Chest) {
+    const chunk = context.chunk;
+    const level = context.level;
+    const area: Area = level || chunk;
+
+    if (randomFloat(0, 1) < 0.5) {
+        log(area, actor, `${actor.name} opens the chest`);
+
+        area.chests.splice(area.chests.indexOf(chest), 1);
+
+        if (chest.loot) {
+            if (actor.inventory.length < 26) {
+                log(area, actor, `${actor.name} loots a ${chest.loot.name}`);
+
+                actor.inventory.push(chest.loot);
+            } else {
+                log(area, actor, `${actor.name}'s inventory is full`);
+            }
+        } else {
+            log(area, actor, `${actor.name} sees nothing inside`);
+        }
+    } else {
+        log(area, actor, `${actor.name} can't open the chest`);
+    }
+}
+
+export function pathfind(actor: Actor, context: Context, coord: Coord) {
+    const chunk = context.chunk;
+    const level = context.level;
+    const area: Area = level || chunk;
+
+    const path = aStar(area, actor, coord);
+
+    if (path && path.length) {
+        moveToCell(actor, context, path.pop());
+
+        return true;
+    }
+}
+
+export function resurrect(actor: Actor, context: Context, corpse: Corpse) {
+    const chunk = context.chunk;
+    const level = context.level;
+    const area: Area = level || chunk;
+
+    const newActor: Actor = {
+        actorType: corpse.actorType,
+        class: corpse.class,
+        experience: corpse.experience,
+        hostileActorIds: corpse.hostileActorIds,
+        id: corpse.id,
+        inventory: corpse.inventory,
+        level: corpse.level,
+        name: corpse.name.replace(" corpse", ""),
+        x: corpse.x,
+        y: corpse.y,
+    };
+
+    log(area, actor, `${actor.name} ressurects ${newActor.name}`);
+
+    area.items.splice(area.items.indexOf(corpse), 1);
+    area.actors.push(newActor);
 }
 
 export function tick(actor: Actor, context: Context) {
@@ -234,33 +285,15 @@ export function tick(actor: Actor, context: Context) {
             if (randomFloat(0, 1) < 0.5) {
                 const corpses = area.items.filter((item) => "originalChar" in item
                     && config.actorInfo[(item as Corpse).actorType].factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1)
-                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actorInfo.sight)
+                    && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))
                     .map((item) => item as Corpse);
 
                 if (corpses.length) {
-                    const corpse = corpses[0];
-
                     if (randomFloat(0, 1) < 0.5) {
-                        const newActor: Actor = {
-                            actorType: corpse.actorType,
-                            class: corpse.class,
-                            experience: corpse.experience,
-                            hostileActorIds: corpse.hostileActorIds,
-                            id: corpse.id,
-                            inventory: corpse.inventory,
-                            level: corpse.level,
-                            name: corpse.name.replace(" corpse", ""),
-                            x: corpse.x,
-                            y: corpse.y,
-                        };
-
-                        log(area, { x: actor.x, y: actor.y }, `${actor.name} ressurects ${newActor.name}`);
-
-                        area.items.splice(area.items.indexOf(corpse), 1);
-                        area.actors.push(newActor);
+                        resurrect(actor, context, corpses[0]);
                     } else {
-                        log(area, { x: actor.x, y: actor.y }, `${actor.name} fails to ressurect ${corpse.name}`);
+                        log(area, actor, `${actor.name} fails to ressurect ${corpses[0].name}`);
                     }
 
                     return;
@@ -278,21 +311,13 @@ export function tick(actor: Actor, context: Context) {
                 const targets: Actor[] = area.actors.filter((target) => target !== actor
                     && config.actorInfo[target.actorType].factions
                         .some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
-                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: target.x, y: target.y }), actorInfo.sight)
+                    && lineOfSight(area, actor, radiansBetween(actor, target), actorInfo.sight)
                         .some((coord) => coord.x === target.x && coord.y === target.y));
 
                 if (targets.length) {
-                    const target = targets[0];
+                    log(area, actor, `${actor.name} spots ${targets[0].name}`);
 
-                    log(area, { x: actor.x, y: actor.y }, `${actor.name} spots ${target.name}`);
-
-                    const path = aStar(area, { x: actor.x, y: actor.y }, { x: target.x, y: target.y });
-
-                    if (path && path.length) {
-                        const next = path.pop();
-
-                        move(actor, context, { x: next.x, y: next.y });
-
+                    if (pathfind(actor, context, targets[0])) {
                         return;
                     }
                 }
@@ -305,25 +330,17 @@ export function tick(actor: Actor, context: Context) {
 
     if (randomFloat(0, 1) < 0.5) {
         const targets: Array<{ x: number, y: number, name: string }> = area.chests.filter((chest) =>
-            lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: chest.x, y: chest.y }), actorInfo.sight)
+            lineOfSight(area, actor, radiansBetween(actor, chest), actorInfo.sight)
                 .some((coord) => coord.x === chest.x && coord.y === chest.y))
             .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
             || area.items.filter((item) => !("originalChar" in item)
-                && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actorInfo.sight)
+                && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                     .some((coord) => coord.x === item.x && coord.y === item.y));
 
         if (targets.length) {
-            const target = targets[0];
+            log(area, actor, `${actor.name} spots ${targets[0].name}`);
 
-            log(area, { x: actor.x, y: actor.y }, `${actor.name} spots ${target.name}`);
-
-            const path = aStar(area, { x: actor.x, y: actor.y }, { x: target.x, y: target.y });
-
-            if (path && path.length) {
-                const next = path.pop();
-
-                move(actor, context, { x: next.x, y: next.y });
-
+            if (pathfind(actor, context, targets[0])) {
                 return;
             }
         }
@@ -331,7 +348,7 @@ export function tick(actor: Actor, context: Context) {
 
     if (randomFloat(0, 1) < 0.5 && area.items.some((item, index) => {
         if (item.x === actor.x && item.y === actor.y) {
-            log(area, { x: actor.x, y: actor.y }, `${actor.name} picks up ${item.name}`);
+            log(area, actor, `${actor.name} picks up ${item.name}`);
 
             area.items.splice(index, 1);
             actor.inventory.push(item);
@@ -344,7 +361,7 @@ export function tick(actor: Actor, context: Context) {
 
     if (randomFloat(0, 1) < 0.5 && actor.inventory.some((item, index) => {
         if (item.name.includes("corpse")) {
-            log(area, { x: actor.x, y: actor.y }, `${actor.name} drops a ${item.name}`);
+            log(area, actor, `${actor.name} drops a ${item.name}`);
 
             item.x = actor.x;
             item.y = actor.y;
@@ -361,13 +378,13 @@ export function tick(actor: Actor, context: Context) {
     if (randomFloat(0, 1) < 0.5) {
         const roll = randomFloat(0, 1);
         if (roll < 0.25) {
-            move(actor, context, { x: actor.x, y: actor.y - 1 });
+            moveToCell(actor, context, { x: actor.x, y: actor.y - 1 });
         } else if (roll < 0.5) {
-            move(actor, context, { x: actor.x + 1, y: actor.y });
+            moveToCell(actor, context, { x: actor.x + 1, y: actor.y });
         } else if (roll < 0.75) {
-            move(actor, context, { x: actor.x, y: actor.y + 1 });
+            moveToCell(actor, context, { x: actor.x, y: actor.y + 1 });
         } else {
-            move(actor, context, { x: actor.x - 1, y: actor.y });
+            moveToCell(actor, context, { x: actor.x - 1, y: actor.y });
         }
     }
 }
