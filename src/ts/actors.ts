@@ -2,7 +2,7 @@ import { aStar, lineOfSight } from "./algorithms";
 import { game, log } from "./game";
 import { createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Entity, Item, Level, StairDirection, Stats } from "./types";
+import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Item, Level, StairDirection, Stats } from "./types";
 import { findStair } from "./utils";
 
 export function calcStats(actor: Actor) {
@@ -308,9 +308,10 @@ export function tick(actorContext: ActorContext) {
     }
 
     if (randomFloat(0, 1) < 0.5) {
-        const targets: Entity[] = area.chests.filter((chest) =>
+        const targets: Array<{ x: number, y: number, name: string }> = area.chests.filter((chest) =>
             lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: chest.x, y: chest.y }), actor.sight)
                 .some((coord) => coord.x === chest.x && coord.y === chest.y))
+            .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
             || area.items.filter((item) => !("originalChar" in item)
                 && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actor.sight)
                     .some((coord) => coord.x === item.x && coord.y === item.y));

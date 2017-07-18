@@ -31,7 +31,7 @@ export function createChunk(opts?: ChunkOptions) {
     for (let i = 0; i < dungeonAmount; i++) {
         chunk.stairsDown.push({
             direction: StairDirection.Down,
-            id: game.currentEntityId++,
+            id: game.currentId++,
             x: randomInt(0, chunk.width),
             y: randomInt(0, chunk.height),
         });
@@ -248,7 +248,7 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
     if (!finalLevel) {
         level.stairDown = {
             direction: StairDirection.Down,
-            id: game.currentEntityId++,
+            id: game.currentId++,
             x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
             y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
         };
@@ -273,7 +273,7 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
             factions: [],
             hostileActorIds: [],
             hostileFactions: [],
-            id: game.currentEntityId++,
+            id: game.currentId++,
             inventory: [],
             level: 1,
             name: "",
@@ -339,10 +339,6 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
         const roomIndex = randomInt(0, level.rooms.length);
 
         level.chests.push({
-            alpha: 1,
-            char: "~",
-            color: "#ffffff",
-            id: game.currentEntityId++,
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
                     const item: Item = {
@@ -350,7 +346,6 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
                         char: "",
                         color: "#ffffff",
                         equipped: false,
-                        id: game.currentEntityId++,
                         name: "",
                         x: -1, y: -1,
                     };
@@ -373,7 +368,6 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
                     return item;
                 }
             })(),
-            name: "chest",
             x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
             y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         });

@@ -118,9 +118,9 @@ export function draw(ev?: UIEvent) {
 
                     if (area.chests.some((chest) => {
                         if (chest.x === x && chest.y === y) {
-                            ctx.fillStyle = chest.color;
-                            ctx.globalAlpha = chest.alpha;
-                            ctx.fillText(chest.char, screen.x, screen.y);
+                            ctx.fillStyle = "#ffffff";
+                            ctx.globalAlpha = 1;
+                            ctx.fillText("~", screen.x, screen.y);
 
                             return true;
                         }

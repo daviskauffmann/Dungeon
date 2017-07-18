@@ -20,7 +20,7 @@ export const config: Config = {
 };
 
 export let game: Game = {
-    currentEntityId: 1,
+    currentId: 1,
     fontSize: 24,
     godMode: true,
     ignoreFov: false,

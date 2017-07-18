@@ -1,4 +1,6 @@
-export interface Actor extends Entity {
+export interface Actor extends Coord, Glyph {
+    id: number;
+    name: string;
     level: number;
     class: Class;
     sight: number;
@@ -42,7 +44,7 @@ export enum CellType {
     DoorClosed,
 }
 
-export interface Chest extends Entity {
+export interface Chest extends Coord {
     loot: Item;
 }
 
@@ -99,11 +101,6 @@ export interface DungeonOptions {
     maxLevels?: number;
 }
 
-export interface Entity extends Coord, Glyph {
-    id: number;
-    name: string;
-}
-
 export interface Level extends Area {
     rooms: Rect[];
     litRooms: boolean;
@@ -133,7 +130,7 @@ export enum Faction {
 
 export interface Game {
     world: World;
-    currentEntityId: number;
+    currentId: number;
     turn: number;
     fontSize: number;
     messages: string[];
@@ -148,7 +145,8 @@ export interface Glyph {
     alpha: number;
 }
 
-export interface Item extends Entity {
+export interface Item extends Coord, Glyph {
+    name: string;
     equipped: boolean;
 }
 
