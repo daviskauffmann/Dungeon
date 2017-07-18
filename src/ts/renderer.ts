@@ -15,6 +15,7 @@ export function draw(ev?: UIEvent) {
     const dungeon = playerContext.dungeon;
     const level = playerContext.level;
     const area = level || chunk;
+    const playerInfo = config.actorInfo[player.actorType];
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -42,7 +43,7 @@ export function draw(ev?: UIEvent) {
         view.top = area.height - view.height;
     }
 
-    const visibleCells = fieldOfView(area, { x: player.x, y: player.y }, 0.5, player.sight)
+    const visibleCells = fieldOfView(area, { x: player.x, y: player.y }, 0.5, playerInfo.sight)
         .map((coord) => area.cells[coord.x][coord.y]);
 
     visibleCells.forEach((cell) => {
@@ -106,9 +107,12 @@ export function draw(ev?: UIEvent) {
                 if (visibleCells.indexOf(area.cells[x][y]) > -1) {
                     if (area.actors.some((actor) => {
                         if (actor.x === x && actor.y === y) {
-                            ctx.fillStyle = actor.color;
-                            ctx.globalAlpha = actor.alpha;
-                            ctx.fillText(actor.char, screen.x, screen.y);
+                            const actorInfo = config.actorInfo[actor.actorType];
+                            const classInfo = config.classInfo[actor.class];
+
+                            ctx.fillStyle = classInfo.color;
+                            ctx.globalAlpha = 1;
+                            ctx.fillText(actorInfo.char, screen.x, screen.y);
 
                             return true;
                         }
@@ -132,9 +136,11 @@ export function draw(ev?: UIEvent) {
                         return 0;
                     }).some((item) => {
                         if (item.x === x && item.y === y) {
-                            ctx.fillStyle = item.color;
-                            ctx.globalAlpha = item.alpha;
-                            ctx.fillText(item.char, screen.x, screen.y);
+                            const itemInfo = config.itemInfo[item.itemType];
+
+                            ctx.fillStyle = "#ffffff";
+                            ctx.globalAlpha = 1;
+                            ctx.fillText(itemInfo.char, screen.x, screen.y);
 
                             return true;
                         }

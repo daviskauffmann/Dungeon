@@ -1,18 +1,32 @@
-export interface Actor extends Coord, Glyph {
+export interface Actor extends Coord {
+    actorType: ActorType;
     id: number;
     name: string;
+    experience: number;
     level: number;
     class: Class;
-    sight: number;
     inventory: Item[];
-    factions: Faction[];
-    hostileFactions: Faction[];
     hostileActorIds: number[];
-    disposition: Disposition;
 }
 
 export interface ActorContext extends Context {
     actor: Actor;
+}
+
+export interface ActorInfo {
+    char: string;
+    disposition: Disposition;
+    factions: Faction[];
+    hostileFactions: Faction[];
+    sight: number;
+}
+
+export enum ActorType {
+    Player,
+    Slime,
+    Rat,
+    Orc,
+    Bugbear,
 }
 
 export interface Area {
@@ -60,12 +74,20 @@ export interface ChunkOptions {
 }
 
 export enum Class {
+    None,
     Warrior,
     Shaman,
 }
 
+export interface ClassInfo {
+    color: string;
+}
+
 export interface Config {
+    actorInfo: ActorInfo[];
     cellInfo: CellInfo[];
+    classInfo: ClassInfo[];
+    itemInfo: ItemInfo[];
     stairInfo: StairInfo[];
 }
 
@@ -80,9 +102,7 @@ export interface Coord {
     y: number;
 }
 
-export interface Corpse extends Actor, Item {
-    originalChar: string;
-}
+export interface Corpse extends Actor, Item { }
 
 export enum Disposition {
     Passive,
@@ -130,7 +150,8 @@ export enum Faction {
 
 export interface Game {
     world: World;
-    currentId: number;
+    currentActorId: number;
+    currentStairId: number;
     turn: number;
     fontSize: number;
     messages: string[];
@@ -139,15 +160,22 @@ export interface Game {
     ignoreFov: boolean;
 }
 
-export interface Glyph {
-    char: string;
-    color: string;
-    alpha: number;
-}
-
-export interface Item extends Coord, Glyph {
+export interface Item extends Coord {
+    itemType: ItemType;
     name: string;
     equipped: boolean;
+}
+
+export interface ItemInfo {
+    char: string;
+}
+
+export enum ItemType {
+    Corpse,
+    Sword,
+    Spear,
+    Shield,
+    Bow,
 }
 
 export interface Rect {

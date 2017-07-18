@@ -1,26 +1,142 @@
 import { tick as actor_tick } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { radiansBetween } from "./math";
-import { ActorContext, Area, Config, Coord, Game, Level, UI, UIMode } from "./types";
+import { Area, Config, Context, Coord, Disposition, Faction, Game, Level, UI, UIMode } from "./types";
 import { findActor } from "./utils";
 
 export const config: Config = {
+    actorInfo: [
+        {
+            char: "@",
+            disposition: Disposition.Aggressive,
+            factions: [
+                Faction.Player,
+            ],
+            hostileFactions: [
+                Faction.Monster,
+            ],
+            sight: 5,
+        },
+        {
+            char: "s",
+            disposition: Disposition.Passive,
+            factions: [
+                Faction.Monster,
+            ],
+            hostileFactions: [],
+            sight: 5,
+        },
+        {
+            char: "r",
+            disposition: Disposition.Cowardly,
+            factions: [
+                Faction.Monster,
+            ],
+            hostileFactions: [],
+            sight: 5,
+        },
+        {
+            char: "o",
+            disposition: Disposition.Aggressive,
+            factions: [
+                Faction.Monster,
+                Faction.Orc,
+            ],
+            hostileFactions: [
+                Faction.Player,
+                Faction.Bugbear,
+            ],
+            sight: 5,
+        },
+        {
+            char: "b",
+            disposition: Disposition.Aggressive,
+            factions: [
+                Faction.Monster,
+                Faction.Bugbear,
+            ],
+            hostileFactions: [
+                Faction.Player,
+                Faction.Orc,
+            ],
+            sight: 5,
+        },
+    ],
     cellInfo: [
-        { char: " ", color: "#ffffff", solid: false },
-        { char: ".", color: "#ffffff", solid: false },
-        { char: "^", color: "#50ff50", solid: false },
-        { char: "#", color: "#ffffff", solid: true },
-        { char: "-", color: "#ffffff", solid: false },
-        { char: "+", color: "#ffffff", solid: true },
+        {
+            char: " ",
+            color: "#ffffff",
+            solid: false,
+        },
+        {
+            char: ".",
+            color: "#ffffff",
+            solid: false,
+        },
+        {
+            char: "^",
+            color: "#50ff50",
+            solid: false,
+        },
+        {
+            char: "#",
+            color: "#ffffff",
+            solid: true,
+        },
+        {
+            char: "-",
+            color: "#ffffff",
+            solid: false,
+        },
+        {
+            char: "+",
+            color: "#ffffff",
+            solid: true,
+        },
+    ],
+    classInfo: [
+        {
+            color: "#ffffff",
+        },
+        {
+            color: "#ffffff",
+        },
+        {
+            color: "#ffff00",
+        },
+    ],
+    itemInfo: [
+        {
+            char: "%",
+        },
+        {
+            char: "|",
+        },
+        {
+            char: "/",
+        },
+        {
+            char: ")",
+        },
+        {
+            char: "}",
+        },
     ],
     stairInfo: [
-        { char: ">", color: "#ffffff" },
-        { char: "<", color: "#ffffff" },
+        {
+            char: ">",
+            color: "#ffffff",
+        },
+        {
+            char: "<",
+            color: "#ffffff",
+        },
     ],
 };
 
 export let game: Game = {
-    currentId: 1,
+    currentActorId: 1,
+    currentStairId: 0,
     fontSize: 24,
     godMode: true,
     ignoreFov: false,
@@ -40,7 +156,7 @@ export function log(area: Area, location: Coord, message: string) {
     const player = playerContext.actor;
 
     if ((area === playerContext.level || area === playerContext.chunk)
-        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), player.sight)
+        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, location), config.actorInfo[player.actorType].sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 
@@ -61,12 +177,11 @@ export function tick() {
             chunks.forEach((chunk) => {
                 chunk.actors.forEach((actor) => {
                     if (actor.id !== 0) {
-                        const actorContext: ActorContext = {
-                            actor,
+                        const context: Context = {
                             chunk,
                         };
 
-                        actor_tick(actorContext);
+                        actor_tick(actor, context);
                     }
                 });
 
@@ -74,14 +189,13 @@ export function tick() {
                     dungeon.levels.forEach((level) => {
                         level.actors.forEach((actor) => {
                             if (actor.id !== 0) {
-                                const actorContext: ActorContext = {
-                                    actor,
+                                const context: Context = {
                                     chunk,
                                     dungeon,
                                     level,
                                 };
 
-                                actor_tick(actorContext);
+                                actor_tick(actor, context);
                             }
                         });
                     });

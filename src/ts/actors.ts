@@ -1,8 +1,8 @@
 import { aStar, lineOfSight } from "./algorithms";
-import { game, log } from "./game";
+import { config, game, log } from "./game";
 import { createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Actor, ActorContext, Area, CellInfo, CellType, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Item, Level, StairDirection, Stats } from "./types";
+import { Actor, Area, CellInfo, CellType, Chunk, Class, Context, Coord, Corpse, Disposition, Dungeon, Item, ItemType, Level, StairDirection, Stats } from "./types";
 import { findStair } from "./utils";
 
 export function calcStats(actor: Actor) {
@@ -31,11 +31,11 @@ export function getInventoryChar(actor: Actor, item: Item) {
     return String.fromCharCode(97 + actor.inventory.indexOf(item));
 }
 
-export function move(actorContext: ActorContext, coord: Coord) {
-    const actor = actorContext.actor;
-    const chunk = actorContext.chunk;
-    const dungeon = actorContext.dungeon;
-    const level = actorContext.level;
+export function move(actor: Actor, context: Context, coord: Coord) {
+    const actorInfo = config.actorInfo[actor.actorType];
+    const chunk = context.chunk;
+    const dungeon = context.dungeon;
+    const level = context.level;
     const area: Area = level || chunk;
 
     if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
@@ -59,7 +59,7 @@ export function move(actorContext: ActorContext, coord: Coord) {
         if (area.actors.some((target, targetIndex) => {
             if (target !== actor
                 && target.x === coord.x && target.y === coord.y) {
-                if (target.factions.some((faction) => actor.hostileFactions.indexOf(faction) > -1)) {
+                if (config.actorInfo[target.actorType].factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)) {
                     if (randomFloat(0, 1) < 0.5) {
                         if (target.id === 0 && game.godMode) {
                             log(area, { x: actor.x, y: actor.y }, `${actor.name} cannot kill ${target.name}`);
@@ -79,14 +79,15 @@ export function move(actorContext: ActorContext, coord: Coord) {
                                 });
                             }
 
-                            area.actors.splice(targetIndex, 1);
-                            area.items.push({
+                            const corpse: Corpse = {
                                 ...target,
-                                char: "%",
                                 equipped: false,
+                                itemType: ItemType.Corpse,
                                 name: target.name + " corpse",
-                                originalChar: target.char,
-                            } as Corpse);
+                            };
+
+                            area.actors.splice(targetIndex, 1);
+                            area.items.push(corpse);
                         }
                     } else {
                         log(area, { x: actor.x, y: actor.y }, `${actor.name} misses ${target.name}`);
@@ -219,11 +220,11 @@ export function move(actorContext: ActorContext, coord: Coord) {
     }
 }
 
-export function tick(actorContext: ActorContext) {
-    const actor = actorContext.actor;
-    const chunk = actorContext.chunk;
-    const dungeon = actorContext.dungeon;
-    const level = actorContext.level;
+export function tick(actor: Actor, context: Context) {
+    const actorInfo = config.actorInfo[actor.actorType];
+    const chunk = context.chunk;
+    const dungeon = context.dungeon;
+    const level = context.level;
     const area: Area = level || chunk;
 
     switch (actor.class) {
@@ -232,8 +233,8 @@ export function tick(actorContext: ActorContext) {
         case Class.Shaman:
             if (randomFloat(0, 1) < 0.5) {
                 const corpses = area.items.filter((item) => "originalChar" in item
-                    && (item as Corpse).factions.every((faction) => actor.hostileFactions.indexOf(faction) === -1)
-                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actor.sight)
+                    && config.actorInfo[(item as Corpse).actorType].factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1)
+                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actorInfo.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))
                     .map((item) => item as Corpse);
 
@@ -242,19 +243,14 @@ export function tick(actorContext: ActorContext) {
 
                     if (randomFloat(0, 1) < 0.5) {
                         const newActor: Actor = {
-                            alpha: corpse.alpha,
-                            char: corpse.originalChar,
+                            actorType: corpse.actorType,
                             class: corpse.class,
-                            color: corpse.color,
-                            disposition: corpse.disposition,
-                            factions: corpse.factions,
+                            experience: corpse.experience,
                             hostileActorIds: corpse.hostileActorIds,
-                            hostileFactions: corpse.hostileFactions,
                             id: corpse.id,
                             inventory: corpse.inventory,
                             level: corpse.level,
                             name: corpse.name.replace(" corpse", ""),
-                            sight: corpse.sight,
                             x: corpse.x,
                             y: corpse.y,
                         };
@@ -274,15 +270,15 @@ export function tick(actorContext: ActorContext) {
             break;
     }
 
-    switch (actor.disposition) {
+    switch (actorInfo.disposition) {
         case Disposition.Passive:
             break;
         case Disposition.Aggressive:
             if (randomFloat(0, 1) < 0.5) {
                 const targets: Actor[] = area.actors.filter((target) => target !== actor
-                    && target.factions
-                        .some((faction) => actor.hostileFactions.indexOf(faction) > -1)
-                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: target.x, y: target.y }), actor.sight)
+                    && config.actorInfo[target.actorType].factions
+                        .some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
+                    && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: target.x, y: target.y }), actorInfo.sight)
                         .some((coord) => coord.x === target.x && coord.y === target.y));
 
                 if (targets.length) {
@@ -295,7 +291,7 @@ export function tick(actorContext: ActorContext) {
                     if (path && path.length) {
                         const next = path.pop();
 
-                        move(actorContext, { x: next.x, y: next.y });
+                        move(actor, context, { x: next.x, y: next.y });
 
                         return;
                     }
@@ -309,11 +305,11 @@ export function tick(actorContext: ActorContext) {
 
     if (randomFloat(0, 1) < 0.5) {
         const targets: Array<{ x: number, y: number, name: string }> = area.chests.filter((chest) =>
-            lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: chest.x, y: chest.y }), actor.sight)
+            lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: chest.x, y: chest.y }), actorInfo.sight)
                 .some((coord) => coord.x === chest.x && coord.y === chest.y))
             .map((chest) => ({ x: chest.x, y: chest.y, name: "chest" }))
             || area.items.filter((item) => !("originalChar" in item)
-                && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actor.sight)
+                && lineOfSight(area, { x: actor.x, y: actor.y }, radiansBetween({ x: actor.x, y: actor.y }, { x: item.x, y: item.y }), actorInfo.sight)
                     .some((coord) => coord.x === item.x && coord.y === item.y));
 
         if (targets.length) {
@@ -326,7 +322,7 @@ export function tick(actorContext: ActorContext) {
             if (path && path.length) {
                 const next = path.pop();
 
-                move(actorContext, { x: next.x, y: next.y });
+                move(actor, context, { x: next.x, y: next.y });
 
                 return;
             }
@@ -365,13 +361,13 @@ export function tick(actorContext: ActorContext) {
     if (randomFloat(0, 1) < 0.5) {
         const roll = randomFloat(0, 1);
         if (roll < 0.25) {
-            move(actorContext, { x: actor.x, y: actor.y - 1 });
+            move(actor, context, { x: actor.x, y: actor.y - 1 });
         } else if (roll < 0.5) {
-            move(actorContext, { x: actor.x + 1, y: actor.y });
+            move(actor, context, { x: actor.x + 1, y: actor.y });
         } else if (roll < 0.75) {
-            move(actorContext, { x: actor.x, y: actor.y + 1 });
+            move(actor, context, { x: actor.x, y: actor.y + 1 });
         } else {
-            move(actorContext, { x: actor.x - 1, y: actor.y });
+            move(actor, context, { x: actor.x - 1, y: actor.y });
         }
     }
 }

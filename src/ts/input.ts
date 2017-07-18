@@ -1,6 +1,6 @@
 import { getInventoryChar, move } from "./actors";
 import { lineOfSight } from "./algorithms";
-import { game, load, log, save, tick, ui } from "./game";
+import { config, game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
 import { Actor, CellType, Corpse, UIMode } from "./types";
@@ -9,6 +9,7 @@ import { findActor } from "./utils";
 export function input(ev: KeyboardEvent) {
     const playerContext = findActor(0);
     const player = playerContext.actor;
+    const playerInfo = config.actorInfo[player.actorType];
     const chunk = playerContext.chunk;
     const dungeon = playerContext.dungeon;
     const level = playerContext.level;
@@ -18,25 +19,25 @@ export function input(ev: KeyboardEvent) {
         case UIMode.Default:
             switch (ev.key) {
                 case "ArrowUp":
-                    move(playerContext, { x: player.x, y: player.y - 1 });
+                    move(player, playerContext, { x: player.x, y: player.y - 1 });
 
                     tick();
 
                     break;
                 case "ArrowRight":
-                    move(playerContext, { x: player.x + 1, y: player.y });
+                    move(player, playerContext, { x: player.x + 1, y: player.y });
 
                     tick();
 
                     break;
                 case "ArrowDown":
-                    move(playerContext, { x: player.x, y: player.y + 1 });
+                    move(player, playerContext, { x: player.x, y: player.y + 1 });
 
                     tick();
 
                     break;
                 case "ArrowLeft":
-                    move(playerContext, { x: player.x - 1, y: player.y });
+                    move(player, playerContext, { x: player.x - 1, y: player.y });
 
                     tick();
 
@@ -60,8 +61,8 @@ export function input(ev: KeyboardEvent) {
                     break;
                 case "s":
                     const targets = area.actors.filter((target) => target !== player
-                        && target.factions.some((faction) => player.hostileFactions.indexOf(faction) > -1)
-                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), player.sight)
+                        && config.actorInfo[target.actorType].factions.some((faction) => playerInfo.hostileFactions.indexOf(faction) > -1)
+                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: target.x, y: target.y }), playerInfo.sight)
                             .some((coord) => coord.x === target.x && coord.y === target.y));
 
                     if (targets.length) {
@@ -74,24 +75,19 @@ export function input(ev: KeyboardEvent) {
                     break;
                 case "r":
                     area.items.filter((item) => "originalChar" in item
-                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), player.sight)
+                        && lineOfSight(area, { x: player.x, y: player.y }, radiansBetween({ x: player.x, y: player.y }, { x: item.x, y: item.y }), playerInfo.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
                         .forEach((corpse) => {
                             const newActor: Actor = {
-                                alpha: corpse.alpha,
-                                char: corpse.originalChar,
+                                actorType: corpse.actorType,
                                 class: corpse.class,
-                                color: corpse.color,
-                                disposition: corpse.disposition,
-                                factions: corpse.factions,
+                                experience: corpse.experience,
                                 hostileActorIds: corpse.hostileActorIds,
-                                hostileFactions: corpse.hostileFactions,
                                 id: corpse.id,
                                 inventory: corpse.inventory,
                                 level: corpse.level,
                                 name: corpse.name.replace(" corpse", ""),
-                                sight: corpse.sight,
                                 x: corpse.x,
                                 y: corpse.y,
                             };

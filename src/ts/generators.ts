@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { Actor, CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, DungeonOptions, Faction, Item, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
+import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, DungeonOptions, Faction, Item, ItemType, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 100;
@@ -31,7 +31,7 @@ export function createChunk(opts?: ChunkOptions) {
     for (let i = 0; i < dungeonAmount; i++) {
         chunk.stairsDown.push({
             direction: StairDirection.Down,
-            id: game.currentId++,
+            id: game.currentStairId++,
             x: randomInt(0, chunk.width),
             y: randomInt(0, chunk.height),
         });
@@ -248,7 +248,7 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
     if (!finalLevel) {
         level.stairDown = {
             direction: StairDirection.Down,
-            id: game.currentId++,
+            id: game.currentStairId++,
             x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
             y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
         };
@@ -265,19 +265,14 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
         const roomIndex = randomInt(1, level.rooms.length);
 
         const monster: Actor = {
-            alpha: 1,
-            char: "",
-            class: Class.Warrior,
-            color: "#ffffff",
-            disposition: Disposition.Aggressive,
-            factions: [],
+            actorType: undefined,
+            class: Class.None,
+            experience: 0,
             hostileActorIds: [],
-            hostileFactions: [],
-            id: game.currentId++,
+            id: game.currentActorId++,
             inventory: [],
             level: 1,
-            name: "",
-            sight: 10,
+            name: undefined,
             x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
             y: randomInt(level.rooms[roomIndex].top, level.rooms[roomIndex].top + level.rooms[roomIndex].height),
         };
@@ -285,48 +280,21 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
         const roll = randomFloat(0, 1);
         if (roll < 0.25) {
             monster.name = "rat";
-            monster.char = "r";
-            monster.factions = [
-                Faction.Monster,
-            ];
-            monster.hostileFactions = [];
-            monster.disposition = Disposition.Cowardly;
+            monster.actorType = ActorType.Rat;
         } else if (roll < 0.50) {
             monster.name = "slime";
-            monster.char = "s";
-            monster.factions = [
-                Faction.Monster,
-            ];
-            monster.disposition = Disposition.Passive;
+            monster.actorType = ActorType.Slime;
         } else if (roll < 0.75) {
             monster.name = "orc";
-            monster.char = "o";
-            monster.factions = [
-                Faction.Monster,
-                Faction.Orc,
-            ];
-            monster.hostileFactions = [
-                Faction.Player,
-                Faction.Bugbear,
-            ];
+            monster.actorType = ActorType.Orc;
             if (randomFloat(0, 1) < 0.5) {
-                monster.color = "#ffff00";
                 monster.name += " shaman";
                 monster.class = Class.Shaman;
             }
         } else {
             monster.name = "bugbear";
-            monster.char = "b";
-            monster.factions = [
-                Faction.Monster,
-                Faction.Bugbear,
-            ];
-            monster.hostileFactions = [
-                Faction.Player,
-                Faction.Orc,
-            ];
+            monster.actorType = ActorType.Bugbear;
             if (randomFloat(0, 1) < 0.5) {
-                monster.color = "#ffff00";
                 monster.name += " shaman";
                 monster.class = Class.Shaman;
             }
@@ -342,27 +310,26 @@ export function createLevel(stairDownId: number, finalLevel: boolean, opts?: Lev
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
                     const item: Item = {
-                        alpha: 1,
-                        char: "",
-                        color: "#ffffff",
                         equipped: false,
-                        name: "",
-                        x: -1, y: -1,
+                        itemType: undefined,
+                        name: undefined,
+                        x: undefined,
+                        y: undefined,
                     };
 
                     const roll = randomFloat(0, 1);
                     if (roll < 0.25) {
                         item.name = "sword";
-                        item.char = "|";
+                        item.itemType = ItemType.Sword;
                     } else if (roll < 0.50) {
                         item.name = "spear";
-                        item.char = "/";
+                        item.itemType = ItemType.Spear;
                     } else if (roll < 0.75) {
                         item.name = "shield";
-                        item.char = ")";
+                        item.itemType = ItemType.Shield;
                     } else {
                         item.name = "bow";
-                        item.char = "}";
+                        item.itemType = ItemType.Bow;
                     }
 
                     return item;
@@ -408,25 +375,16 @@ export function createWorld(opts?: WorldOptions) {
 
 export function spawnPlayer() {
     const player: Actor = {
-        alpha: 1,
-        char: "@",
+        actorType: ActorType.Player,
         class: Class.Warrior,
-        color: "#ffffff",
-        disposition: Disposition.Aggressive,
-        factions: [
-            Faction.Player,
-        ],
+        experience: 0,
         hostileActorIds: [],
-        hostileFactions: [
-            Faction.Monster,
-        ],
         id: 0,
         inventory: [],
         level: 1,
         name: "player",
-        sight: 5,
-        x: 0,
-        y: 0,
+        x: undefined,
+        y: undefined,
     };
 
     return player;
