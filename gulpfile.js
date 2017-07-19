@@ -8,7 +8,7 @@ const gutil = require('gulp-util');
 const webpack = require('webpack');
 
 const SRC_DIR = './src';
-const OUT_DIR = './www';
+const OUT_DIR = './docs';
 
 gulp.task('watch', ['build'], () => {
     gulp.watch(`${SRC_DIR}/*/**`, ['build']);
