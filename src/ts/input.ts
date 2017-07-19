@@ -1,4 +1,4 @@
-import { getInventoryChar, moveToCell, resurrect } from "./actors";
+import { dropItem, getInventoryChar, moveToCell, pickUpItem, resurrect } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { config, game, load, log, save, tick, ui } from "./game";
 import { radiansBetween } from "./math";
@@ -19,25 +19,25 @@ export function input(ev: KeyboardEvent) {
         case UIMode.Default:
             switch (ev.key) {
                 case "ArrowUp":
-                    moveToCell(player, playerContext, { x: player.x, y: player.y - 1 });
+                    moveToCell(player, { x: player.x, y: player.y - 1 }, chunk, dungeon, level);
 
                     tick();
 
                     break;
                 case "ArrowRight":
-                    moveToCell(player, playerContext, { x: player.x + 1, y: player.y });
+                    moveToCell(player, { x: player.x + 1, y: player.y }, chunk, dungeon, level);
 
                     tick();
 
                     break;
                 case "ArrowDown":
-                    moveToCell(player, playerContext, { x: player.x, y: player.y + 1 });
+                    moveToCell(player, { x: player.x, y: player.y + 1 }, chunk, dungeon, level);
 
                     tick();
 
                     break;
                 case "ArrowLeft":
-                    moveToCell(player, playerContext, { x: player.x - 1, y: player.y });
+                    moveToCell(player, { x: player.x - 1, y: player.y }, chunk, dungeon, level);
 
                     tick();
 
@@ -47,12 +47,9 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 case "g":
-                    area.items.forEach((item, index) => {
+                    area.items.forEach((item) => {
                         if (item.x === player.x && item.y === player.y) {
-                            log(area, player, `${player.name} picks up a ${item.name}`);
-
-                            player.inventory.push(item);
-                            area.items.splice(index, 1);
+                            pickUpItem(player, item, area);
                         }
                     });
 
@@ -61,7 +58,6 @@ export function input(ev: KeyboardEvent) {
                     break;
                 case "s":
                     const targets = area.actors.filter((target) => target !== player
-                        && config.actorInfo[target.actorType].factions.some((faction) => playerInfo.hostileFactions.indexOf(faction) > -1)
                         && lineOfSight(area, player, radiansBetween(player, target), playerInfo.sight)
                             .some((coord) => coord.x === target.x && coord.y === target.y));
 
@@ -78,7 +74,7 @@ export function input(ev: KeyboardEvent) {
                         && lineOfSight(area, player, radiansBetween(player, item), playerInfo.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
-                        .forEach((corpse) => resurrect(player, playerContext, corpse));
+                        .forEach((corpse) => resurrect(player, corpse, area));
 
                     tick();
 
@@ -175,15 +171,9 @@ export function input(ev: KeyboardEvent) {
 
             break;
         case UIMode.InventoryDrop:
-            player.inventory.forEach((item, index) => {
+            player.inventory.forEach((item) => {
                 if (ev.key === getInventoryChar(player, item)) {
-                    log(area, player, `${player.name} drops a ${item.name}`);
-
-                    item.x = player.x;
-                    item.y = player.y;
-
-                    player.inventory.splice(index, 1);
-                    area.items.push(item);
+                    dropItem(player, item, area);
 
                     ui.mode = UIMode.Default;
                 }

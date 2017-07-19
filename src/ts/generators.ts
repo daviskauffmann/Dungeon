@@ -72,7 +72,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     const roomAttempts = opts && opts.roomAttempts || 20;
     const minRoomSize = opts && opts.minRoomSize || 5;
     const maxRoomSize = opts && opts.maxRoomSize || 15;
-    const preventOverlap = opts && opts.preventOverlap || false;
+    const preventOverlap = opts && opts.preventOverlap || true;
     const litRooms = opts && opts.litRooms || false;
     const doorChance = opts && opts.doorChance || 0.5;
     const monsterAmount = opts && opts.monsterAmount || 5;
@@ -359,31 +359,23 @@ export function createWorld(opts?: WorldOptions) {
     }
 
     {
-        const player = spawnPlayer();
         const playerChunk = world.chunks[0][0] = createChunk();
 
-        playerChunk.actors.push(player);
+        const player: Actor = {
+            actorType: ActorType.Player,
+            class: Class.Warrior,
+            experience: 0,
+            hostileActorIds: [],
+            id: 0,
+            inventory: [],
+            level: 1,
+            name: "player",
+            x: Math.round(playerChunk.width / 2),
+            y: Math.round(playerChunk.height / 2),
+        };
 
-        player.x = Math.round(playerChunk.width / 2);
-        player.y = Math.round(playerChunk.height / 2);
+        playerChunk.actors.push(player);
     }
 
     return world;
-}
-
-export function spawnPlayer() {
-    const player: Actor = {
-        actorType: ActorType.Player,
-        class: Class.Warrior,
-        experience: 0,
-        hostileActorIds: [],
-        id: 0,
-        inventory: [],
-        level: 1,
-        name: "player",
-        x: undefined,
-        y: undefined,
-    };
-
-    return player;
 }

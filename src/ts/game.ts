@@ -19,21 +19,21 @@ export const config: Config = {
         },
         {
             char: "s",
-            disposition: Disposition.Passive,
+            disposition: Disposition.Aggressive,
             factions: [
                 Faction.Monster,
             ],
             hostileFactions: [],
-            sight: 5,
+            sight: 10,
         },
         {
             char: "r",
-            disposition: Disposition.Cowardly,
+            disposition: Disposition.Aggressive,
             factions: [
                 Faction.Monster,
             ],
             hostileFactions: [],
-            sight: 5,
+            sight: 10,
         },
         {
             char: "o",
@@ -46,7 +46,7 @@ export const config: Config = {
                 Faction.Player,
                 Faction.Bugbear,
             ],
-            sight: 5,
+            sight: 10,
         },
         {
             char: "b",
@@ -59,7 +59,7 @@ export const config: Config = {
                 Faction.Player,
                 Faction.Orc,
             ],
-            sight: 5,
+            sight: 10,
         },
     ],
     cellInfo: [
@@ -177,11 +177,7 @@ export function tick() {
             chunks.forEach((chunk) => {
                 chunk.actors.forEach((actor) => {
                     if (actor.id !== 0) {
-                        const context: Context = {
-                            chunk,
-                        };
-
-                        actor_tick(actor, context);
+                        actor_tick(actor, chunk);
                     }
                 });
 
@@ -189,13 +185,7 @@ export function tick() {
                     dungeon.levels.forEach((level) => {
                         level.actors.forEach((actor) => {
                             if (actor.id !== 0) {
-                                const context: Context = {
-                                    chunk,
-                                    dungeon,
-                                    level,
-                                };
-
-                                actor_tick(actor, context);
+                                actor_tick(actor, chunk, dungeon, level);
                             }
                         });
                     });
