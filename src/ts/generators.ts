@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Coord, Disposition, Dungeon, DungeonOptions, Faction, Item, ItemType, Level, LevelOptions, Rect, Stair, StairContext, StairDirection, World, WorldOptions } from "./types";
+import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Dungeon, DungeonOptions, Item, ItemType, Level, LevelOptions, Rect, StairDirection, World, WorldOptions } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 100;
@@ -21,10 +21,10 @@ export function createChunk(opts?: ChunkOptions) {
     for (let x = 0; x < chunk.width; x++) {
         chunk.cells[x] = [];
         for (let y = 0; y < chunk.height; y++) {
-            chunk.cells[x][y] = {
+            chunk.cells[x].push({
                 discovered: false,
                 type: CellType.Grass,
-            };
+            });
         }
     }
 
@@ -94,10 +94,10 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     for (let x = 0; x < level.width; x++) {
         level.cells[x] = [];
         for (let y = 0; y < level.height; y++) {
-            level.cells[x][y] = {
+            level.cells[x].push({
                 discovered: false,
                 type: CellType.Empty,
-            };
+            });
         }
     }
 
@@ -349,20 +349,15 @@ export function createWorld(opts?: WorldOptions) {
     const height = opts && opts.height || 0;
 
     const world: World = {
-        chunks: [[]],
+        chunks: {},
         height,
         width,
     };
 
-    for (let x = 0; x < world.width; x++) {
-        // world.chunks[x] = [];
-        for (let y = 0; y < world.height; y++) {
-            // world.chunks[x][y] = createChunk();
-        }
-    }
-
     {
-        const playerChunk = world.chunks[0][0] = createChunk();
+        const playerChunk = createChunk();
+
+        world.chunks["0_0"] = playerChunk;
 
         const player: Actor = {
             actorType: ActorType.Player,

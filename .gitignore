@@ -7,3 +7,6 @@ npm-debug.log
 
 # Bower
 /bower_components
+
+# Build
+/dist

@@ -250,7 +250,9 @@ export enum UIMode {
 export interface World {
     width: number;
     height: number;
-    chunks: Chunk[][];
+    chunks: {
+        [key: string]: Chunk;
+    };
 }
 
 export interface WorldOptions {

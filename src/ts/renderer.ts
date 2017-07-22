@@ -2,8 +2,8 @@ import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
 import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { Actor, ActorContext, Chunk, Corpse, Dungeon, Level, Rect, Stair, UIMode } from "./types";
-import { findActor } from "./utils";
+import { Corpse, Rect, UIMode } from "./types";
+import { findActor } from "./world";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -53,9 +53,12 @@ export function draw(ev?: UIEvent) {
     if (game.ignoreFov) {
         for (let x = view.left; x < view.left + view.width; x++) {
             for (let y = view.top; y < view.top + view.height; y++) {
-                if (x >= 0 && x < area.width && y >= 0 && y < area.height
-                    && visibleCells.indexOf(area.cells[x][y]) === -1) {
-                    visibleCells.push(area.cells[x][y]);
+                if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+                    const cell = area.cells[x][y];
+
+                    if (visibleCells.indexOf(cell) === -1) {
+                        visibleCells.push(cell);
+                    }
                 }
             }
         }
@@ -67,10 +70,12 @@ export function draw(ev?: UIEvent) {
                 for (let x = room.left - 1; x < room.left + room.width + 1; x++) {
                     for (let y = room.top - 1; y < room.top + room.height + 1; y++) {
                         if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
-                            area.cells[x][y].discovered = true;
+                            const cell = area.cells[x][y];
 
-                            if (visibleCells.indexOf(area.cells[x][y]) === -1) {
-                                visibleCells.push(area.cells[x][y]);
+                            cell.discovered = true;
+
+                            if (visibleCells.indexOf(cell) === -1) {
+                                visibleCells.push(cell);
                             }
                         }
                     }
@@ -85,6 +90,7 @@ export function draw(ev?: UIEvent) {
     for (let x = view.left; x < view.left + view.width; x++) {
         for (let y = view.top; y < view.top + view.height; y++) {
             if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+                const cell = area.cells[x][y];
                 const screen = {
                     x: (x - view.left) * game.fontSize,
                     y: (y - view.top + 1) * game.fontSize,
@@ -107,9 +113,12 @@ export function draw(ev?: UIEvent) {
                     }
                 }
 
-                if (visibleCells.indexOf(area.cells[x][y]) > -1) {
-                    if (area.actors.some((actor) => {
-                        if (actor.x === x && actor.y === y) {
+                if (visibleCells.indexOf(cell) > -1) {
+                    {
+                        const actors = area.actors.filter((actor) => actor.x === x && actor.y === y);
+
+                        if (actors.length) {
+                            const actor = actors[0]; // pick an actor
                             const actorInfo = config.actorInfo[actor.actorType];
                             const classInfo = config.classInfo[actor.class];
 
@@ -117,67 +126,63 @@ export function draw(ev?: UIEvent) {
                             ctx.globalAlpha = 1;
                             ctx.fillText(actorInfo.char, screen.x, screen.y);
 
-                            return true;
+                            continue;
                         }
-                    })) {
-                        continue;
                     }
 
-                    if (area.chests.some((chest) => {
-                        if (chest.x === x && chest.y === y) {
+                    {
+                        const chests = area.chests.filter((chest) => chest.x === x && chest.y === y);
+
+                        if (chests.length) {
+                            const chest = chests[0]; // pick a chest
+
                             ctx.fillStyle = "#ffffff";
                             ctx.globalAlpha = 1;
                             ctx.fillText("~", screen.x, screen.y);
 
-                            return true;
+                            continue;
                         }
-                    })) {
-                        continue;
                     }
 
-                    if (area.items.sort((a, b) => {
-                        return 0;
-                    }).some((item) => {
-                        if (item.x === x && item.y === y) {
-                            const itemInfo = config.itemInfo[item.itemType];
+                    {
+                        const items = area.items.filter((item) => item.x === x && item.y === y);
 
-                            ctx.fillStyle = ("class" in item) ? config.classInfo[(item as Corpse).class].color : "#ffffff";
+                        if (items.length) {
+                            const item = items[0]; // pick an item
+                            const itemInfo = config.itemInfo[item.itemType];
+                            const actorInfo = ("actorType" in item) && config.actorInfo[(item as Corpse).actorType];
+                            const classInfo = ("class" in item) && config.classInfo[(item as Corpse).class];
+
+                            ctx.fillStyle = classInfo ? classInfo.color : "#ffffff";
                             ctx.globalAlpha = 1;
                             ctx.fillText(itemInfo.char, screen.x, screen.y);
 
-                            return true;
+                            continue;
                         }
-                    })) {
-                        continue;
                     }
                 }
 
                 {
-                    let stair: Stair;
-
-                    if (level) {
-                        if (level.stairDown
-                            && level.stairDown.x === x && level.stairDown.y === y) {
-                            stair = level.stairDown;
-                        }
-                        if (level.stairUp.x === x && level.stairUp.y === y) {
-                            stair = level.stairUp;
-                        }
-                    } else {
-                        chunk.stairsDown.forEach((stairDown) => {
-                            if (stairDown.x === x && stairDown.y === y) {
-                                stair = stairDown;
-
-                                return;
+                    const stair = (() => {
+                        if (level) {
+                            if (level.stairDown
+                                && level.stairDown.x === x && level.stairDown.y === y) {
+                                return level.stairDown;
                             }
-                        });
-                    }
+                            if (level.stairUp.x === x && level.stairUp.y === y) {
+                                return level.stairUp;
+                            }
+                        } else {
+                            return chunk.stairsDown.find((s) => s.x === x && s.y === y);
+                        }
+                    })();
 
                     if (stair) {
                         const stairInfo = config.stairInfo[stair.direction];
+
                         ctx.fillStyle = stairInfo.color;
-                        ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
-                            : area.cells[x][y].discovered ? 0.25
+                        ctx.globalAlpha = visibleCells.indexOf(cell) > -1 ? 1
+                            : cell.discovered ? 0.25
                                 : 0;
                         ctx.fillText(stairInfo.char, screen.x, screen.y);
 
@@ -185,12 +190,15 @@ export function draw(ev?: UIEvent) {
                     }
                 }
 
-                const cellInfo = config.cellInfo[area.cells[x][y].type];
-                ctx.fillStyle = cellInfo.color;
-                ctx.globalAlpha = visibleCells.indexOf(area.cells[x][y]) > -1 ? 1
-                    : area.cells[x][y].discovered ? 0.25
-                        : 0;
-                ctx.fillText(cellInfo.char, screen.x, screen.y);
+                {
+                    const cellInfo = config.cellInfo[cell.type];
+
+                    ctx.fillStyle = cellInfo.color;
+                    ctx.globalAlpha = visibleCells.indexOf(cell) > -1 ? 1
+                        : cell.discovered ? 0.25
+                            : 0;
+                    ctx.fillText(cellInfo.char, screen.x, screen.y);
+                }
             }
         }
     }

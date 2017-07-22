@@ -1,8 +1,7 @@
-import { tick as actor_tick } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { radiansBetween } from "./math";
-import { Area, Config, Context, Coord, Disposition, Faction, Game, Level, UI, UIMode } from "./types";
-import { findActor } from "./utils";
+import { Area, Config, Coord, Disposition, Faction, Game, UI, UIMode } from "./types";
+import { findActor } from "./world";
 
 export const config: Config = {
     actorInfo: [
@@ -154,9 +153,10 @@ export function load() {
 export function log(area: Area, location: Coord, message: string) {
     const playerContext = findActor(0);
     const player = playerContext.actor;
+    const playerInfo = config.actorInfo[player.actorType];
 
     if ((area === playerContext.level || area === playerContext.chunk)
-        && lineOfSight(area, player, radiansBetween(player, location), config.actorInfo[player.actorType].sight)
+        && lineOfSight(area, player, radiansBetween(player, location), playerInfo.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 
@@ -169,32 +169,6 @@ export function log(area: Area, location: Coord, message: string) {
 export function save() {
     localStorage.setItem("game", JSON.stringify(game));
     console.log(JSON.stringify(game));
-}
-
-export function tick() {
-    if (!game.stopTime) {
-        game.world.chunks.forEach((chunks) => {
-            chunks.forEach((chunk) => {
-                chunk.actors.forEach((actor) => {
-                    if (actor.id !== 0) {
-                        actor_tick(actor, chunk);
-                    }
-                });
-
-                chunk.dungeons.forEach((dungeon) => {
-                    dungeon.levels.forEach((level) => {
-                        level.actors.forEach((actor) => {
-                            if (actor.id !== 0) {
-                                actor_tick(actor, chunk, dungeon, level);
-                            }
-                        });
-                    });
-                });
-            });
-        });
-
-        game.turn++;
-    }
 }
 
 export const ui: UI = {
