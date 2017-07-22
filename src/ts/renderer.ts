@@ -85,7 +85,10 @@ export function draw(ev?: UIEvent) {
     for (let x = view.left; x < view.left + view.width; x++) {
         for (let y = view.top; y < view.top + view.height; y++) {
             if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
-                const screen = { x: (x - view.left) * game.fontSize, y: (y - view.top + 1) * game.fontSize };
+                const screen = {
+                    x: (x - view.left) * game.fontSize,
+                    y: (y - view.top + 1) * game.fontSize,
+                };
 
                 if (ui.mode === UIMode.Target) {
                     if (ui.target.x + 1 === x && ui.target.y === y) {

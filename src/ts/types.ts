@@ -1,10 +1,13 @@
 export interface Actor extends Coord {
-    actorType: ActorType;
     id: number;
+    actorType: ActorType;
     name: string;
-    experience: number;
-    level: number;
     class: Class;
+    level: number;
+    experience: number;
+    health: number;
+    energy: number;
+    mana: number;
     inventory: Item[];
     hostileActorIds: number[];
 }

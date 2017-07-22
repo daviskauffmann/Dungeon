@@ -17,26 +17,36 @@ export function ascend(actor: Actor, stair: Stair, area: Area) {
 export function attack(actor: Actor, target: Actor, area: Area) {
     const actorInfo = config.actorInfo[actor.actorType];
     const targetInfo = config.actorInfo[target.actorType];
+    const actorStats = calcStats(actor);
+    const targetStats = calcStats(target);
 
     if (randomFloat(0, 1) < 0.5) {
         if (target.id === 0 && game.godMode) {
-            log(area, actor, `${actor.name} cannot kill ${target.name}`);
+            log(area, actor, `${actor.name} cannot damage ${target.name}`);
         } else {
-            log(area, actor, `${actor.name} kills ${target.name}`);
+            const damage = randomInt(0, 100);
 
-            target.inventory.forEach((item) => {
-                dropItem(target, item, area);
-            });
+            log(area, actor, `${actor.name} hits ${target.name} for ${damage}`);
 
-            const corpse: Corpse = {
-                ...target,
-                equipped: false,
-                itemType: ItemType.Corpse,
-                name: target.name + " corpse",
-            };
+            target.health -= damage;
 
-            area.actors.splice(area.actors.indexOf(target), 1);
-            area.items.push(corpse);
+            if (target.health <= 0) {
+                log(area, actor, `${actor.name} kills ${target.name}`);
+
+                target.inventory.forEach((item) => {
+                    dropItem(target, item, area);
+                });
+
+                const corpse: Corpse = {
+                    ...target,
+                    equipped: false,
+                    itemType: ItemType.Corpse,
+                    name: target.name + " corpse",
+                };
+
+                area.actors.splice(area.actors.indexOf(target), 1);
+                area.items.push(corpse);
+            }
         }
     } else {
         log(area, actor, `${actor.name} misses ${target.name}`);
@@ -253,11 +263,14 @@ export function resurrect(actor: Actor, corpse: Corpse, area: Area) {
     const newActor: Actor = {
         actorType: corpse.actorType,
         class: corpse.class,
+        energy: 1,
         experience: corpse.experience,
+        health: 1,
         hostileActorIds: corpse.hostileActorIds,
         id: corpse.id,
         inventory: corpse.inventory,
         level: corpse.level,
+        mana: 1,
         name: corpse.name.replace(" corpse", ""),
         x: corpse.x,
         y: corpse.y,
