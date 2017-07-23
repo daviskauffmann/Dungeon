@@ -1,6 +1,6 @@
 import { config, game } from "./game";
 import { distanceBetweenSquared, toRadians } from "./math";
-import { Area, Coord } from "./types";
+import { Area, CellType, Coord } from "./types";
 
 export function aStar(area: Area, start: Coord, goal: Coord) {
     const coords: Coord[][] = [];
@@ -72,7 +72,7 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
             neighbors.push(coords[current.x - 1][current.y]);
         }
 
-        neighbors.filter((neighbor) => !config.cellInfo[area.cells[neighbor.x][neighbor.y].type].solid
+        neighbors.filter((neighbor) => !config.cellInfo[CellType[area.cells[neighbor.x][neighbor.y].type]].solid
             && !area.actors.some((actor) => actor.x === neighbor.x && actor.y === neighbor.y
                 && actor.x !== goal.x && actor.y !== goal.y)
             && !area.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y
@@ -116,34 +116,29 @@ export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: 
 export function lineOfSight(area: Area, origin: Coord, radians: number, range: number) {
     const coords: Coord[] = [];
 
-    const current: Coord = {
-        x: origin.x + 0.5,
-        y: origin.y + 0.5,
-    };
+    const dx = Math.cos(radians);
+    const dy = Math.sin(radians);
 
-    const delta: Coord = {
-        x: Math.cos(radians),
-        y: Math.sin(radians),
-    };
+    let x = origin.x + 0.5;
+    let y = origin.y + 0.5;
 
     for (let i = 0; i < range; i++) {
-        const coord: Coord = {
-            x: Math.trunc(current.x),
-            y: Math.trunc(current.y),
+        const current: Coord = {
+            x: Math.trunc(x),
+            y: Math.trunc(y),
         };
 
-        if (coord.x >= 0 && coord.x < area.width
-            && coord.y >= 0 && coord.y < area.height) {
-            if (!coords.some((c) => c.x === coord.x && c.y === coord.y)) {
-                coords.push(coord);
+        if (current.x >= 0 && current.x < area.width && current.y >= 0 && current.y < area.height) {
+            if (!coords.some((coord) => coord.x === current.x && coord.y === current.y)) {
+                coords.push(current);
             }
 
-            if (config.cellInfo[area.cells[coord.x][coord.y].type].solid) {
+            if (config.cellInfo[CellType[area.cells[current.x][current.y].type]].solid) {
                 break;
             }
 
-            current.x += delta.x;
-            current.y += delta.y;
+            x += dx;
+            y += dy;
         }
     }
 

@@ -1,9 +1,8 @@
-import { game } from "./game";
-import { createWorld } from "./generators";
+import { init } from "./game";
 import { input } from "./input";
 import { draw } from "./renderer";
 
-game.world = createWorld();
+init();
 
 document.addEventListener("keydown", input);
 window.addEventListener("resize", draw);

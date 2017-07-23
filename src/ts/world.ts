@@ -117,6 +117,6 @@ export function tick() {
             });
         });
 
-        game.turn++;
+        game.world.turn++;
     }
 }

@@ -16,18 +16,10 @@ export interface ActorContext extends Context {
     actor: Actor;
 }
 
-export interface ActorInfo {
-    char: string;
-    disposition: Disposition;
-    factions: Faction[];
-    hostileFactions: Faction[];
-    sight: number;
-}
-
 export enum ActorType {
     Player,
-    Slime,
     Rat,
+    Slime,
     Orc,
     Bugbear,
 }
@@ -46,19 +38,13 @@ export interface Cell {
     discovered: boolean;
 }
 
-export interface CellInfo {
-    char: string;
-    color: string;
-    solid: boolean;
-}
-
 export enum CellType {
+    DoorClosed,
+    DoorOpen,
     Empty,
     Floor,
     Grass,
     Wall,
-    DoorOpen,
-    DoorClosed,
 }
 
 export interface Chest extends Coord {
@@ -82,16 +68,58 @@ export enum Class {
     Shaman,
 }
 
-export interface ClassInfo {
-    color: string;
-}
-
 export interface Config {
-    actorInfo: ActorInfo[];
-    cellInfo: CellInfo[];
-    classInfo: ClassInfo[];
-    itemInfo: ItemInfo[];
-    stairInfo: StairInfo[];
+    actorInfo: {
+        [key: string]: {
+            char: string;
+            disposition: Disposition;
+            factions: Faction[];
+            hostileFactions: Faction[];
+            sight: number;
+        };
+    };
+    cellInfo: {
+        [key: string]: {
+            char: string;
+            color: string;
+            solid: boolean;
+        };
+    };
+    chestCommon: {
+        char: string;
+        color: string;
+    };
+    classInfo: {
+        [key: string]: {
+            color: string;
+        };
+    };
+    equipmentInfo: {
+        [key: string]: {
+            char?: string;
+            color?: string;
+        };
+    };
+    itemInfo: {
+        [key: string]: {
+            char?: string;
+            color?: string;
+        };
+    };
+    potionInfo: {
+        [key: string]: {
+            char?: string;
+            color?: string;
+        };
+    };
+    stairCommon: {
+        color: string;
+    };
+    stairInfo: {
+        [key: string]: {
+            char: string;
+        };
+    };
 }
 
 export interface Context {
@@ -124,6 +152,18 @@ export interface DungeonOptions {
     maxLevels?: number;
 }
 
+export interface Equipment extends Item {
+    equipmentType: EquipmentType;
+    equipped: boolean;
+}
+
+export enum EquipmentType {
+    Sword,
+    Spear,
+    Shield,
+    Bow,
+}
+
 export interface Level extends Area {
     rooms: Rect[];
     litRooms: boolean;
@@ -153,9 +193,6 @@ export enum Faction {
 
 export interface Game {
     world: World;
-    currentActorId: number;
-    currentStairId: number;
-    turn: number;
     fontSize: number;
     messages: string[];
     godMode: boolean;
@@ -166,19 +203,23 @@ export interface Game {
 export interface Item extends Coord {
     itemType: ItemType;
     name: string;
-    equipped: boolean;
-}
-
-export interface ItemInfo {
-    char: string;
 }
 
 export enum ItemType {
+    Equipment,
+    Potion,
+    Scroll,
     Corpse,
-    Sword,
-    Spear,
-    Shield,
-    Bow,
+}
+
+export interface Potion extends Item {
+    potionType: PotionType;
+}
+
+export enum PotionType {
+    Health,
+    Energy,
+    Mana,
 }
 
 export interface Rect {
@@ -186,6 +227,14 @@ export interface Rect {
     top: number;
     width: number;
     height: number;
+}
+
+export interface Scroll extends Item {
+    scrollType: ScrollType;
+}
+
+export enum ScrollType {
+    Unused,
 }
 
 export interface Stair extends Coord {
@@ -200,11 +249,6 @@ export interface StairContext extends Context {
 export enum StairDirection {
     Down,
     Up,
-}
-
-export interface StairInfo {
-    char: string;
-    color: string;
 }
 
 export interface Stats {
@@ -248,14 +292,10 @@ export enum UIMode {
 }
 
 export interface World {
-    width: number;
-    height: number;
     chunks: {
         [key: string]: Chunk;
     };
-}
-
-export interface WorldOptions {
-    width?: number;
-    height?: number;
+    currentActorId: number;
+    currentStairId: number;
+    turn: number;
 }

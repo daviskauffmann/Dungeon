@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Dungeon, DungeonOptions, Item, ItemType, Level, LevelOptions, Rect, StairDirection, World, WorldOptions } from "./types";
+import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Dungeon, DungeonOptions, Equipment, EquipmentType, Game, Item, ItemType, Level, LevelOptions, Rect, StairDirection, World } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 100;
@@ -31,7 +31,7 @@ export function createChunk(opts?: ChunkOptions) {
     for (let i = 0; i < dungeonAmount; i++) {
         chunk.stairsDown.push({
             direction: StairDirection.Down,
-            id: game.currentStairId++,
+            id: game.world.currentStairId++,
             x: randomInt(0, chunk.width),
             y: randomInt(0, chunk.height),
         });
@@ -247,7 +247,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
 
     level.stairDown = {
         direction: StairDirection.Down,
-        id: game.currentStairId++,
+        id: game.world.currentStairId++,
         x: randomInt(level.rooms[0].left, level.rooms[0].left + level.rooms[0].width),
         y: randomInt(level.rooms[0].top, level.rooms[0].top + level.rooms[0].height),
     };
@@ -269,7 +269,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
             experience: 0,
             health: 100,
             hostileActorIds: [],
-            id: game.currentActorId++,
+            id: game.world.currentActorId++,
             inventory: [],
             level: 1,
             mana: 100,
@@ -311,7 +311,6 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
             loot: (() => {
                 if (randomFloat(0, 1) < 0.5) {
                     const item: Item = {
-                        equipped: false,
                         itemType: undefined,
                         name: undefined,
                         x: undefined,
@@ -321,19 +320,49 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                     const roll = randomFloat(0, 1);
                     if (roll < 0.25) {
                         item.name = "sword";
-                        item.itemType = ItemType.Sword;
+                        item.itemType = ItemType.Equipment;
+
+                        const equipment: Equipment = {
+                            ...item,
+                            equipmentType: EquipmentType.Sword,
+                            equipped: false,
+                        };
+
+                        return equipment;
                     } else if (roll < 0.50) {
                         item.name = "spear";
-                        item.itemType = ItemType.Spear;
+                        item.itemType = ItemType.Equipment;
+
+                        const equipment: Equipment = {
+                            ...item,
+                            equipmentType: EquipmentType.Spear,
+                            equipped: false,
+                        };
+
+                        return equipment;
                     } else if (roll < 0.75) {
                         item.name = "shield";
-                        item.itemType = ItemType.Shield;
+                        item.itemType = ItemType.Equipment;
+
+                        const equipment: Equipment = {
+                            ...item,
+                            equipmentType: EquipmentType.Shield,
+                            equipped: false,
+                        };
+
+                        return equipment;
                     } else {
                         item.name = "bow";
-                        item.itemType = ItemType.Bow;
-                    }
+                        item.itemType = ItemType.Equipment;
 
-                    return item;
+                        const equipment: Equipment = {
+                            ...item,
+                            equipmentType: EquipmentType.Bow,
+                            equipped: false,
+                        };
+
+                        return equipment;
+                    }
                 }
             })(),
             x: randomInt(level.rooms[roomIndex].left, level.rooms[roomIndex].left + level.rooms[roomIndex].width),
@@ -342,41 +371,4 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
     }
 
     return level;
-}
-
-export function createWorld(opts?: WorldOptions) {
-    const width = opts && opts.width || 0;
-    const height = opts && opts.height || 0;
-
-    const world: World = {
-        chunks: {},
-        height,
-        width,
-    };
-
-    {
-        const playerChunk = createChunk();
-
-        world.chunks["0_0"] = playerChunk;
-
-        const player: Actor = {
-            actorType: ActorType.Player,
-            class: Class.Warrior,
-            energy: 100,
-            experience: 0,
-            health: 100,
-            hostileActorIds: [],
-            id: 0,
-            inventory: [],
-            level: 1,
-            mana: 100,
-            name: "player",
-            x: Math.round(playerChunk.width / 2),
-            y: Math.round(playerChunk.height / 2),
-        };
-
-        playerChunk.actors.push(player);
-    }
-
-    return world;
 }

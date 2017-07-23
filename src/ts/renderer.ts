@@ -2,7 +2,7 @@ import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
 import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { Corpse, Rect, UIMode } from "./types";
+import { ActorType, CellType, Class, Corpse, Equipment, EquipmentType, ItemType, Potion, PotionType, Rect, StairDirection, UIMode } from "./types";
 import { findActor } from "./world";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -15,7 +15,8 @@ export function draw(ev?: UIEvent) {
     const dungeon = playerContext.dungeon;
     const level = playerContext.level;
     const area = level || chunk;
-    const playerInfo = config.actorInfo[player.actorType];
+
+    const playerInfo = config.actorInfo[ActorType[player.actorType]];
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -66,7 +67,7 @@ export function draw(ev?: UIEvent) {
 
     if (level && level.litRooms) {
         level.rooms.forEach((room) => {
-            if (isInside({ x: player.x, y: player.y }, room)) {
+            if (isInside(player, room)) {
                 for (let x = room.left - 1; x < room.left + room.width + 1; x++) {
                     for (let y = room.top - 1; y < room.top + room.height + 1; y++) {
                         if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
@@ -119,8 +120,8 @@ export function draw(ev?: UIEvent) {
 
                         if (actors.length) {
                             const actor = actors[0]; // pick an actor
-                            const actorInfo = config.actorInfo[actor.actorType];
-                            const classInfo = config.classInfo[actor.class];
+                            const actorInfo = config.actorInfo[ActorType[actor.actorType]];
+                            const classInfo = config.classInfo[Class[actor.class]];
 
                             ctx.fillStyle = classInfo.color;
                             ctx.globalAlpha = 1;
@@ -136,9 +137,9 @@ export function draw(ev?: UIEvent) {
                         if (chests.length) {
                             const chest = chests[0]; // pick a chest
 
-                            ctx.fillStyle = "#ffffff";
+                            ctx.fillStyle = config.chestCommon.color;
                             ctx.globalAlpha = 1;
-                            ctx.fillText("~", screen.x, screen.y);
+                            ctx.fillText(config.chestCommon.char, screen.x, screen.y);
 
                             continue;
                         }
@@ -149,13 +150,45 @@ export function draw(ev?: UIEvent) {
 
                         if (items.length) {
                             const item = items[0]; // pick an item
-                            const itemInfo = config.itemInfo[item.itemType];
-                            const actorInfo = ("actorType" in item) && config.actorInfo[(item as Corpse).actorType];
-                            const classInfo = ("class" in item) && config.classInfo[(item as Corpse).class];
+                            const itemInfo = config.itemInfo[ItemType[item.itemType]];
 
-                            ctx.fillStyle = classInfo ? classInfo.color : "#ffffff";
+                            let color = itemInfo.color;
+                            let char = itemInfo.char;
+
+                            switch (item.itemType) {
+                                case ItemType.Corpse: {
+                                    const corpse = item as Corpse;
+                                    const actorInfo = config.actorInfo[ActorType[corpse.actorType]];
+                                    const classInfo = config.classInfo[Class[corpse.class]];
+
+                                    color = classInfo.color;
+
+                                    break;
+                                }
+                                case ItemType.Equipment: {
+                                    const equipment = item as Equipment;
+                                    const equipmentInfo = config.equipmentInfo[EquipmentType[equipment.equipmentType]];
+
+                                    char = equipmentInfo.char;
+
+                                    break;
+                                }
+                                case ItemType.Potion: {
+                                    const potion = item as Potion;
+                                    const potionInfo = config.potionInfo[PotionType[potion.potionType]];
+
+                                    color = potionInfo.color;
+
+                                    break;
+                                }
+                                case ItemType.Scroll: {
+                                    break;
+                                }
+                            }
+
+                            ctx.fillStyle = color;
                             ctx.globalAlpha = 1;
-                            ctx.fillText(itemInfo.char, screen.x, screen.y);
+                            ctx.fillText(char, screen.x, screen.y);
 
                             continue;
                         }
@@ -173,14 +206,14 @@ export function draw(ev?: UIEvent) {
                                 return level.stairUp;
                             }
                         } else {
-                            return chunk.stairsDown.find((s) => s.x === x && s.y === y);
+                            return chunk.stairsDown.find((stairDown) => stairDown.x === x && stairDown.y === y);
                         }
                     })();
 
                     if (stair) {
-                        const stairInfo = config.stairInfo[stair.direction];
+                        const stairInfo = config.stairInfo[StairDirection[stair.direction]];
 
-                        ctx.fillStyle = stairInfo.color;
+                        ctx.fillStyle = config.stairCommon.color;
                         ctx.globalAlpha = visibleCells.indexOf(cell) > -1 ? 1
                             : cell.discovered ? 0.25
                                 : 0;
@@ -191,7 +224,7 @@ export function draw(ev?: UIEvent) {
                 }
 
                 {
-                    const cellInfo = config.cellInfo[cell.type];
+                    const cellInfo = config.cellInfo[CellType[cell.type]];
 
                     ctx.fillStyle = cellInfo.color;
                     ctx.globalAlpha = visibleCells.indexOf(cell) > -1 ? 1
@@ -211,7 +244,7 @@ export function draw(ev?: UIEvent) {
 
     ctx.fillStyle = "#ffffff";
     ctx.globalAlpha = 1;
-    ctx.fillText(`Dungeon: ${dungeon ? chunk.dungeons.indexOf(dungeon) : "N/A"} Level: ${dungeon && level ? dungeon.levels.indexOf(level) : "N/A"} Turn: ${game.turn}`, 0, canvas.height);
+    ctx.fillText(`Dungeon: ${dungeon ? chunk.dungeons.indexOf(dungeon) : "N/A"} Level: ${dungeon && level ? dungeon.levels.indexOf(level) : "N/A"} Turn: ${game.world.turn}`, 0, canvas.height);
 
     if (ui.mode === UIMode.Inventory
         || ui.mode === UIMode.InventoryDrop
@@ -222,7 +255,8 @@ export function draw(ev?: UIEvent) {
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = 1;
         player.inventory.forEach((item, index) => {
-            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${item.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
+            const equipment = item.itemType === ItemType.Equipment && item as Equipment;
+            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${equipment && equipment.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }
 

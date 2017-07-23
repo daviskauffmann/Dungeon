@@ -1,19 +1,20 @@
-import { dropItem, getInventoryChar, moveToCell, pickUpItem, resurrect } from "./actors";
+import { dropItem, getInventoryChar, getInventoryIndex, moveToCell, pickUpItem, resurrect } from "./actors";
 import { lineOfSight } from "./algorithms";
-import { config, game, load, log, save, ui } from "./game";
+import { config, game, init, load, log, save, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
-import { CellType, Corpse, UIMode } from "./types";
+import { ActorType, CellType, Corpse, Equipment, ItemType, UIMode } from "./types";
 import { findActor, tick } from "./world";
 
 export function input(ev: KeyboardEvent) {
     const playerContext = findActor(0);
     const player = playerContext.actor;
-    const playerInfo = config.actorInfo[player.actorType];
     const chunk = playerContext.chunk;
     const dungeon = playerContext.dungeon;
     const level = playerContext.level;
     const area = level || chunk;
+
+    const playerInfo = config.actorInfo[ActorType[player.actorType]];
 
     switch (ui.mode) {
         case UIMode.Default: {
@@ -90,10 +91,12 @@ export function input(ev: KeyboardEvent) {
                     break;
                 }
                 case "c": {
-                    if (area.cells[player.x][player.y].type === CellType.DoorOpen) {
+                    const cell = area.cells[player.x][player.y];
+
+                    if (cell.type === CellType.DoorOpen) {
                         log(area, player, `${player.name} closes the door`);
 
-                        area.cells[player.x][player.y].type = CellType.DoorClosed;
+                        cell.type = CellType.DoorClosed;
                     }
 
                     tick();
@@ -198,10 +201,10 @@ export function input(ev: KeyboardEvent) {
             break;
         }
         case UIMode.InventoryDrop: {
-            const selectedItem = player.inventory.find((item) => ev.key === getInventoryChar(player, item));
+            const item = player.inventory[getInventoryIndex(ev.key)];
 
-            if (selectedItem) {
-                dropItem(player, selectedItem, area);
+            if (item) {
+                dropItem(player, item, area);
 
                 ui.mode = UIMode.Default;
             }
@@ -217,14 +220,18 @@ export function input(ev: KeyboardEvent) {
             break;
         }
         case UIMode.InventoryEquip: {
-            const selectedItem = player.inventory.find((item) => ev.key === getInventoryChar(player, item));
+            const item = player.inventory[getInventoryIndex(ev.key)];
 
-            if (selectedItem) {
-                log(area, player, `${player.name} equips a ${selectedItem.name}`);
+            if (item) {
+                const equipment = item.itemType === ItemType.Equipment && item as Equipment;
 
-                selectedItem.equipped = true;
+                if (equipment) {
+                    log(area, player, `${player.name} equips a ${equipment.name}`);
 
-                ui.mode = UIMode.Default;
+                    equipment.equipped = true;
+
+                    ui.mode = UIMode.Default;
+                }
             }
 
             switch (ev.key) {
@@ -237,14 +244,18 @@ export function input(ev: KeyboardEvent) {
             break;
         }
         case UIMode.InventoryUnequip: {
-            const selectedItem = player.inventory.find((item) => ev.key === getInventoryChar(player, item));
+            const item = player.inventory[getInventoryIndex(ev.key)];
 
-            if (selectedItem) {
-                log(area, player, `${player.name} unequips a ${selectedItem.name}`);
+            if (item) {
+                const equipment = item.itemType === ItemType.Equipment && item as Equipment;
 
-                selectedItem.equipped = false;
+                if (equipment) {
+                    log(area, player, `${player.name} equips a ${equipment.name}`);
 
-                ui.mode = UIMode.Default;
+                    equipment.equipped = false;
+
+                    ui.mode = UIMode.Default;
+                }
             }
 
             switch (ev.key) {
@@ -329,7 +340,7 @@ export function input(ev: KeyboardEvent) {
             break;
         }
         case "\\": {
-            console.log(game);
+            init();
 
             break;
         }
