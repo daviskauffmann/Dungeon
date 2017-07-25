@@ -3,7 +3,7 @@ import { lineOfSight } from "./algorithms";
 import { config, game, init, load, log, save, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw } from "./renderer";
-import { ActorType, CellType, Corpse, Equipment, ItemType, UIMode } from "./types";
+import { ActorType, CellType, Corpse, Equipment, ItemType, Potion, UIMode } from "./types";
 import { findActor, tick } from "./world";
 
 export function input(ev: KeyboardEvent) {
@@ -80,7 +80,7 @@ export function input(ev: KeyboardEvent) {
                     break;
                 }
                 case "r": {
-                    area.items.filter((item) => "actorType" in item
+                    area.items.filter((item) => item.itemType === ItemType.Corpse
                         && lineOfSight(area, player, radiansBetween(player, item), playerInfo.sight)
                             .some((coord) => coord.x === item.x && coord.y === item.y))
                         .map((item) => (item as Corpse))
@@ -196,6 +196,38 @@ export function input(ev: KeyboardEvent) {
 
                     break;
                 }
+                case "q": {
+                    log(area, player, "select potion to drink");
+                    log(area, player, "press space to cancel");
+
+                    ui.mode = UIMode.InventoryDrink;
+
+                    break;
+                }
+            }
+
+            break;
+        }
+        case UIMode.InventoryDrink: {
+            const item = player.inventory[getInventoryIndex(ev.key)];
+
+            if (item) {
+                const potion = item.itemType === ItemType.Potion && item as Potion;
+
+                if (potion) {
+                    log(area, player, `${player.name} drinks a ${potion.name}`);
+
+                    player.inventory.splice(player.inventory.indexOf(item), 1);
+
+                    ui.mode = UIMode.Default;
+                }
+            }
+
+            switch (ev.key) {
+                case " ":
+                    ui.mode = UIMode.Default;
+
+                    break;
             }
 
             break;

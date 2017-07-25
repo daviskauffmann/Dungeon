@@ -105,40 +105,44 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
 export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: number) {
     const coords: Coord[] = [];
 
-    for (let degrees = 0; degrees < 360; degrees += accuracy) {
-        coords.push(...lineOfSight(area, origin, toRadians(degrees), range)
-            .filter((coord) => !coords.some((c) => c.x === coord.x && c.y === coord.y)));
+    for (let direction = 0; direction < 360; direction += accuracy) {
+        coords.push(...lineOfSight(area, origin, toRadians(direction), range)
+            .filter((cellCoord) => !coords.some((coord) => coord.x === cellCoord.x && coord.y === cellCoord.y)));
     }
 
     return coords;
 }
 
-export function lineOfSight(area: Area, origin: Coord, radians: number, range: number) {
+export function lineOfSight(area: Area, origin: Coord, direction: number, range: number) {
     const coords: Coord[] = [];
 
-    const dx = Math.cos(radians);
-    const dy = Math.sin(radians);
+    const delta: Coord = {
+        x: Math.cos(direction),
+        y: Math.sin(direction),
+    };
 
-    let x = origin.x + 0.5;
-    let y = origin.y + 0.5;
+    const current: Coord = {
+        x: origin.x + 0.5,
+        y: origin.y + 0.5,
+    };
 
     for (let i = 0; i < range; i++) {
-        const current: Coord = {
-            x: Math.trunc(x),
-            y: Math.trunc(y),
+        const cellCoord: Coord = {
+            x: Math.trunc(current.x),
+            y: Math.trunc(current.y),
         };
 
-        if (current.x >= 0 && current.x < area.width && current.y >= 0 && current.y < area.height) {
-            if (!coords.some((coord) => coord.x === current.x && coord.y === current.y)) {
-                coords.push(current);
+        if (cellCoord.x >= 0 && cellCoord.x < area.width && cellCoord.y >= 0 && cellCoord.y < area.height) {
+            if (!coords.some((coord) => coord.x === cellCoord.x && coord.y === cellCoord.y)) {
+                coords.push(cellCoord);
             }
 
-            if (config.cellInfo[CellType[area.cells[current.x][current.y].type]].solid) {
+            if (config.cellInfo[CellType[area.cells[cellCoord.x][cellCoord.y].type]].opaque) {
                 break;
             }
 
-            x += dx;
-            y += dy;
+            current.x += delta.x;
+            current.y += delta.y;
         }
     }
 

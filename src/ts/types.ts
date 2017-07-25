@@ -45,6 +45,7 @@ export enum CellType {
     Floor,
     Grass,
     Wall,
+    Window,
 }
 
 export interface Chest extends Coord {
@@ -82,6 +83,7 @@ export interface Config {
         [key: string]: {
             char: string;
             color: string;
+            opaque: boolean;
             solid: boolean;
         };
     };
@@ -283,6 +285,7 @@ export enum UIMode {
     Default,
     Target,
     Inventory,
+    InventoryDrink,
     InventoryDrop,
     InventoryEquip,
     InventoryUnequip,

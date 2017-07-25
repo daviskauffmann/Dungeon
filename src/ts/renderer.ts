@@ -247,6 +247,7 @@ export function draw(ev?: UIEvent) {
     ctx.fillText(`Dungeon: ${dungeon ? chunk.dungeons.indexOf(dungeon) : "N/A"} Level: ${dungeon && level ? dungeon.levels.indexOf(level) : "N/A"} Turn: ${game.world.turn}`, 0, canvas.height);
 
     if (ui.mode === UIMode.Inventory
+        || ui.mode === UIMode.InventoryDrink
         || ui.mode === UIMode.InventoryDrop
         || ui.mode === UIMode.InventoryEquip
         || ui.mode === UIMode.InventorySwapFirst

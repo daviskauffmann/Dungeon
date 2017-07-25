@@ -66,31 +66,43 @@ export const config: Config = {
         DoorClosed: {
             char: "+",
             color: "#ffffff",
+            opaque: true,
             solid: true,
         },
         DoorOpen: {
             char: "-",
             color: "#ffffff",
+            opaque: false,
             solid: false,
         },
         Empty: {
             char: " ",
             color: "#ffffff",
+            opaque: false,
             solid: false,
         },
         Floor: {
             char: ".",
             color: "#ffffff",
+            opaque: false,
             solid: false,
         },
         Grass: {
             char: "^",
             color: "#50ff50",
+            opaque: false,
             solid: false,
         },
         Wall: {
             char: "#",
             color: "#ffffff",
+            opaque: true,
+            solid: true,
+        },
+        Window: {
+            char: "#",
+            color: "#0000ff",
+            opaque: false,
             solid: true,
         },
     },

@@ -144,22 +144,20 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
     if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
         {
             const cell = area.cells[coord.x][coord.y];
+            const cellInfo = config.cellInfo[CellType[cell.type]];
 
-            switch (cell.type) {
-                case CellType.Wall: {
-                    return;
+            if (cell.type === CellType.DoorClosed) {
+                if (randomFloat(0, 1) < 0.5) { // chance to open lock
+                    log(area, actor, `${actor.name} opens the door`);
+
+                    cell.type = CellType.DoorOpen;
+                } else {
+                    log(area, actor, `${actor.name} can't open the door`);
                 }
-                case CellType.DoorClosed: {
-                    if (randomFloat(0, 1) < 0.5) { // chance to open lock
-                        log(area, actor, `${actor.name} opens the door`);
+            }
 
-                        cell.type = CellType.DoorOpen;
-                    } else {
-                        log(area, actor, `${actor.name} can't open the door`);
-                    }
-
-                    return;
-                }
+            if (cellInfo.solid) {
+                return;
             }
         }
 
@@ -312,7 +310,7 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
         }
         case Class.Shaman: {
             if (randomFloat(0, 1) < 0.5) { // decision to resurrect
-                const corpses = area.items.filter((item) => "actorType" in item
+                const corpses = area.items.filter((item) => item.itemType === ItemType.Corpse
                     && config.actorInfo[ActorType[(item as Corpse).actorType]].factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1)
                     && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                         .some((coord) => coord.x === item.x && coord.y === item.y))

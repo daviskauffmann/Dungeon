@@ -1,6 +1,6 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Dungeon, DungeonOptions, Equipment, EquipmentType, Game, Item, ItemType, Level, LevelOptions, Rect, StairDirection, World } from "./types";
+import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Dungeon, DungeonOptions, Equipment, EquipmentType, Game, Item, ItemType, Level, LevelOptions, Potion, PotionType, Rect, StairDirection, World } from "./types";
 
 export function createChunk(opts?: ChunkOptions) {
     const width = opts && opts.width || 100;
@@ -318,7 +318,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                     };
 
                     const roll = randomFloat(0, 1);
-                    if (roll < 0.25) {
+                    if (roll < 0.20) {
                         item.name = "sword";
                         item.itemType = ItemType.Equipment;
 
@@ -329,7 +329,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                         };
 
                         return equipment;
-                    } else if (roll < 0.50) {
+                    } else if (roll < 0.40) {
                         item.name = "spear";
                         item.itemType = ItemType.Equipment;
 
@@ -340,7 +340,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                         };
 
                         return equipment;
-                    } else if (roll < 0.75) {
+                    } else if (roll < 0.60) {
                         item.name = "shield";
                         item.itemType = ItemType.Equipment;
 
@@ -351,7 +351,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                         };
 
                         return equipment;
-                    } else {
+                    } else if (roll < 0.80) {
                         item.name = "bow";
                         item.itemType = ItemType.Equipment;
 
@@ -362,6 +362,39 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
                         };
 
                         return equipment;
+                    } else {
+                        const roll2 = randomFloat(0, 1);
+                        if (roll2 < 0.33) {
+                            item.name = "health potion";
+                            item.itemType = ItemType.Potion;
+
+                            const potion: Potion = {
+                                ...item,
+                                potionType: PotionType.Health,
+                            };
+
+                            return potion;
+                        } else if (roll2 < 0.66) {
+                            item.name = "energy potion";
+                            item.itemType = ItemType.Potion;
+
+                            const potion: Potion = {
+                                ...item,
+                                potionType: PotionType.Energy,
+                            };
+
+                            return potion;
+                        } else {
+                            item.name = "mana potion";
+                            item.itemType = ItemType.Potion;
+
+                            const potion: Potion = {
+                                ...item,
+                                potionType: PotionType.Mana,
+                            };
+
+                            return potion;
+                        }
                     }
                 }
             })(),
