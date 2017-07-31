@@ -12,9 +12,7 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
     }
 
     const closedSet: Coord[] = [];
-    const openSet = [
-        coords[start.x][start.y],
-    ];
+    const openSet = [coords[start.x][start.y]];
 
     const cameFrom = new Map<Coord, Coord>();
     const gScore = new Map<Coord, number>();
@@ -43,9 +41,7 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
         }
 
         if (current === coords[goal.x][goal.y] || passes > Infinity) {
-            const path = [
-                current,
-            ];
+            const path = [current];
 
             while (cameFrom.get(current)) {
                 current = cameFrom.get(current);
@@ -72,11 +68,15 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
             neighbors.push(coords[current.x - 1][current.y]);
         }
 
-        neighbors.filter((neighbor) => !config.cellInfo[CellType[area.cells[neighbor.x][neighbor.y].type]].solid
-            && !area.actors.some((actor) => actor.x === neighbor.x && actor.y === neighbor.y
-                && actor.x !== goal.x && actor.y !== goal.y)
-            && !area.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y
-                && chest.x !== goal.x && chest.y !== goal.y))
+        neighbors
+            .filter((neighbor) =>
+                !config.cellInfo[CellType[area.cells[neighbor.x][neighbor.y].type]].solid
+                && !area.actors.some((actor) =>
+                    actor.x === neighbor.x && actor.y === neighbor.y
+                    && actor.x !== goal.x && actor.y !== goal.y)
+                && !area.chests.some((chest) =>
+                    chest.x === neighbor.x && chest.y === neighbor.y
+                    && chest.x !== goal.x && chest.y !== goal.y))
             .forEach((neighbor) => {
                 if (closedSet.indexOf(neighbor) === -1) {
                     if (openSet.indexOf(neighbor) === -1) {
@@ -105,9 +105,13 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
 export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: number) {
     const coords: Coord[] = [];
 
+    function contains(x: number, y: number) {
+        return coords.some((coord) => coord.x === x && coord.y === y);
+    }
+
     for (let direction = 0; direction < 360; direction += accuracy) {
         coords.push(...lineOfSight(area, origin, toRadians(direction), range)
-            .filter((cellCoord) => !coords.some((coord) => coord.x === cellCoord.x && coord.y === cellCoord.y)));
+            .filter((coord) => !contains(coord.x, coord.y)));
     }
 
     return coords;
@@ -116,33 +120,27 @@ export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: 
 export function lineOfSight(area: Area, origin: Coord, direction: number, range: number) {
     const coords: Coord[] = [];
 
-    const delta: Coord = {
-        x: Math.cos(direction),
-        y: Math.sin(direction),
-    };
+    const dx = Math.cos(direction);
+    const dy = Math.sin(direction);
 
-    const current: Coord = {
-        x: origin.x + 0.5,
-        y: origin.y + 0.5,
-    };
+    let cx = origin.x + 0.5;
+    let cy = origin.y + 0.5;
 
     for (let i = 0; i < range; i++) {
-        const cellCoord: Coord = {
-            x: Math.trunc(current.x),
-            y: Math.trunc(current.y),
-        };
+        const x = Math.trunc(cx);
+        const y = Math.trunc(cy);
 
-        if (cellCoord.x >= 0 && cellCoord.x < area.width && cellCoord.y >= 0 && cellCoord.y < area.height) {
-            if (!coords.some((coord) => coord.x === cellCoord.x && coord.y === cellCoord.y)) {
-                coords.push(cellCoord);
+        if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+            if (!coords.some((coord) => coord.x === x && coord.y === y)) {
+                coords.push({ x, y });
             }
 
-            if (config.cellInfo[CellType[area.cells[cellCoord.x][cellCoord.y].type]].opaque) {
+            if (config.cellInfo[CellType[area.cells[x][y].type]].opaque) {
                 break;
             }
 
-            current.x += delta.x;
-            current.y += delta.y;
+            cx += dx;
+            cy += dy;
         }
     }
 

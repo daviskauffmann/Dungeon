@@ -51,7 +51,7 @@ export function findStair(id: number, direction: StairDirection) {
         stairContext.chunk = chunk;
 
         if (direction === StairDirection.Down) {
-            for (const stair of chunk.stairsDown) {
+            for (const stair of chunk.stairs) {
                 stairContext.stair = stair;
 
                 if (stair.id === id) {

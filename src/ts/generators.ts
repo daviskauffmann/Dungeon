@@ -14,7 +14,7 @@ export function createChunk(opts?: ChunkOptions) {
         dungeons: [],
         height,
         items: [],
-        stairsDown: [],
+        stairs: [],
         width,
     };
 
@@ -29,7 +29,7 @@ export function createChunk(opts?: ChunkOptions) {
     }
 
     for (let i = 0; i < dungeonAmount; i++) {
-        chunk.stairsDown.push({
+        chunk.stairs.push({
             direction: StairDirection.Down,
             id: game.world.currentStairId++,
             x: randomInt(0, chunk.width),
@@ -109,8 +109,7 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
             width: randomInt(minRoomSize, maxRoomSize),
         };
 
-        if (room.left < 1 || room.left + room.width > level.width - 1 || room.top < 1
-            || room.top + room.height > level.height - 1) {
+        if (room.left < 1 || room.left + room.width > level.width - 1 || room.top < 1 || room.top + room.height > level.height - 1) {
             continue;
         }
 
@@ -154,14 +153,10 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
         let y2 = randomInt(level.rooms[i + 1].top, level.rooms[i + 1].top + level.rooms[i + 1].height);
 
         if (x1 > x2) {
-            const t = x1;
-            x1 = x2;
-            x2 = t;
+            [x1, x2] = [x2, x1];
         }
         if (y1 > y2) {
-            const t = y1;
-            y1 = y2;
-            y2 = t;
+            [y1, y2] = [y2, y1];
         }
 
         for (let x = x1; x <= x2; x++) {

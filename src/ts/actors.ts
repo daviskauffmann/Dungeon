@@ -2,7 +2,7 @@ import { aStar, lineOfSight } from "./algorithms";
 import { config, game, log } from "./game";
 import { createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
-import { Actor, ActorType, Area, CellType, Chest, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Equipment, Item, ItemType, Level, Stair, StairDirection, Stats } from "./types";
+import { Actor, ActorType, Area, Cell, CellType, Chest, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Equipment, Item, ItemType, Level, Stair, StairDirection, Stats } from "./types";
 import { findStair } from "./world";
 
 export function ascend(actor: Actor, stair: Stair, area: Area) {
@@ -22,7 +22,7 @@ export function attack(actor: Actor, target: Actor, area: Area) {
     const targetStats = calcStats(target);
 
     if (randomFloat(0, 1) < 0.5) { // chance to hit
-        if (target.id === 0 && game.godMode) {
+        if (game.godMode && target.id === 0) {
             log(area, actor, `${actor.name} cannot damage ${target.name}`);
         } else {
             const damage = randomInt(0, 100);
@@ -34,9 +34,7 @@ export function attack(actor: Actor, target: Actor, area: Area) {
             if (target.health <= 0) {
                 log(area, actor, `${actor.name} kills ${target.name}`);
 
-                target.inventory.forEach((item) => {
-                    dropItem(target, item, area);
-                });
+                target.inventory.forEach((item) => dropItem(target, item, area));
 
                 const corpse: Corpse = {
                     ...target,
@@ -81,6 +79,14 @@ export function calcStats(actor: Actor) {
     return stats;
 }
 
+export function closeDoor(actor: Actor, cell: Cell, area: Area) {
+    if (cell.type === CellType.DoorOpen) {
+        log(area, actor, `${actor.name} closes the door`);
+
+        cell.type = CellType.DoorClosed;
+    }
+}
+
 export function descend(actor: Actor, stair: Stair, chunk: Chunk, dungeon?: Dungeon, level?: Level) {
     const area: Area = level || chunk;
 
@@ -91,14 +97,14 @@ export function descend(actor: Actor, stair: Stair, chunk: Chunk, dungeon?: Dung
     if (stairContext) {
         moveToArea(actor, area, stairContext.level, stairContext.level.stairUp);
     } else {
-        const newDungeon = dungeon || createDungeon();
+        let newDungeon = dungeon;
 
-        if (!dungeon) {
+        if (!newDungeon) {
+            newDungeon = createDungeon();
             chunk.dungeons.push(newDungeon);
         }
 
         const newLevel = createLevel(stair.id);
-
         newDungeon.levels.push(newLevel);
 
         moveToArea(actor, area, newLevel, newLevel.stairUp);
@@ -111,8 +117,9 @@ export function dropItem(actor: Actor, item: Item, area: Area) {
     item.x = actor.x;
     item.y = actor.y;
 
-    const equipment = item.itemType === ItemType.Equipment && item as Equipment;
-    if (equipment) {
+    if (item.itemType === ItemType.Equipment) {
+        const equipment = item as Equipment;
+
         equipment.equipped = false;
     }
 
@@ -129,11 +136,11 @@ export function getInventoryIndex(char: string) {
 }
 
 export function moveToArea(actor: Actor, area: Area, newArea: Area, newCoord: Coord) {
-    area.actors.splice(area.actors.indexOf(actor), 1);
-    newArea.actors.push(actor);
-
     actor.x = newCoord.x;
     actor.y = newCoord.y;
+
+    area.actors.splice(area.actors.indexOf(actor), 1);
+    newArea.actors.push(actor);
 }
 
 export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: Dungeon, level?: Level) {
@@ -147,13 +154,7 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
             const cellInfo = config.cellInfo[CellType[cell.type]];
 
             if (cell.type === CellType.DoorClosed) {
-                if (randomFloat(0, 1) < 0.5) { // chance to open lock
-                    log(area, actor, `${actor.name} opens the door`);
-
-                    cell.type = CellType.DoorOpen;
-                } else {
-                    log(area, actor, `${actor.name} can't open the door`);
-                }
+                openDoor(actor, cell, area);
             }
 
             if (cellInfo.solid) {
@@ -162,16 +163,16 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
         }
 
         {
-            const targets = area.actors.filter((target) => target !== actor
-                && target.x === coord.x && target.y === coord.y);
+            const other = area.actors
+                .filter((other) => other !== actor)
+                .find((other) => other.x === coord.x && other.y === coord.y);
 
-            if (targets.length) {
-                const target = targets[0]; // pick a target
-                const targetInfo = config.actorInfo[ActorType[target.actorType]];
+            if (other) {
+                const otherInfo = config.actorInfo[ActorType[other.actorType]];
 
-                if (targetInfo.factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
-                    || actor.hostileActorIds.some((id) => id === target.id)) {
-                    attack(actor, target, area);
+                if (otherInfo.factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
+                    || actor.hostileActorIds.some((id) => id === other.id)) {
+                    attack(actor, other, area);
                 }
 
                 return;
@@ -179,11 +180,9 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
         }
 
         {
-            const chests = area.chests.filter((chest) => chest.x === coord.x && chest.y === coord.y);
+            const chest = area.chests.find((chest) => chest.x === coord.x && chest.y === coord.y);
 
-            if (chests.length) {
-                const chest = chests[0]; // pick a chest
-
+            if (chest) {
                 openChest(actor, chest, area);
 
                 return;
@@ -203,22 +202,23 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
                 return;
             }
         } else {
-            const stairsDown = chunk.stairsDown.filter((stairDown) => stairDown.x === coord.x && stairDown.y === coord.y);
+            const stair = chunk.stairs.find((stair) => stair.x === coord.x && stair.y === coord.y);
 
-            if (stairsDown.length) {
-                const stairDown = stairsDown[0]; // pick a stair
-
-                descend(actor, stairDown, chunk, dungeon, level);
+            if (stair) {
+                descend(actor, stair, chunk, dungeon, level);
 
                 return;
             }
         }
 
         {
-            const items = area.items.filter((item) => item.x === coord.x && item.y === coord.y);
+            const itemNames = area.items
+                .filter((item) => item.x === coord.x && item.y === coord.y)
+                .map((item) => item.name)
+                .join(", ");
 
-            if (items.length) {
-                log(area, actor, `${actor.name} sees a ${items.map((item) => item.name).join(", ")}`);
+            if (itemNames) {
+                log(area, actor, `${actor.name} sees ${itemNames}`);
             }
         }
 
@@ -254,6 +254,16 @@ export function openChest(actor: Actor, chest: Chest, area: Area) {
     }
 }
 
+export function openDoor(actor: Actor, cell: Cell, area: Area) {
+    if (randomFloat(0, 1) < 0.5) { // chance to open lock
+        log(area, actor, `${actor.name} opens the door`);
+
+        cell.type = CellType.DoorOpen;
+    } else {
+        log(area, actor, `${actor.name} can't open the door`);
+    }
+}
+
 export function pathfind(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: Dungeon, level?: Level) {
     const area: Area = level || chunk;
 
@@ -277,32 +287,36 @@ export function pickUpItem(actor: Actor, item: Item, area: Area) {
 }
 
 export function resurrect(actor: Actor, corpse: Corpse, area: Area) {
-    const newActor: Actor = {
-        actorType: corpse.actorType,
-        class: corpse.class,
-        energy: 1,
-        experience: corpse.experience,
-        health: 1,
-        hostileActorIds: corpse.hostileActorIds,
-        id: corpse.id,
-        inventory: corpse.inventory,
-        level: corpse.level,
-        mana: 1,
-        name: corpse.name.replace(" corpse", ""),
-        x: corpse.x,
-        y: corpse.y,
-    };
+    if (randomFloat(0, 1) < 0.5) { // chance to resurrect
+        const newActor: Actor = {
+            actorType: corpse.actorType,
+            class: corpse.class,
+            energy: 1,
+            experience: corpse.experience,
+            health: 1,
+            hostileActorIds: corpse.hostileActorIds,
+            id: corpse.id,
+            inventory: corpse.inventory,
+            level: corpse.level,
+            mana: 1,
+            name: corpse.name.replace(" corpse", ""),
+            x: corpse.x,
+            y: corpse.y,
+        };
 
-    log(area, actor, `${actor.name} ressurects ${newActor.name}`);
+        log(area, actor, `${actor.name} ressurects ${newActor.name}`);
 
-    area.items.splice(area.items.indexOf(corpse), 1);
-    area.actors.push(newActor);
+        area.items.splice(area.items.indexOf(corpse), 1);
+        area.actors.push(newActor);
+    } else {
+        log(area, actor, `${actor.name} fails to ressurect ${corpse.name}`);
+    }
 }
 
 export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Level) {
-    const area: Area = level || chunk;
-
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
+
+    const area: Area = level || chunk;
 
     switch (actor.class) {
         case Class.Warrior: {
@@ -310,20 +324,19 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
         }
         case Class.Shaman: {
             if (randomFloat(0, 1) < 0.5) { // decision to resurrect
-                const corpses = area.items.filter((item) => item.itemType === ItemType.Corpse
-                    && config.actorInfo[ActorType[(item as Corpse).actorType]].factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1)
-                    && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
-                        .some((coord) => coord.x === item.x && coord.y === item.y))
-                    .map((item) => item as Corpse);
+                const corpse = area.items
+                    .filter((item) => item.itemType === ItemType.Corpse)
+                    .map((item) => item as Corpse)
+                    .filter((corpse) => {
+                        const corpseInfo = config.actorInfo[ActorType[corpse.actorType]];
 
-                if (corpses.length) {
-                    const corpse = corpses[0]; // pick a corpse
+                        return corpseInfo.factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1);
+                    })
+                    .find((corpse) => lineOfSight(area, actor, radiansBetween(actor, corpse), actorInfo.sight)
+                        .some((coord) => coord.x === corpse.x && coord.y === corpse.y));
 
-                    if (randomFloat(0, 1) < 0.5) { // chance to resurrect
-                        resurrect(actor, corpse, area);
-                    } else {
-                        log(area, actor, `${actor.name} fails to ressurect ${corpse.name}`);
-                    }
+                if (corpse) {
+                    resurrect(actor, corpse, area);
 
                     return;
                 }
@@ -339,15 +352,18 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
         }
         case Disposition.Aggressive: {
             if (randomFloat(0, 1) < 0.5) { // decision to look for targets
-                const targets = area.actors.filter((target) => target !== actor
-                    && (config.actorInfo[ActorType[target.actorType]].factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
-                        || actor.hostileActorIds.some((id) => id === target.id))
-                    && lineOfSight(area, actor, radiansBetween(actor, target), actorInfo.sight)
-                        .some((coord) => coord.x === target.x && coord.y === target.y));
+                const target = area.actors
+                    .filter((other) => other !== actor)
+                    .filter((other) => {
+                        const otherInfo = config.actorInfo[ActorType[other.actorType]];
 
-                if (targets.length) {
-                    const target = targets[0]; // pick a target
+                        return otherInfo.factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
+                            || actor.hostileActorIds.some((id) => id === other.id);
+                    })
+                    .find((other) => lineOfSight(area, actor, radiansBetween(actor, other), actorInfo.sight)
+                        .some((coord) => coord.x === other.x && coord.y === other.y));
 
+                if (target) {
                     log(area, actor, `${actor.name} spots ${target.name}`);
 
                     if (pathfind(actor, target, chunk, dungeon, level)) {
@@ -364,12 +380,10 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to look for chests
-        const chests = area.chests.filter((chest) => lineOfSight(area, actor, radiansBetween(actor, chest), actorInfo.sight)
+        const chest = area.chests.find((chest) => lineOfSight(area, actor, radiansBetween(actor, chest), actorInfo.sight)
             .some((coord) => coord.x === chest.x && coord.y === chest.y));
 
-        if (chests.length) {
-            const chest = chests[0]; // pick a chest
-
+        if (chest) {
             log(area, actor, `${actor.name} spots a chest`);
 
             if (pathfind(actor, chest, chunk, dungeon, level)) {
@@ -379,14 +393,13 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to look for items
-        const items = area.items.filter((item) => !("actorType" in item)
-            && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
+        const item = area.items
+            .filter((item) => item.itemType !== ItemType.Corpse)
+            .find((item) => lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                 .some((coord) => coord.x === item.x && coord.y === item.y));
 
-        if (items.length) {
-            const item = items[0]; // pick an item
-
-            log(area, actor, `${actor.name} spots a ${item.name}`);
+        if (item) {
+            log(area, actor, `${actor.name} spots ${item.name}`);
 
             if (pathfind(actor, item, chunk, dungeon, level)) {
                 return;
@@ -395,11 +408,9 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to pick up item
-        const items = area.items.filter((item) => item.x === actor.x && item.y === actor.y);
+        const item = area.items.find((item) => item.x === actor.x && item.y === actor.y);
 
-        if (items.length) {
-            const item = items[0]; // pick an item
-
+        if (item) {
             pickUpItem(actor, item, area);
 
             return;
@@ -407,13 +418,12 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to discard corpses
-        const corpses = actor.inventory.filter((item) => item.itemType === ItemType.Corpse)
+        const corpses = actor.inventory
+            .filter((item) => item.itemType === ItemType.Corpse)
             .map((item) => item as Corpse);
 
         if (corpses.length) {
-            const corpse = corpses[0]; // pick a corpse
-
-            dropItem(actor, corpse, area);
+            corpses.forEach((corpse) => dropItem(actor, corpse, area));
 
             return;
         }

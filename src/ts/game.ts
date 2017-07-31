@@ -220,12 +220,13 @@ export function load() {
 }
 
 export function log(area: Area, location: Coord, message: string) {
-    const playerContext = findActor(0);
-    const player = playerContext.actor;
-    const playerInfo = config.actorInfo[ActorType[player.actorType]];
+    const actorContext = findActor(0);
+    const { actor } = actorContext;
 
-    if ((area === playerContext.level || area === playerContext.chunk)
-        && lineOfSight(area, player, radiansBetween(player, location), playerInfo.sight)
+    const actorInfo = config.actorInfo[ActorType[actor.actorType]];
+
+    if ((area === actorContext.level || area === actorContext.chunk)
+        && lineOfSight(area, actor, radiansBetween(actor, location), actorInfo.sight)
             .find((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 

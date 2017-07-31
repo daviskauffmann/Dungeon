@@ -9,14 +9,12 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
 export function draw(ev?: UIEvent) {
-    const playerContext = findActor(0);
-    const player = playerContext.actor;
-    const chunk = playerContext.chunk;
-    const dungeon = playerContext.dungeon;
-    const level = playerContext.level;
-    const area = level || chunk;
+    const actorContext = findActor(0);
+    const { actor, chunk, dungeon, level } = actorContext;
 
-    const playerInfo = config.actorInfo[ActorType[player.actorType]];
+    const actorInfo = config.actorInfo[ActorType[actor.actorType]];
+
+    const area = level || chunk;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -29,8 +27,8 @@ export function draw(ev?: UIEvent) {
     };
     view.width = Math.round(canvas.width / game.fontSize);
     view.height = Math.round(canvas.height / game.fontSize);
-    view.left = player.x - Math.round(view.width / 2);
-    view.top = player.y - Math.round(view.height / 2);
+    view.left = actor.x - Math.round(view.width / 2);
+    view.top = actor.y - Math.round(view.height / 2);
     if (view.left < 0) {
         view.left = 0;
     }
@@ -44,7 +42,7 @@ export function draw(ev?: UIEvent) {
         view.top = area.height - view.height;
     }
 
-    const visibleCells = fieldOfView(area, player, 0.5, playerInfo.sight)
+    const visibleCells = fieldOfView(area, actor, 0.5, actorInfo.sight)
         .map((coord) => area.cells[coord.x][coord.y]);
 
     visibleCells.forEach((cell) => {
@@ -67,7 +65,7 @@ export function draw(ev?: UIEvent) {
 
     if (level && level.litRooms) {
         level.rooms.forEach((room) => {
-            if (isInside(player, room)) {
+            if (isInside(actor, room)) {
                 for (let x = room.left - 1; x < room.left + room.width + 1; x++) {
                     for (let y = room.top - 1; y < room.top + room.height + 1; y++) {
                         if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
@@ -92,6 +90,7 @@ export function draw(ev?: UIEvent) {
         for (let y = view.top; y < view.top + view.height; y++) {
             if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
                 const cell = area.cells[x][y];
+
                 const screen = {
                     x: (x - view.left) * game.fontSize,
                     y: (y - view.top + 1) * game.fontSize,
@@ -116,10 +115,9 @@ export function draw(ev?: UIEvent) {
 
                 if (visibleCells.indexOf(cell) > -1) {
                     {
-                        const actors = area.actors.filter((actor) => actor.x === x && actor.y === y);
+                        const actor = area.actors.find((actor) => actor.x === x && actor.y === y);
 
-                        if (actors.length) {
-                            const actor = actors[0]; // pick an actor
+                        if (actor) {
                             const actorInfo = config.actorInfo[ActorType[actor.actorType]];
                             const classInfo = config.classInfo[Class[actor.class]];
 
@@ -132,11 +130,9 @@ export function draw(ev?: UIEvent) {
                     }
 
                     {
-                        const chests = area.chests.filter((chest) => chest.x === x && chest.y === y);
+                        const chest = area.chests.find((chest) => chest.x === x && chest.y === y);
 
-                        if (chests.length) {
-                            const chest = chests[0]; // pick a chest
-
+                        if (chest) {
                             ctx.fillStyle = config.chestCommon.color;
                             ctx.globalAlpha = 1;
                             ctx.fillText(config.chestCommon.char, screen.x, screen.y);
@@ -146,10 +142,9 @@ export function draw(ev?: UIEvent) {
                     }
 
                     {
-                        const items = area.items.filter((item) => item.x === x && item.y === y);
+                        const item = area.items.find((item) => item.x === x && item.y === y);
 
-                        if (items.length) {
-                            const item = items[0]; // pick an item
+                        if (item) {
                             const itemInfo = config.itemInfo[ItemType[item.itemType]];
 
                             let color = itemInfo.color;
@@ -196,26 +191,22 @@ export function draw(ev?: UIEvent) {
                 }
 
                 {
-                    const stair = (() => {
-                        if (level) {
-                            if (level.stairDown
-                                && level.stairDown.x === x && level.stairDown.y === y) {
-                                return level.stairDown;
-                            }
-                            if (level.stairUp.x === x && level.stairUp.y === y) {
-                                return level.stairUp;
-                            }
-                        } else {
-                            return chunk.stairsDown.find((stairDown) => stairDown.x === x && stairDown.y === y);
-                        }
-                    })();
+                    const stair = level
+                        ? level.stairDown && level.stairDown.x === x && level.stairDown.y === y
+                            ? level.stairDown
+                            : level.stairUp && level.stairUp.x === x && level.stairUp.y === y
+                                ? level.stairUp
+                                : undefined
+                        : chunk.stairs.find((stair) => stair.x === x && stair.y === y);
 
                     if (stair) {
                         const stairInfo = config.stairInfo[StairDirection[stair.direction]];
 
                         ctx.fillStyle = config.stairCommon.color;
-                        ctx.globalAlpha = visibleCells.indexOf(cell) > -1 ? 1
-                            : cell.discovered ? 0.25
+                        ctx.globalAlpha = visibleCells.indexOf(cell) > -1
+                            ? 1
+                            : cell.discovered
+                                ? 0.25
                                 : 0;
                         ctx.fillText(stairInfo.char, screen.x, screen.y);
 
@@ -227,8 +218,10 @@ export function draw(ev?: UIEvent) {
                     const cellInfo = config.cellInfo[CellType[cell.type]];
 
                     ctx.fillStyle = cellInfo.color;
-                    ctx.globalAlpha = visibleCells.indexOf(cell) > -1 ? 1
-                        : cell.discovered ? 0.25
+                    ctx.globalAlpha = visibleCells.indexOf(cell) > -1
+                        ? 1
+                        : cell.discovered
+                            ? 0.25
                             : 0;
                     ctx.fillText(cellInfo.char, screen.x, screen.y);
                 }
@@ -255,14 +248,14 @@ export function draw(ev?: UIEvent) {
         || ui.mode === UIMode.InventoryUnequip) {
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = 1;
-        player.inventory.forEach((item, index) => {
+        actor.inventory.forEach((item, index) => {
             const equipment = item.itemType === ItemType.Equipment && item as Equipment;
-            ctx.fillText(`${getInventoryChar(player, item)}) ${item.name}${equipment && equipment.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
+            ctx.fillText(`${getInventoryChar(actor, item)}) ${item.name}${equipment && equipment.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }
 
     if (ui.mode === UIMode.Character) {
-        const stats = calcStats(player);
+        const stats = calcStats(actor);
 
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = 1;

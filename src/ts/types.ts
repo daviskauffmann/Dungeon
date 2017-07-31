@@ -54,7 +54,7 @@ export interface Chest extends Coord {
 
 export interface Chunk extends Area {
     dungeons: Dungeon[];
-    stairsDown: Stair[];
+    stairs: Stair[];
 }
 
 export interface ChunkOptions {
