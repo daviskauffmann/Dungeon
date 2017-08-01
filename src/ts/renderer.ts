@@ -11,7 +11,6 @@ const ctx = canvas.getContext("2d");
 export function draw(ev?: UIEvent) {
     const actorContext = findActor(0);
     const { actor, chunk, dungeon, level } = actorContext;
-
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
     const area = level || chunk;
@@ -250,6 +249,7 @@ export function draw(ev?: UIEvent) {
         ctx.globalAlpha = 1;
         actor.inventory.forEach((item, index) => {
             const equipment = item.itemType === ItemType.Equipment && item as Equipment;
+
             ctx.fillText(`${getInventoryChar(actor, item)}) ${item.name}${equipment && equipment.equipped ? " (equipped)" : ""}`, canvas.width - (game.fontSize * 10), (index + 1) * game.fontSize);
         });
     }

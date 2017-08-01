@@ -9,7 +9,6 @@ import { findActor, tick } from "./world";
 export function input(ev: KeyboardEvent) {
     const actorContext = findActor(0);
     const { actor, chunk, dungeon, level } = actorContext;
-
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
     const area = level || chunk;
@@ -84,7 +83,7 @@ export function input(ev: KeyboardEvent) {
                             item.itemType === ItemType.Corpse
                             && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                                 .some((coord) => coord.x === item.x && coord.y === item.y))
-                        .map((item) => (item as Corpse))
+                        .map((item) => item as Corpse)
                         .forEach((corpse) => resurrect(actor, corpse, area));
 
                     tick();

@@ -163,9 +163,9 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
         }
 
         {
-            const other = area.actors
-                .filter((other) => other !== actor)
-                .find((other) => other.x === coord.x && other.y === coord.y);
+            const other = area.actors.find((other) =>
+                other !== actor
+                && other.x === coord.x && other.y === coord.y);
 
             if (other) {
                 const otherInfo = config.actorInfo[ActorType[other.actorType]];
@@ -324,16 +324,16 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
         }
         case Class.Shaman: {
             if (randomFloat(0, 1) < 0.5) { // decision to resurrect
-                const corpse = area.items
-                    .filter((item) => item.itemType === ItemType.Corpse)
-                    .map((item) => item as Corpse)
-                    .filter((corpse) => {
+                const corpse = area.items.find((item) => {
+                    if (item.itemType === ItemType.Corpse) {
+                        const corpse = item as Corpse;
                         const corpseInfo = config.actorInfo[ActorType[corpse.actorType]];
 
-                        return corpseInfo.factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1);
-                    })
-                    .find((corpse) => lineOfSight(area, actor, radiansBetween(actor, corpse), actorInfo.sight)
-                        .some((coord) => coord.x === corpse.x && coord.y === corpse.y));
+                        return corpseInfo.factions.every((faction) => actorInfo.hostileFactions.indexOf(faction) === -1)
+                            && lineOfSight(area, actor, radiansBetween(actor, corpse), actorInfo.sight)
+                                .some((coord) => coord.x === corpse.x && coord.y === corpse.y);
+                    }
+                }) as Corpse;
 
                 if (corpse) {
                     resurrect(actor, corpse, area);
@@ -352,16 +352,15 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
         }
         case Disposition.Aggressive: {
             if (randomFloat(0, 1) < 0.5) { // decision to look for targets
-                const target = area.actors
-                    .filter((other) => other !== actor)
-                    .filter((other) => {
-                        const otherInfo = config.actorInfo[ActorType[other.actorType]];
+                const target = area.actors.find((other) => {
+                    const otherInfo = config.actorInfo[ActorType[other.actorType]];
 
-                        return otherInfo.factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
-                            || actor.hostileActorIds.some((id) => id === other.id);
-                    })
-                    .find((other) => lineOfSight(area, actor, radiansBetween(actor, other), actorInfo.sight)
-                        .some((coord) => coord.x === other.x && coord.y === other.y));
+                    return other !== actor
+                        && (otherInfo.factions.some((faction) => actorInfo.hostileFactions.indexOf(faction) > -1)
+                            || actor.hostileActorIds.some((id) => id === other.id))
+                        && lineOfSight(area, actor, radiansBetween(actor, other), actorInfo.sight)
+                            .some((coord) => coord.x === other.x && coord.y === other.y);
+                });
 
                 if (target) {
                     log(area, actor, `${actor.name} spots ${target.name}`);
@@ -380,8 +379,9 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to look for chests
-        const chest = area.chests.find((chest) => lineOfSight(area, actor, radiansBetween(actor, chest), actorInfo.sight)
-            .some((coord) => coord.x === chest.x && coord.y === chest.y));
+        const chest = area.chests.find((chest) =>
+            lineOfSight(area, actor, radiansBetween(actor, chest), actorInfo.sight)
+                .some((coord) => coord.x === chest.x && coord.y === chest.y));
 
         if (chest) {
             log(area, actor, `${actor.name} spots a chest`);
@@ -393,9 +393,9 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to look for items
-        const item = area.items
-            .filter((item) => item.itemType !== ItemType.Corpse)
-            .find((item) => lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
+        const item = area.items.find((item) =>
+            item.itemType !== ItemType.Corpse
+            && lineOfSight(area, actor, radiansBetween(actor, item), actorInfo.sight)
                 .some((coord) => coord.x === item.x && coord.y === item.y));
 
         if (item) {
@@ -418,15 +418,12 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to discard corpses
-        const corpses = actor.inventory
+        actor.inventory
             .filter((item) => item.itemType === ItemType.Corpse)
-            .map((item) => item as Corpse);
+            .map((item) => item as Corpse)
+            .forEach((corpse) => dropItem(actor, corpse, area));
 
-        if (corpses.length) {
-            corpses.forEach((corpse) => dropItem(actor, corpse, area));
-
-            return;
-        }
+        return;
     }
 
     if (randomFloat(0, 1) < 0.5) { // decision to move randomly
@@ -440,5 +437,7 @@ export function tick(actor: Actor, chunk: Chunk, dungeon?: Dungeon, level?: Leve
         } else {
             moveToCell(actor, { x: actor.x - 1, y: actor.y }, chunk, dungeon, level);
         }
+
+        return;
     }
 }

@@ -1,6 +1,6 @@
 import { tick as actor_tick } from "./actors";
 import { game } from "./game";
-import { ActorContext, Chunk, StairContext, StairDirection } from "./types";
+import { ActorContext, Area, Chunk, Coord, StairContext, StairDirection } from "./types";
 
 export function findActor(id: number) {
     const actorContext: ActorContext = {

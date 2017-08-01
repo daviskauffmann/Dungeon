@@ -215,19 +215,19 @@ export function init() {
 }
 
 export function load() {
-    game = JSON.parse(localStorage.getItem("game"));
+    const load = localStorage.getItem("game");
+    game = JSON.parse(load);
     console.log(game);
 }
 
 export function log(area: Area, location: Coord, message: string) {
     const actorContext = findActor(0);
-    const { actor } = actorContext;
-
+    const { actor, chunk, level } = actorContext;
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
-    if ((area === actorContext.level || area === actorContext.chunk)
+    if ((area === level || area === chunk)
         && lineOfSight(area, actor, radiansBetween(actor, location), actorInfo.sight)
-            .find((coord) => coord.x === location.x && coord.y === location.y)) {
+            .some((coord) => coord.x === location.x && coord.y === location.y)) {
         game.messages.push(message);
 
         if (game.messages.length > ui.maxMessages) {
@@ -237,8 +237,9 @@ export function log(area: Area, location: Coord, message: string) {
 }
 
 export function save() {
-    localStorage.setItem("game", JSON.stringify(game));
-    console.log(JSON.stringify(game));
+    const save = JSON.stringify(game);
+    localStorage.setItem("game", save);
+    console.log(save);
 }
 
 export const ui: UI = {
