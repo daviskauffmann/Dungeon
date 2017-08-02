@@ -52,7 +52,7 @@ export interface Chest extends Coord {
     loot: Item;
 }
 
-export interface Chunk extends Area {
+export interface Chunk extends Area, Coord {
     dungeons: Dungeon[];
     stairs: Stair[];
 }

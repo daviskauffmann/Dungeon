@@ -1,8 +1,8 @@
 import { game } from "./game";
 import { randomFloat, randomInt } from "./math";
-import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Dungeon, DungeonOptions, Equipment, EquipmentType, Game, Item, ItemType, Level, LevelOptions, Potion, PotionType, Rect, StairDirection, World } from "./types";
+import { Actor, ActorType, CellType, Chunk, ChunkOptions, Class, Coord, Dungeon, DungeonOptions, Equipment, EquipmentType, Game, Item, ItemType, Level, LevelOptions, Potion, PotionType, Rect, StairDirection, World } from "./types";
 
-export function createChunk(opts?: ChunkOptions) {
+export function createChunk(coord: Coord, opts?: ChunkOptions) {
     const width = opts && opts.width || 100;
     const height = opts && opts.height || 100;
     const dungeonAmount = opts && opts.dungeonAmount || 100;
@@ -16,6 +16,8 @@ export function createChunk(opts?: ChunkOptions) {
         items: [],
         stairs: [],
         width,
+        x: coord.x,
+        y: coord.y,
     };
 
     for (let x = 0; x < chunk.width; x++) {

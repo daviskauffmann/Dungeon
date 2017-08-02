@@ -226,8 +226,7 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
         actor.y = coord.y;
     } else {
         if (!level) {
-            // we are in the overworld
-            // transition to different chunk?
+            const chunkCoord: Coord = chunk;
         }
     }
 }

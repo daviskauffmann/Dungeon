@@ -192,7 +192,7 @@ export function init() {
     };
 
     {
-        const playerChunk = game.world.chunks["0_0"] = createChunk();
+        const playerChunk = game.world.chunks["0,0"] = createChunk({ x: 0, y: 0 });
 
         const player: Actor = {
             actorType: ActorType.Player,

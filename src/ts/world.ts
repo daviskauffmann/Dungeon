@@ -88,15 +88,6 @@ export function getChunkArray() {
     return Object.keys(game.world.chunks).map((key) => game.world.chunks[key]);
 }
 
-export function getChunkCoord() {
-    const coord = {
-        x: 0,
-        y: 0,
-    };
-
-    return coord;
-}
-
 export function tick() {
     if (!game.stopTime) {
         getChunkArray().forEach((chunk) => {
