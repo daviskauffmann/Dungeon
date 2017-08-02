@@ -4,6 +4,16 @@ import { radiansBetween } from "./math";
 import { Actor, ActorType, Area, Class, Config, Coord, Disposition, Faction, Game, UI, UIMode, World } from "./types";
 import { findActor } from "./world";
 
+export let game: Game;
+
+export const ui: UI = {
+    inventorySwapFirst: -1,
+    inventorySwapSecond: -1,
+    maxMessages: 10,
+    mode: UIMode.Default,
+    target: { x: 0, y: 0 },
+};
+
 export const config: Config = {
     actorInfo: {
         Bugbear: {
@@ -174,8 +184,6 @@ export const config: Config = {
     },
 };
 
-export let game: Game;
-
 export function init() {
     game = {
         fontSize: 24,
@@ -241,11 +249,3 @@ export function save() {
     localStorage.setItem("game", save);
     console.log(save);
 }
-
-export const ui: UI = {
-    inventorySwapFirst: -1,
-    inventorySwapSecond: -1,
-    maxMessages: 10,
-    mode: UIMode.Default,
-    target: { x: 0, y: 0 },
-};

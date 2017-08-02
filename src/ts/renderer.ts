@@ -2,11 +2,18 @@ import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
 import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { ActorType, CellType, Class, Corpse, Equipment, EquipmentType, ItemType, Potion, PotionType, Rect, StairDirection, UIMode } from "./types";
+import { ActorType, CellType, Class, Coord, Corpse, Equipment, EquipmentType, ItemType, Potion, PotionType, Rect, StairDirection, UIMode } from "./types";
 import { findActor } from "./world";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
+
+export const view: Rect = {
+    height: 0,
+    left: 0,
+    top: 0,
+    width: 0,
+};
 
 export function draw(ev?: UIEvent) {
     const actorContext = findActor(0);
@@ -18,12 +25,6 @@ export function draw(ev?: UIEvent) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const view: Rect = {
-        height: 0,
-        left: 0,
-        top: 0,
-        width: 0,
-    };
     view.width = Math.round(canvas.width / game.fontSize);
     view.height = Math.round(canvas.height / game.fontSize);
     view.left = actor.x - Math.round(view.width / 2);
@@ -262,4 +263,13 @@ export function draw(ev?: UIEvent) {
         ctx.fillText(`Health: ${stats.health}`, canvas.width - (game.fontSize * 10), game.fontSize);
         ctx.fillText(`Mana: ${stats.mana}`, canvas.width - (game.fontSize * 10), game.fontSize * 2);
     }
+}
+
+export function screenToCellCoord(screen: Coord) {
+    const coord: Coord = {
+        x: view.left + Math.floor(screen.x / game.fontSize),
+        y: view.top + Math.floor(screen.y / game.fontSize),
+    };
+
+    return coord;
 }

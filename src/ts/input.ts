@@ -2,11 +2,11 @@ import { closeDoor, dropItem, getInventoryChar, getInventoryIndex, moveToCell, p
 import { lineOfSight } from "./algorithms";
 import { config, game, init, load, log, save, ui } from "./game";
 import { radiansBetween } from "./math";
-import { draw } from "./renderer";
+import { draw, screenToCellCoord } from "./renderer";
 import { ActorType, CellType, Corpse, Equipment, ItemType, Potion, UIMode } from "./types";
 import { findActor, tick } from "./world";
 
-export function input(ev: KeyboardEvent) {
+export function keydown(ev: KeyboardEvent) {
     const actorContext = findActor(0);
     const { actor, chunk, dungeon, level } = actorContext;
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
@@ -395,4 +395,20 @@ export function input(ev: KeyboardEvent) {
     }
 
     draw();
+}
+
+export function mousedown(ev: MouseEvent) {
+    const actorContext = findActor(0);
+    const { actor, chunk, dungeon, level } = actorContext;
+    const actorInfo = config.actorInfo[ActorType[actor.actorType]];
+
+    const area = level || chunk;
+
+    const coord = screenToCellCoord(ev);
+
+    console.log(coord);
+    console.log(area.cells[coord.x][coord.y]);
+    console.log(area.actors.find((other) => other.x === coord.x && other.y === coord.y));
+    console.log(area.chests.find((chest) => chest.x === coord.x && chest.y === coord.y));
+    console.log(area.items.find((item) => item.x === coord.x && item.y === coord.y));
 }
