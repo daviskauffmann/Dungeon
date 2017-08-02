@@ -20,6 +20,8 @@ export function createChunk(coord: Coord, opts?: ChunkOptions) {
         y: coord.y,
     };
 
+    game.world.chunks[`${chunk.x},${chunk.y}`] = chunk;
+
     for (let x = 0; x < chunk.width; x++) {
         chunk.cells[x] = [];
         for (let y = 0; y < chunk.height; y++) {

@@ -236,7 +236,7 @@ export function draw(ev?: UIEvent) {
 
     ctx.fillStyle = "#ffffff";
     ctx.globalAlpha = 1;
-    ctx.fillText(`Dungeon: ${dungeon ? chunk.dungeons.indexOf(dungeon) : "N/A"} Level: ${dungeon && level ? dungeon.levels.indexOf(level) : "N/A"} Turn: ${game.world.turn}`, 0, canvas.height);
+    ctx.fillText(`Chunk: (${chunk.x}, ${chunk.y}) Dungeon: ${dungeon ? chunk.dungeons.indexOf(dungeon) : "N/A"} Level: ${dungeon && level ? dungeon.levels.indexOf(level) : "N/A"} Turn: ${game.world.turn}`, 0, canvas.height);
 
     if (ui.mode === UIMode.Inventory
         || ui.mode === UIMode.InventoryDrink

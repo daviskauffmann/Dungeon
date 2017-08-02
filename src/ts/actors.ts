@@ -1,6 +1,6 @@
 import { aStar, lineOfSight } from "./algorithms";
 import { config, game, log } from "./game";
-import { createDungeon, createLevel } from "./generators";
+import { createChunk, createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
 import { Actor, ActorType, Area, Cell, CellType, Chest, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Equipment, Item, ItemType, Level, Stair, StairDirection, Stats } from "./types";
 import { findStair } from "./world";
@@ -226,7 +226,39 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
         actor.y = coord.y;
     } else {
         if (!level) {
-            const chunkCoord: Coord = chunk;
+            const newChunkCoord: Coord = {
+                x: coord.x < 0
+                    ? chunk.x - 1
+                    : coord.x >= area.width
+                        ? chunk.x + 1
+                        : chunk.x,
+                y: coord.y < 0
+                    ? chunk.y - 1
+                    : coord.y >= area.height
+                        ? chunk.y + 1
+                        : chunk.y,
+            };
+
+            let newChunk = game.world.chunks[`${newChunkCoord.x},${newChunkCoord.y}`];
+
+            if (!newChunk) {
+                newChunk = game.world.chunks[`${newChunkCoord.x},${newChunkCoord.y}`] = createChunk(newChunkCoord);
+            }
+
+            const newCoord = {
+                x: coord.x < 0
+                    ? newChunk.width - 1
+                    : coord.x >= area.width
+                        ? 0
+                        : actor.x,
+                y: coord.y < 0
+                    ? newChunk.height - 1
+                    : coord.y >= area.height
+                        ? 0
+                        : actor.y,
+            };
+
+            moveToArea(actor, chunk, newChunk, newCoord);
         }
     }
 }
@@ -243,7 +275,7 @@ export function openChest(actor: Actor, chest: Chest, area: Area) {
 
                 actor.inventory.push(chest.loot);
             } else {
-                log(area, actor, `${actor.name} 's inventory is full`);
+                log(area, actor, `${actor.name}'s inventory is full`);
             }
         } else {
             log(area, actor, `${actor.name} sees nothing inside`);
