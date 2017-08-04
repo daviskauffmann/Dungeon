@@ -29,18 +29,17 @@ export function draw(ev?: UIEvent) {
     view.height = Math.round(canvas.height / game.fontSize);
     view.left = actor.x - Math.round(view.width / 2);
     view.top = actor.y - Math.round(view.height / 2);
-    if (view.left < 0) {
-        view.left = 0;
-    }
-    if (view.left + view.width > area.width) {
-        view.left = area.width - view.width;
-    }
-    if (view.top < 0) {
-        view.top = 0;
-    }
-    if (view.top + view.height > area.height) {
-        view.top = area.height - view.height;
-    }
+
+    view.left = view.left < 0
+        ? 0
+        : view.left + view.width > area.width
+            ? area.width - view.width
+            : view.left;
+    view.top = view.top < 0
+        ? 0
+        : view.top + view.height > area.height
+            ? area.height - view.height
+            : view.top;
 
     const visibleCells = fieldOfView(area, actor, 0.5, actorInfo.sight)
         .map((coord) => area.cells[coord.x][coord.y]);

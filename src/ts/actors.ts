@@ -94,8 +94,10 @@ export function descend(actor: Actor, stair: Stair, chunk: Chunk, dungeon?: Dung
 
     const stairContext = findStair(stair.id, StairDirection.Up);
 
+    let newLevel: Level;
+
     if (stairContext) {
-        moveToArea(actor, area, stairContext.level, stairContext.level.stairUp);
+        newLevel = stairContext.level;
     } else {
         let newDungeon = dungeon;
 
@@ -104,11 +106,11 @@ export function descend(actor: Actor, stair: Stair, chunk: Chunk, dungeon?: Dung
             chunk.dungeons.push(newDungeon);
         }
 
-        const newLevel = createLevel(stair.id);
+        newLevel = createLevel(stair.id);
         newDungeon.levels.push(newLevel);
-
-        moveToArea(actor, area, newLevel, newLevel.stairUp);
     }
+
+    moveToArea(actor, area, newLevel, newLevel.stairUp);
 }
 
 export function dropItem(actor: Actor, item: Item, area: Area) {
@@ -239,11 +241,7 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
                         : chunk.y,
             };
 
-            let newChunk = game.world.chunks[`${newChunkCoord.x},${newChunkCoord.y}`];
-
-            if (!newChunk) {
-                newChunk = game.world.chunks[`${newChunkCoord.x},${newChunkCoord.y}`] = createChunk(newChunkCoord);
-            }
+            const newChunk = game.world.chunks[`${newChunkCoord.x},${newChunkCoord.y}`] || createChunk(newChunkCoord);
 
             const newCoord = {
                 x: coord.x < 0

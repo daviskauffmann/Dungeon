@@ -1,4 +1,4 @@
-import { closeDoor, dropItem, getInventoryChar, getInventoryIndex, moveToCell, pickUpItem, resurrect } from "./actors";
+import { closeDoor, dropItem, getInventoryChar, getInventoryIndex, moveToCell, pathfind, pickUpItem, resurrect } from "./actors";
 import { lineOfSight } from "./algorithms";
 import { config, game, init, load, log, save, ui } from "./game";
 import { radiansBetween } from "./math";
@@ -406,9 +406,9 @@ export function mousedown(ev: MouseEvent) {
 
     const coord = screenToCellCoord(ev);
 
-    console.log(coord);
-    console.log(area.cells[coord.x][coord.y]);
-    console.log(area.actors.find((other) => other.x === coord.x && other.y === coord.y));
-    console.log(area.chests.find((chest) => chest.x === coord.x && chest.y === coord.y));
-    console.log(area.items.find((item) => item.x === coord.x && item.y === coord.y));
+    if (pathfind(actor, coord, chunk, dungeon, level)) {
+        tick();
+
+        draw();
+    }
 }
