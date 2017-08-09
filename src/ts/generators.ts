@@ -44,7 +44,7 @@ export function createChunk(coord: Coord, opts?: ChunkOptions) {
     return chunk;
 }
 
-export function createDungeon(opts?: DungeonOptions) {
+export function createDungeon(chunk: Chunk, opts?: DungeonOptions) {
     const name = opts && opts.name;
     const maxLevels = opts && opts.maxLevels || 1;
 
@@ -53,6 +53,8 @@ export function createDungeon(opts?: DungeonOptions) {
         maxLevels,
         name,
     };
+
+    chunk.dungeons.push(dungeon);
 
     if (!dungeon.name) {
         const roll = randomFloat(0, 1);
@@ -70,7 +72,7 @@ export function createDungeon(opts?: DungeonOptions) {
     return dungeon;
 }
 
-export function createLevel(stairDownId: number, opts?: LevelOptions) {
+export function createLevel(dungeon: Dungeon, stairDownId: number, opts?: LevelOptions) {
     const width = opts && opts.width || 50;
     const height = opts && opts.height || 50;
     const roomAttempts = opts && opts.roomAttempts || 20;
@@ -94,6 +96,8 @@ export function createLevel(stairDownId: number, opts?: LevelOptions) {
         stairUp: undefined,
         width,
     };
+
+    dungeon.levels.push(level);
 
     for (let x = 0; x < level.width; x++) {
         level.cells[x] = [];

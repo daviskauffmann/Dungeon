@@ -3,35 +3,18 @@ import { game } from "./game";
 import { ActorContext, Area, Chunk, Coord, StairContext, StairDirection } from "./types";
 
 export function findActor(id: number) {
-    const actorContext: ActorContext = {
-        actor: undefined,
-        chunk: undefined,
-        dungeon: undefined,
-        level: undefined,
-    };
-
     for (const chunk of getChunkArray()) {
-        actorContext.chunk = chunk;
-
         for (const actor of chunk.actors) {
-            actorContext.actor = actor;
-
             if (actor.id === id) {
-                return actorContext;
+                return Object.freeze<ActorContext>({ chunk, actor });
             }
         }
 
         for (const dungeon of chunk.dungeons) {
-            actorContext.dungeon = dungeon;
-
             for (const level of dungeon.levels) {
-                actorContext.level = level;
-
                 for (const actor of level.actors) {
-                    actorContext.actor = actor;
-
                     if (actor.id === id) {
-                        return actorContext;
+                        return Object.freeze<ActorContext>({ chunk, dungeon, level, actor });
                     }
                 }
             }
@@ -40,43 +23,24 @@ export function findActor(id: number) {
 }
 
 export function findStair(id: number, direction: StairDirection) {
-    const stairContext: StairContext = {
-        chunk: undefined,
-        dungeon: undefined,
-        level: undefined,
-        stair: undefined,
-    };
-
     for (const chunk of getChunkArray()) {
-        stairContext.chunk = chunk;
-
         if (direction === StairDirection.Down) {
             for (const stair of chunk.stairs) {
-                stairContext.stair = stair;
-
                 if (stair.id === id) {
-                    return stairContext;
+                    return Object.freeze<StairContext>({ chunk, stair });
                 }
             }
         }
 
         for (const dungeon of chunk.dungeons) {
-            stairContext.dungeon = dungeon;
-
             for (const level of dungeon.levels) {
-                stairContext.level = level;
-
                 if (direction === StairDirection.Down) {
                     if (level.stairDown.id === id) {
-                        stairContext.stair = level.stairDown;
-
-                        return stairContext;
+                        return Object.freeze<StairContext>({ chunk, dungeon, level, stair: level.stairDown });
                     }
                 } else if (direction === StairDirection.Up) {
                     if (level.stairUp.id === id) {
-                        stairContext.stair = level.stairUp;
-
-                        return stairContext;
+                        return Object.freeze<StairContext>({ chunk, dungeon, level, stair: level.stairUp });
                     }
                 }
             }

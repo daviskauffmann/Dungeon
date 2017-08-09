@@ -58,7 +58,7 @@ export function attack(actor: Actor, target: Actor, area: Area) {
 }
 
 export function calcStats(actor: Actor) {
-    const stats: Stats = {
+    return Object.freeze<Stats>({
         armor: actor.level,
         attunement: actor.level,
         avoidance: actor.level,
@@ -74,9 +74,7 @@ export function calcStats(actor: Actor) {
         resistance: actor.level,
         stamina: actor.level,
         strength: actor.level,
-    };
-
-    return stats;
+    });
 }
 
 export function closeDoor(actor: Actor, cell: Cell, area: Area) {
@@ -94,21 +92,9 @@ export function descend(actor: Actor, stair: Stair, chunk: Chunk, dungeon?: Dung
 
     const stairContext = findStair(stair.id, StairDirection.Up);
 
-    let newLevel: Level;
-
-    if (stairContext) {
-        newLevel = stairContext.level;
-    } else {
-        let newDungeon = dungeon;
-
-        if (!newDungeon) {
-            newDungeon = createDungeon();
-            chunk.dungeons.push(newDungeon);
-        }
-
-        newLevel = createLevel(stair.id);
-        newDungeon.levels.push(newLevel);
-    }
+    const newLevel: Level = stairContext
+        ? stairContext.level
+        : createLevel(dungeon || createDungeon(chunk), stair.id);
 
     moveToArea(actor, area, newLevel, newLevel.stairUp);
 }
