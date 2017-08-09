@@ -70,13 +70,10 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
 
         neighbors
             .filter((neighbor) =>
-                !config.cellInfo[CellType[area.cells[neighbor.x][neighbor.y].type]].solid
-                && !area.actors.some((actor) =>
-                    actor.x === neighbor.x && actor.y === neighbor.y
-                    && actor.x !== goal.x && actor.y !== goal.y)
-                && !area.chests.some((chest) =>
-                    chest.x === neighbor.x && chest.y === neighbor.y
-                    && chest.x !== goal.x && chest.y !== goal.y))
+                (neighbor.x === goal.x && neighbor.y === goal.y)
+                || (!config.cellInfo[CellType[area.cells[neighbor.x][neighbor.y].type]].solid
+                    && !area.actors.some((actor) => actor.x === neighbor.x && actor.y === neighbor.y)
+                    && !area.chests.some((chest) => chest.x === neighbor.x && chest.y === neighbor.y)))
             .forEach((neighbor) => {
                 if (closedSet.indexOf(neighbor) === -1) {
                     if (openSet.indexOf(neighbor) === -1) {
