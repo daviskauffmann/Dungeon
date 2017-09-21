@@ -3,15 +3,14 @@ import { lineOfSight } from "./algorithms";
 import { config, game, init, load, log, save, ui } from "./game";
 import { radiansBetween } from "./math";
 import { draw, screenToCellCoord } from "./renderer";
-import { ActorType, CellType, Corpse, Equipment, ItemType, Potion, UIMode } from "./types";
+import { ActorType, Area, Corpse, Equipment, ItemType, Potion, UIMode } from "./types";
 import { findActor, tick } from "./world";
 
 export function keydown(ev: KeyboardEvent) {
-    const actorContext = findActor(0);
-    const { actor, chunk, dungeon, level } = actorContext;
+    const { actor, chunk, dungeon, level } = findActor(0);
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
-    const area = level || chunk;
+    const area: Area = level || chunk;
 
     switch (ui.mode) {
         case UIMode.Default: {
@@ -200,6 +199,14 @@ export function keydown(ev: KeyboardEvent) {
 
                     break;
                 }
+                case "z": {
+                    log(area, actor, "select wand to zap");
+                    log(area, actor, "press space to cancel");
+
+                    ui.mode = UIMode.InventoryZap;
+
+                    break;
+                }
             }
 
             break;
@@ -290,13 +297,13 @@ export function keydown(ev: KeyboardEvent) {
             break;
         }
         case UIMode.InventorySwapFirst: {
-            const selectedItem = actor.inventory[getInventoryIndex(ev.key)];
+            const item = actor.inventory[getInventoryIndex(ev.key)];
 
-            if (selectedItem) {
+            if (item) {
                 log(area, actor, "select second item to swap");
                 log(area, actor, "press space to cancel");
 
-                ui.inventorySwapFirst = actor.inventory.indexOf(selectedItem);
+                ui.inventorySwapFirst = actor.inventory.indexOf(item);
 
                 ui.mode = UIMode.InventorySwapSecond;
             }
@@ -311,10 +318,10 @@ export function keydown(ev: KeyboardEvent) {
             break;
         }
         case UIMode.InventorySwapSecond: {
-            const selectedItem = actor.inventory[getInventoryIndex(ev.key)];
+            const item = actor.inventory[getInventoryIndex(ev.key)];
 
-            if (selectedItem) {
-                ui.inventorySwapSecond = actor.inventory.indexOf(selectedItem);
+            if (item) {
+                ui.inventorySwapSecond = actor.inventory.indexOf(item);
 
                 const i = ui.inventorySwapFirst;
                 const j = ui.inventorySwapSecond;
@@ -334,6 +341,18 @@ export function keydown(ev: KeyboardEvent) {
             }
 
             break;
+        }
+        case UIMode.InventoryZap: {
+            const item = actor.inventory[getInventoryIndex(ev.key)];
+
+            console.log(item);
+
+            switch (ev.key) {
+                case " ":
+                    ui.mode = UIMode.Default;
+
+                    break;
+            }
         }
         case UIMode.Character: {
             switch (ev.key) {
@@ -398,11 +417,10 @@ export function keydown(ev: KeyboardEvent) {
 }
 
 export function mousedown(ev: MouseEvent) {
-    const actorContext = findActor(0);
-    const { actor, chunk, dungeon, level } = actorContext;
+    const { actor, chunk, dungeon, level } = findActor(0);
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
-    const area = level || chunk;
+    const area: Area = level || chunk;
 
     const coord = screenToCellCoord(ev);
 

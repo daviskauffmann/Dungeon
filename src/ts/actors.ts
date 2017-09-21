@@ -3,13 +3,13 @@ import { config, game, log } from "./game";
 import { createChunk, createDungeon, createLevel } from "./generators";
 import { radiansBetween, randomFloat, randomInt } from "./math";
 import { Actor, ActorType, Area, Cell, CellType, Chest, Chunk, Class, Coord, Corpse, Disposition, Dungeon, Equipment, Item, ItemType, Level, Stair, StairDirection, Stats } from "./types";
-import { findStair } from "./world";
+import { checkBounds, findStair } from "./world";
 
 export function ascend(actor: Actor, stair: Stair, area: Area) {
     log(area, actor, `${actor.name} ascends`);
 
     const stairContext = findStair(stair.id, StairDirection.Down);
-    const newArea = stairContext.level || stairContext.chunk;
+    const newArea: Area = stairContext.level || stairContext.chunk;
 
     moveToArea(actor, area, newArea, stairContext.stair);
 }
@@ -136,7 +136,7 @@ export function moveToCell(actor: Actor, coord: Coord, chunk: Chunk, dungeon?: D
 
     const area: Area = level || chunk;
 
-    if (coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height) {
+    if (checkBounds(area, coord)) {
         {
             const cell = area.cells[coord.x][coord.y];
             const cellInfo = config.cellInfo[CellType[cell.type]];

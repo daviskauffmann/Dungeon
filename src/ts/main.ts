@@ -5,8 +5,7 @@ import { draw } from "./renderer";
 init();
 
 document.addEventListener("keydown", keydown);
-window.addEventListener("resize", draw);
-
 document.addEventListener("mousedown", mousedown);
+window.addEventListener("resize", draw);
 
 draw();

@@ -2,8 +2,8 @@ import { calcStats, getInventoryChar } from "./actors";
 import { fieldOfView } from "./algorithms";
 import { config, game, ui } from "./game";
 import { isInside } from "./math";
-import { ActorType, CellType, Class, Coord, Corpse, Equipment, EquipmentType, ItemType, Potion, PotionType, Rect, StairDirection, UIMode } from "./types";
-import { findActor } from "./world";
+import { ActorType, Area, CellType, Class, Coord, Corpse, Equipment, EquipmentType, ItemType, Potion, PotionType, Rect, StairDirection, UIMode } from "./types";
+import { checkBounds, findActor } from "./world";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
@@ -16,11 +16,10 @@ export const view: Rect = {
 };
 
 export function draw(ev?: UIEvent) {
-    const actorContext = findActor(0);
-    const { actor, chunk, dungeon, level } = actorContext;
+    const { actor, chunk, dungeon, level } = findActor(0);
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
-    const area = level || chunk;
+    const area: Area = level || chunk;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -51,7 +50,7 @@ export function draw(ev?: UIEvent) {
     if (game.ignoreFov) {
         for (let x = view.left; x < view.left + view.width; x++) {
             for (let y = view.top; y < view.top + view.height; y++) {
-                if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+                if (checkBounds(area, { x, y })) {
                     const cell = area.cells[x][y];
 
                     if (visibleCells.indexOf(cell) === -1) {
@@ -67,7 +66,7 @@ export function draw(ev?: UIEvent) {
             if (isInside(actor, room)) {
                 for (let x = room.left - 1; x < room.left + room.width + 1; x++) {
                     for (let y = room.top - 1; y < room.top + room.height + 1; y++) {
-                        if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+                        if (checkBounds(area, { x, y })) {
                             const cell = area.cells[x][y];
 
                             cell.discovered = true;
@@ -87,7 +86,7 @@ export function draw(ev?: UIEvent) {
 
     for (let x = view.left; x < view.left + view.width; x++) {
         for (let y = view.top; y < view.top + view.height; y++) {
-            if (x >= 0 && x < area.width && y >= 0 && y < area.height) {
+            if (checkBounds(area, { x, y })) {
                 const cell = area.cells[x][y];
 
                 const screen = {
@@ -244,7 +243,8 @@ export function draw(ev?: UIEvent) {
         || ui.mode === UIMode.InventoryEquip
         || ui.mode === UIMode.InventorySwapFirst
         || ui.mode === UIMode.InventorySwapSecond
-        || ui.mode === UIMode.InventoryUnequip) {
+        || ui.mode === UIMode.InventoryUnequip
+        || ui.mode === UIMode.InventoryZap) {
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = 1;
         actor.inventory.forEach((item, index) => {
@@ -264,11 +264,11 @@ export function draw(ev?: UIEvent) {
     }
 }
 
-export function screenToCellCoord(screen: Coord) {
-    const coord: Coord = {
-        x: view.left + Math.floor(screen.x / game.fontSize),
-        y: view.top + Math.floor(screen.y / game.fontSize),
+export function screenToCellCoord(screenCoord: Coord) {
+    const cellCoord: Coord = {
+        x: view.left + Math.floor(screenCoord.x / game.fontSize),
+        y: view.top + Math.floor(screenCoord.y / game.fontSize),
     };
 
-    return coord;
+    return cellCoord;
 }

@@ -102,13 +102,9 @@ export function aStar(area: Area, start: Coord, goal: Coord) {
 export function fieldOfView(area: Area, origin: Coord, accuracy: number, range: number) {
     const coords: Coord[] = [];
 
-    function contains(x: number, y: number) {
-        return coords.some((coord) => coord.x === x && coord.y === y);
-    }
-
     for (let direction = 0; direction < 360; direction += accuracy) {
         coords.push(...lineOfSight(area, origin, toRadians(direction), range)
-            .filter((coord) => !contains(coord.x, coord.y)));
+            .filter((coord) => !coords.some((c) => c.x === coord.x && c.y === coord.y)));
     }
 
     return coords;

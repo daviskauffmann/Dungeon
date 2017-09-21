@@ -1,6 +1,10 @@
 import { tick as actor_tick } from "./actors";
 import { game } from "./game";
-import { ActorContext, Area, Chunk, Coord, StairContext, StairDirection } from "./types";
+import { ActorContext, Area, Coord, StairContext, StairDirection } from "./types";
+
+export function checkBounds(area: Area, coord: Coord) {
+    return coord.x >= 0 && coord.x < area.width && coord.y >= 0 && coord.y < area.height;
+}
 
 export function findActor(id: number) {
     for (const chunk of getChunkArray()) {

@@ -229,8 +229,7 @@ export function load() {
 }
 
 export function log(area: Area, location: Coord, message: string) {
-    const actorContext = findActor(0);
-    const { actor, chunk, level } = actorContext;
+    const { actor, chunk, level } = findActor(0);
     const actorInfo = config.actorInfo[ActorType[actor.actorType]];
 
     if ((area === level || area === chunk)

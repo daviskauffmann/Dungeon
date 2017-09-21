@@ -79,7 +79,7 @@ export function createLevel(dungeon: Dungeon, stairDownId: number, opts?: LevelO
     const minRoomSize = opts && opts.minRoomSize || 5;
     const maxRoomSize = opts && opts.maxRoomSize || 15;
     const preventOverlap = opts && opts.preventOverlap || true;
-    const litRooms = opts && opts.litRooms || false;
+    const litRooms = opts && opts.litRooms || true;
     const doorChance = opts && opts.doorChance || 0.5;
     const monsterAmount = opts && opts.monsterAmount || 5;
     const chestAmount = opts && opts.chestAmount || 5;

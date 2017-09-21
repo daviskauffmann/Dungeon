@@ -291,6 +291,7 @@ export enum UIMode {
     InventoryUnequip,
     InventorySwapFirst,
     InventorySwapSecond,
+    InventoryZap,
     Character,
 }
 
